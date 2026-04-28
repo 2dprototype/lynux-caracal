@@ -28,6 +28,10 @@ function BrowserApp.new()
     self.loadTimer = 0
     self.loadDuration = 0
     
+    self.scrollBarDragging = false
+    self.scrollBarDragStartY = 0
+    self.scrollBarDragStartOffset = 0
+    
     self.windowWidth = 800
     self.windowHeight = 600
     
@@ -197,6 +201,18 @@ function BrowserApp:draw(x, y, w, h)
         if self.siteInstance.draw then
             self.siteInstance:draw(x, contentY, w, contentH)
         end
+        
+        -- Global Scrollbar
+        local s = self.siteInstance
+        if s.maxScroll and s.maxScroll > 0 then
+            local scrollbarHeight = math.max(20, contentH * (contentH / (s.maxScroll + contentH)))
+            local maxThumbTravel = contentH - scrollbarHeight
+            local thumbY = contentY + (s.scroll / s.maxScroll) * maxThumbTravel
+            
+            love.graphics.setColor(0.7, 0.7, 0.7, 0.8)
+            if self.scrollBarDragging then love.graphics.setColor(0.5, 0.5, 0.5, 0.9) end
+            love.graphics.rectangle("fill", x + w - 8, thumbY, 6, scrollbarHeight, 3)
+        end
     elseif not self.loading then
         love.graphics.setColor(1, 1, 1)
         love.graphics.rectangle("fill", x, contentY, w, contentH)
@@ -223,6 +239,27 @@ function BrowserApp:mousepressed(rx, ry, button, ax, ay)
             self.urlActive = false
         else
             self.urlActive = false
+            -- Scrollbar interaction
+            local s = self.siteInstance
+            if s and s.maxScroll and s.maxScroll > 0 then
+                local contentH = self.h - headerHeight
+                local scrollbarHeight = math.max(20, contentH * (contentH / (s.maxScroll + contentH)))
+                local maxThumbTravel = contentH - scrollbarHeight
+                local thumbY = headerHeight + (s.scroll / s.maxScroll) * maxThumbTravel
+                
+                if rx >= self.w - 15 and rx <= self.w then
+                    if ry >= thumbY and ry <= thumbY + scrollbarHeight then
+                        self.scrollBarDragging = true
+                        self.scrollBarDragStartY = ry
+                        self.scrollBarDragStartOffset = s.scroll
+                    else
+                        local clickRatio = (ry - headerHeight) / contentH
+                        s.scroll = math.max(0, math.min(clickRatio * s.maxScroll, s.maxScroll))
+                    end
+                    return
+                end
+            end
+            
             if not self.loading and self.siteInstance and self.siteInstance.mousepressed then
                 self.siteInstance:mousepressed(ax, ay, button)
             end
@@ -231,12 +268,26 @@ function BrowserApp:mousepressed(rx, ry, button, ax, ay)
 end
 
 function BrowserApp:mousemoved(ax, ay, dx, dy)
+    if self.scrollBarDragging and self.siteInstance then
+        local s = self.siteInstance
+        local contentH = self.h - 40
+        local deltaY = (ay - self.y) - self.scrollBarDragStartY
+        local scrollRatio = deltaY / contentH
+        s.scroll = math.max(0, math.min(self.scrollBarDragStartOffset + (scrollRatio * s.maxScroll), s.maxScroll))
+        return
+    end
+
     if not self.loading and self.siteInstance and self.siteInstance.mousemoved then
         self.siteInstance:mousemoved(ax, ay, dx, dy)
     end
 end
 
 function BrowserApp:mousereleased(ax, ay, button)
+    if self.scrollBarDragging then
+        self.scrollBarDragging = false
+        return
+    end
+
     if not self.loading and self.siteInstance and self.siteInstance.mousereleased then
         self.siteInstance:mousereleased(ax, ay, button)
     end

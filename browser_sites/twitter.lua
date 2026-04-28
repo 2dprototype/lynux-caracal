@@ -24,6 +24,7 @@ function Twitter:draw(x, y, w, h)
     local contentY = y
     love.graphics.setScissor(x, contentY, w, h)
     local cy = contentY - self.scroll
+    local totalHeight = 150
     
     local colW = math.min(600, w)
     local cx = x + (w - colW)/2
@@ -86,13 +87,19 @@ function Twitter:draw(x, y, w, h)
         love.graphics.line(cx, cy+120, cx+colW, cy+120)
         
         cy = cy + 120
+        totalHeight = totalHeight + 120
     end
+    
+    self.maxScroll = math.max(0, totalHeight - h)
+    self.scroll = math.max(0, math.min(self.scroll, self.maxScroll))
     
     love.graphics.setScissor()
 end
 
 function Twitter:wheelmoved(wx, wy)
-    self.scroll = math.max(0, self.scroll - wy * 40)
+    if self.maxScroll then
+        self.scroll = math.max(0, math.min(self.maxScroll, self.scroll - wy * 40))
+    end
 end
 
 return Twitter

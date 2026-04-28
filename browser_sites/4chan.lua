@@ -32,6 +32,7 @@ function FourChan:draw(x, y, w, h)
     love.graphics.setScissor(x, contentY, w, contentH)
     
     local cy = contentY - self.scroll
+    local totalHeight = 0
     
     for i, p in ipairs(self.posts) do
         -- Draw post
@@ -73,13 +74,19 @@ function FourChan:draw(x, y, w, h)
         end
         
         cy = cy + 90
+        totalHeight = totalHeight + 90
     end
+    
+    self.maxScroll = math.max(0, totalHeight - contentH)
+    self.scroll = math.max(0, math.min(self.scroll, self.maxScroll))
     
     love.graphics.setScissor()
 end
 
 function FourChan:wheelmoved(wx, wy)
-    self.scroll = math.max(0, self.scroll - wy * 40)
+    if self.maxScroll then
+        self.scroll = math.max(0, math.min(self.maxScroll, self.scroll - wy * 40))
+    end
 end
 
 return FourChan

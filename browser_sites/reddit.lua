@@ -40,6 +40,7 @@ function Reddit:draw(x, y, w, h)
     love.graphics.setScissor(x, contentY, w, contentH)
     
     local cy = contentY + 20 - self.scroll
+    local totalHeight = 20
     for i, p in ipairs(self.posts) do
         local pw = math.min(800, w - 40)
         local px = x + (w - pw)/2
@@ -80,7 +81,11 @@ function Reddit:draw(x, y, w, h)
         love.graphics.printf(p.title, px + 50, cy + 40, pw - 60, "left")
         
         cy = cy + ph + 15
+        totalHeight = totalHeight + ph + 15
     end
+    
+    self.maxScroll = math.max(0, totalHeight - contentH)
+    self.scroll = math.max(0, math.min(self.scroll, self.maxScroll))
     
     love.graphics.setScissor()
 end
@@ -128,7 +133,9 @@ function Reddit:mousepressed(mx, my, button)
 end
 
 function Reddit:wheelmoved(wx, wy)
-    self.scroll = math.max(0, self.scroll - wy * 40)
+    if self.maxScroll then
+        self.scroll = math.max(0, math.min(self.maxScroll, self.scroll - wy * 40))
+    end
 end
 
 return Reddit

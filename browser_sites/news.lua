@@ -35,6 +35,7 @@ function News:draw(x, y, w, h)
     love.graphics.setScissor(x, contentY, w, h - 60)
     
     local cy = contentY + 30 - self.scroll
+    local totalHeight = 30
     
     local colW = math.min(800, w - 40)
     local cx = x + (w - colW)/2
@@ -58,13 +59,19 @@ function News:draw(x, y, w, h)
         love.graphics.print(n.time, cx + 20, cy + 70)
         
         cy = cy + 120
+        totalHeight = totalHeight + 120
     end
+    
+    self.maxScroll = math.max(0, totalHeight - (h - 60))
+    self.scroll = math.max(0, math.min(self.scroll, self.maxScroll))
     
     love.graphics.setScissor()
 end
 
 function News:wheelmoved(wx, wy)
-    self.scroll = math.max(0, self.scroll - wy * 40)
+    if self.maxScroll then
+        self.scroll = math.max(0, math.min(self.maxScroll, self.scroll - wy * 40))
+    end
 end
 
 return News

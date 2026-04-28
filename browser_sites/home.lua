@@ -66,29 +66,34 @@ function Home:draw(x, y, w, h)
     -- Top sites
     local bw, bh = 120, 100
     local spacing = 20
-    local totalW = (#self.sites * bw) + ((#self.sites - 1) * spacing)
+    local cols = math.max(1, math.floor((w - 40) / (bw + spacing)))
+    if cols > #self.sites then cols = #self.sites end
+    local totalW = (cols * bw) + ((cols - 1) * spacing)
     local startX = x + (w - totalW) / 2
     
     for i, site in ipairs(self.sites) do
-        local sx = startX + (i-1)*(bw+spacing)
+        local row = math.floor((i - 1) / cols)
+        local col = (i - 1) % cols
+        local sx = startX + col * (bw + spacing)
+        local sy = cy + row * (bh + spacing)
         
         local mx, my = love.mouse.getPosition()
-        local hovered = mx >= sx and mx <= sx+bw and my >= cy and my <= cy+bh
+        local hovered = mx >= sx and mx <= sx+bw and my >= sy and my <= sy+bh
         
         love.graphics.setColor(1, 1, 1)
         if hovered then love.graphics.setColor(0.9, 0.9, 0.9) end
-        love.graphics.rectangle("fill", sx, cy, bw, bh, 10)
+        love.graphics.rectangle("fill", sx, sy, bw, bh, 10)
         love.graphics.setColor(0.8, 0.8, 0.8)
-        love.graphics.rectangle("line", sx, cy, bw, bh, 10)
+        love.graphics.rectangle("line", sx, sy, bw, bh, 10)
         
         -- Circle icon
         love.graphics.setColor(site.color)
-        love.graphics.circle("fill", sx + bw/2, cy + 40, 25)
+        love.graphics.circle("fill", sx + bw/2, sy + 40, 25)
         love.graphics.setColor(1, 1, 1)
-        love.graphics.printf(site.name:sub(1,1), sx, cy + 25, bw, "center")
+        love.graphics.printf(site.name:sub(1,1), sx, sy + 25, bw, "center")
         
         love.graphics.setColor(0.3, 0.3, 0.3)
-        love.graphics.printf(site.name, sx, cy + 75, bw, "center")
+        love.graphics.printf(site.name, sx, sy + 75, bw, "center")
     end
 end
 
@@ -106,13 +111,19 @@ function Home:mousepressed(mx, my, button)
         -- Check sites
         local bw, bh = 120, 100
         local spacing = 20
-        local totalW = (#self.sites * bw) + ((#self.sites - 1) * spacing)
+        local cols = math.max(1, math.floor((w - 40) / (bw + spacing)))
+        if cols > #self.sites then cols = #self.sites end
+        local totalW = (cols * bw) + ((cols - 1) * spacing)
         local startX = self.x + (w - totalW) / 2
         local sitesY = cy + 80
         
         for i, site in ipairs(self.sites) do
-            local sx = startX + (i-1)*(bw+spacing)
-            if mx >= sx and mx <= sx+bw and my >= sitesY and my <= sitesY+bh then
+            local row = math.floor((i - 1) / cols)
+            local col = (i - 1) % cols
+            local sx = startX + col * (bw + spacing)
+            local sy = sitesY + row * (bh + spacing)
+            
+            if mx >= sx and mx <= sx+bw and my >= sy and my <= sy+bh then
                 self.browser:loadURL(site.url)
             end
         end
