@@ -5,7 +5,6 @@ local EmailApp = require("email")
 local BrowserApp = require("browser")
 local FilesApp = require("files")
 local TerminalApp = require("terminal") 
-local RouletteApp = require("roulette")
 local TextEditor = require("texteditor")
 local DinoApp = require("dino")
 local TessarectApp = require("tessarect")
@@ -13,7 +12,6 @@ local ImageViewer = require("imageviewer")
 local ObjViewer = require("objviewer")
 local NexusAI = require("nexusai")
 local SettingsApp = require("settings")
-local PokerApp = require("poker")
 local filesystemModule = require("filesystem")
 
 effect = moonshine(moonshine.effects.scanlines).chain(moonshine.effects.crt)
@@ -437,7 +435,24 @@ function drawDesktop()
     end
     love.graphics.rectangle("fill", 0, love.graphics.getHeight() - bottomBarHeight, startBtnWidth, bottomBarHeight)
     love.graphics.setColor(1, 1, 1)
-    love.graphics.draw(startIcon, (startBtnWidth - 24) / 2, love.graphics.getHeight() - bottomBarHeight + (bottomBarHeight - 24) / 2, 0, 24/startIcon:getWidth(), 24/startIcon:getHeight())
+    
+    local cx, cy = startBtnWidth / 2, love.graphics.getHeight() - bottomBarHeight + bottomBarHeight / 2
+    love.graphics.rectangle("fill", cx - 8, cy - 8, 7, 7)
+    love.graphics.rectangle("fill", cx + 1, cy - 8, 7, 7)
+    love.graphics.rectangle("fill", cx - 8, cy + 1, 7, 7)
+    love.graphics.rectangle("fill", cx + 1, cy + 1, 7, 7)
+    
+    -- Windows 10 Search Bar
+    local searchBarWidth = 150
+    local searchBarX = startBtnWidth
+    love.graphics.setColor(0.9, 0.9, 0.9, 0.1)
+    local isSearchHovered = love.mouse.getX() >= searchBarX and love.mouse.getX() <= searchBarX + searchBarWidth and love.mouse.getY() >= love.graphics.getHeight() - bottomBarHeight
+    if isSearchHovered then
+        love.graphics.setColor(0.9, 0.9, 0.9, 0.2)
+    end
+    love.graphics.rectangle("fill", searchBarX, love.graphics.getHeight() - bottomBarHeight, searchBarWidth, bottomBarHeight)
+    love.graphics.setColor(1, 1, 1, 0.7)
+    love.graphics.print("Type here to search", searchBarX + 15, love.graphics.getHeight() - bottomBarHeight + (bottomBarHeight - 13)/2)
     
     -- Draw date and time on taskbar (right side)
     love.graphics.setColor(0.9, 0.9, 0.9)
@@ -537,7 +552,7 @@ function drawDesktop()
     -- Draw start menu if open
     if startMenuOpen then
         local menuWidth = 400
-        local menuHeight = 450
+        local menuHeight = math.min(500, love.graphics.getHeight() - bottomBarHeight)
         local menuX = 0
         local menuY = love.graphics.getHeight() - bottomBarHeight - menuHeight
         local sidebarWidth = 48
@@ -628,13 +643,17 @@ function drawDesktop()
             
             -- Title bar
             if window == focusedWindow then
-                love.graphics.setColor(0.15, 0.15, 0.18, 1) -- Active window title bar (Windows 10 dark mode)
+                love.graphics.setColor(1, 1, 1, 1) -- Active window title bar (Windows 10 light/neutral)
             else
-                love.graphics.setColor(0.2, 0.2, 0.25, 0.95) -- Inactive window
+                love.graphics.setColor(0.95, 0.95, 0.95, 0.95) -- Inactive window
             end
             love.graphics.rectangle("fill", window.x, window.y, window.width, titleBarHeight)
             
-            love.graphics.setColor(1, 1, 1)
+            if window == focusedWindow then
+                love.graphics.setColor(0, 0, 0)
+            else
+                love.graphics.setColor(0.5, 0.5, 0.5)
+            end
             love.graphics.print(window.app.name, window.x + 10, window.y + (titleBarHeight - 13)/2)
             
             local btnSize = 40
@@ -643,15 +662,23 @@ function drawDesktop()
             local minX = window.x + window.width - 3 * btnSize
             
             -- Close button
-            love.graphics.setColor(0.9, 0.2, 0.2)
-            love.graphics.rectangle("fill", closeX, window.y, btnSize, titleBarHeight)
-            love.graphics.setColor(1, 1, 1)
+            local isCloseHovered = love.mouse.getX() >= closeX and love.mouse.getX() <= closeX + btnSize and love.mouse.getY() >= window.y and love.mouse.getY() <= window.y + titleBarHeight
+            if isCloseHovered then
+                love.graphics.setColor(0.9, 0.1, 0.1)
+                love.graphics.rectangle("fill", closeX, window.y, btnSize, titleBarHeight)
+                love.graphics.setColor(1, 1, 1)
+            else
+                if window == focusedWindow then love.graphics.setColor(0, 0, 0) else love.graphics.setColor(0.5, 0.5, 0.5) end
+            end
             love.graphics.printf("X", closeX, window.y + (titleBarHeight - 13)/2, btnSize, "center")
             
             -- Maximize button
-            love.graphics.setColor(0.25, 0.25, 0.3)
-            love.graphics.rectangle("fill", maxX, window.y, btnSize, titleBarHeight)
-            love.graphics.setColor(1, 1, 1)
+            local isMaxHovered = love.mouse.getX() >= maxX and love.mouse.getX() <= maxX + btnSize and love.mouse.getY() >= window.y and love.mouse.getY() <= window.y + titleBarHeight
+            if isMaxHovered then
+                love.graphics.setColor(0.8, 0.8, 0.8)
+                love.graphics.rectangle("fill", maxX, window.y, btnSize, titleBarHeight)
+            end
+            if window == focusedWindow or isMaxHovered then love.graphics.setColor(0, 0, 0) else love.graphics.setColor(0.5, 0.5, 0.5) end
             if window.maximized then
                 love.graphics.printf("[-]", maxX, window.y + (titleBarHeight - 13)/2, btnSize, "center")
             else
@@ -659,9 +686,12 @@ function drawDesktop()
             end
             
             -- Minimize button
-            love.graphics.setColor(0.3, 0.3, 0.35)
-            love.graphics.rectangle("fill", minX, window.y, btnSize, titleBarHeight)
-            love.graphics.setColor(1, 1, 1)
+            local isMinHovered = love.mouse.getX() >= minX and love.mouse.getX() <= minX + btnSize and love.mouse.getY() >= window.y and love.mouse.getY() <= window.y + titleBarHeight
+            if isMinHovered then
+                love.graphics.setColor(0.8, 0.8, 0.8)
+                love.graphics.rectangle("fill", minX, window.y, btnSize, titleBarHeight)
+            end
+            if window == focusedWindow or isMinHovered then love.graphics.setColor(0, 0, 0) else love.graphics.setColor(0.5, 0.5, 0.5) end
             love.graphics.printf("_", minX, window.y + (titleBarHeight - 13)/2, btnSize, "center")
             
             -- Scissor and draw content
@@ -753,7 +783,6 @@ function love.load()
     browserIcon = love.graphics.newImage("assets/browser.png")
     filesIcon = love.graphics.newImage("assets/files.png")
     terminalIcon = love.graphics.newImage("assets/terminal.png")
-    rouletteIcon = love.graphics.newImage("assets/roulette.png")
     texteditorIcon = love.graphics.newImage("assets/file.png")
     tessarectIcon = love.graphics.newImage("assets/box.png")
     objviewerIcon = love.graphics.newImage("assets/cube.png")
@@ -763,7 +792,6 @@ function love.load()
     startIcon = love.graphics.newImage("assets/layers.png")
     ellipsisIcon = love.graphics.newImage("assets/option.png")
     settingsIcon = love.graphics.newImage("assets/settings.png")
-	pokerIcon = love.graphics.newImage("assets/dino.png")
     
     local sharedFS = filesystemModule.getFS()
     -- Ensure there is a "/home" folder in the root.
@@ -791,7 +819,6 @@ function love.load()
         { name = "Browser", module = BrowserApp, instance = nil, icon = browserIcon },
         { name = "Files", module = FilesApp, instance = nil, icon = filesIcon },
         { name = "Terminal", module = TerminalApp, instance = nil, icon = terminalIcon },
-        { name = "Roulette", module = RouletteApp, instance = nil, icon = rouletteIcon },
         { name = "TextEditor", module = TextEditor, instance = nil, icon = texteditorIcon },
         { name = "Tessarect", module = TessarectApp, instance = nil, icon = tessarectIcon },
         { name = "Dino", module = DinoApp, instance = nil, icon = dinoIcon },
@@ -799,13 +826,12 @@ function love.load()
         { name = "ObjViewer", module = ObjViewer, instance = nil, icon = objviewerIcon },
         { name = "NexusAI", module = NexusAI, instance = nil, icon = chatIcon },
         { name = "Settings", module = SettingsApp, instance = nil, icon = settingsIcon },
-        { name = "Poker", module = PokerApp, instance = nil, icon = pokerIcon },
     }
 
     iconWidth = 40
     iconHeight = 40
     iconSpacing = 8
-    local startX = iconSpacing + 40  -- Space for start button
+    local startX = 48 + 150 + iconSpacing  -- Space for start button and search bar
     for i, app in ipairs(apps) do
         app.x = startX
         app.y = love.graphics.getHeight() - bottomBarHeight + (bottomBarHeight - iconHeight) / 2
@@ -821,8 +847,8 @@ function love.load()
 end
 
 function updateVisibleApps()
-    local availableWidth = love.graphics.getWidth() - 120  -- Space for start button and ellipsis
-    local currentX = 80  -- Start after start button
+    local availableWidth = love.graphics.getWidth() - 120  -- Space for start button, search, and ellipsis
+    local currentX = 48 + 150 + 10  -- Start after start button and search bar
     visibleApps = {}
     hiddenApps = {}
     
@@ -905,9 +931,14 @@ function love.mousepressed(x, y, button)
         end
         
         -- Check start button
-        if x >= 0 and x <= 40 and y >= love.graphics.getHeight() - bottomBarHeight then
+        if x >= 0 and x <= 48 and y >= love.graphics.getHeight() - bottomBarHeight then
             startMenuOpen = not startMenuOpen
             ellipsisMenuOpen = false
+            return
+        end
+        
+        -- Check search bar click (do nothing for now but consume click)
+        if x >= 48 and x <= 48 + 150 and y >= love.graphics.getHeight() - bottomBarHeight then
             return
         end
         
@@ -949,7 +980,7 @@ function love.mousepressed(x, y, button)
         -- Check start menu
         if startMenuOpen then
             local menuWidth = 400
-            local menuHeight = 450
+            local menuHeight = math.min(500, love.graphics.getHeight() - bottomBarHeight)
             local menuX = 0
             local menuY = love.graphics.getHeight() - bottomBarHeight - menuHeight
             local sidebarWidth = 48
@@ -1142,7 +1173,7 @@ function love.mousemoved(x, y, dx, dy)
         desktopLayout[draggingIcon.name].x = x - dragIconOffsetX
         desktopLayout[draggingIcon.name].y = y - dragIconOffsetY
     elseif scrollBarDragging then
-        local menuHeight = 450
+        local menuHeight = math.min(500, love.graphics.getHeight() - bottomBarHeight)
         local menuY = love.graphics.getHeight() - bottomBarHeight - menuHeight
         local scrollTrackHeight = menuHeight
         local relativeY = y - menuY - scrollBarDragOffset
@@ -1156,8 +1187,7 @@ function love.mousemoved(x, y, dx, dy)
 end
 
 function love.mousereleased(x, y, button)
-    -- if button == 1 and contextMenuOpen then
-    if button == 1 then
+    if button == 1 and contextMenuOpen then
         local menuWidth = 220
         local itemHeight = 32
         local menuPadding = 4
