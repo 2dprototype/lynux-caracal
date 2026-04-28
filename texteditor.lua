@@ -26,6 +26,10 @@ function TextEditor.new(filename, fileNode)
     self.lineNumberWidth = 40       -- Width for line numbers area
     self.selection = {startX = nil, startY = nil, endX = nil, endY = nil}
     self.selecting = false
+    self.scrollBarVDragging = false
+    self.scrollBarHDragging = false
+    self.scrollBarDragOffsetY = 0
+    self.scrollBarDragOffsetX = 0
     self.tabSize = 4                -- Tab width in spaces
     self.undoStack = {}             -- Undo history
     self.redoStack = {}             -- Redo history
@@ -298,6 +302,9 @@ function TextEditor:drawScrollbars(x, y, width, height, headerHeight, textAreaWi
         local thumbY = y + headerHeight + (self.scrollOffsetY / maxScrollY) * (textAreaHeight - thumbHeight)
         
         love.graphics.setColor(0.7, 0.7, 0.7, 0.8)
+        if self.scrollBarVDragging then
+            love.graphics.setColor(0.5, 0.5, 0.5, 0.8)
+        end
         love.graphics.rectangle("fill", x + width - 12, thumbY, 8, thumbHeight)
     end
     
@@ -313,7 +320,10 @@ function TextEditor:drawScrollbars(x, y, width, height, headerHeight, textAreaWi
         local thumbX = x + (self.lineNumbers and self.lineNumberWidth or 0) + (self.scrollOffsetX / maxScrollX) * (textAreaWidth - thumbWidth)
         
         love.graphics.setColor(0.7, 0.7, 0.7, 0.8)
-        love.graphics.rectangle("fill", thumbX, y + height - 12, thumbWidth, 8)
+        if self.scrollBarHDragging then
+            love.graphics.setColor(0.5, 0.5, 0.5, 0.8)
+        end
+        love.graphics.rectangle("fill", thumbX, y + height - 20 - 12, thumbWidth, 8)
     end
 end
 
@@ -600,6 +610,50 @@ function TextEditor:mousepressed(mx, my, button)
         local headerHeight = 25
         local textAreaX = self.lineNumbers and self.lineNumberWidth or 0
         local textAreaY = headerHeight
+        local textAreaHeight = self.editorHeight - headerHeight - 20 -- minus status bar
+        local textAreaWidth = self.editorWidth - textAreaX
+        
+        -- Check vertical scrollbar click
+        local totalLines = #self.lines
+        local totalHeight = totalLines * self.lineHeight
+        if totalHeight > textAreaHeight then
+            local thumbHeight = (textAreaHeight / totalHeight) * textAreaHeight
+            local maxScrollY = math.max(0, totalHeight - textAreaHeight)
+            local thumbY = textAreaY + (self.scrollOffsetY / maxScrollY) * (textAreaHeight - thumbHeight)
+            
+            if mx >= self.editorWidth - 12 and mx <= self.editorWidth and my >= textAreaY and my <= textAreaY + textAreaHeight then
+                if my >= thumbY and my <= thumbY + thumbHeight then
+                    self.scrollBarVDragging = true
+                    self.scrollBarDragOffsetY = my - thumbY
+                else
+                    if my < thumbY then self.scrollOffsetY = math.max(0, self.scrollOffsetY - textAreaHeight) end
+                    if my > thumbY + thumbHeight then self.scrollOffsetY = math.min(maxScrollY, self.scrollOffsetY + textAreaHeight) end
+                end
+                return
+            end
+        end
+
+        -- Check horizontal scrollbar click
+        local maxLineWidth = 0
+        for _, line in ipairs(self.lines) do
+            maxLineWidth = math.max(maxLineWidth, self.font:getWidth(line))
+        end
+        if maxLineWidth > textAreaWidth then
+            local thumbWidth = (textAreaWidth / maxLineWidth) * textAreaWidth
+            local maxScrollX = math.max(0, maxLineWidth - textAreaWidth)
+            local thumbX = textAreaX + (self.scrollOffsetX / maxScrollX) * (textAreaWidth - thumbWidth)
+            
+            if mx >= textAreaX and mx <= textAreaX + textAreaWidth and my >= self.editorHeight - 20 - 12 and my <= self.editorHeight - 20 then
+                if mx >= thumbX and mx <= thumbX + thumbWidth then
+                    self.scrollBarHDragging = true
+                    self.scrollBarDragOffsetX = mx - thumbX
+                else
+                    if mx < thumbX then self.scrollOffsetX = math.max(0, self.scrollOffsetX - textAreaWidth) end
+                    if mx > thumbX + thumbWidth then self.scrollOffsetX = math.min(maxScrollX, self.scrollOffsetX + textAreaWidth) end
+                end
+                return
+            end
+        end
         
         -- Convert mouse coordinates to text position
         local relX = mx - textAreaX - 5 + self.scrollOffsetX
@@ -624,11 +678,39 @@ function TextEditor:mousepressed(mx, my, button)
 end
 
 function TextEditor:mousemoved(mx, my, dx, dy)
-    if self.selecting then
-        local headerHeight = 25
-        local textAreaX = self.lineNumbers and self.lineNumberWidth or 0
-        local textAreaY = headerHeight
+    local headerHeight = 25
+    local textAreaX = self.lineNumbers and self.lineNumberWidth or 0
+    local textAreaY = headerHeight
+    local textAreaHeight = self.editorHeight - headerHeight - 20
+    local textAreaWidth = self.editorWidth - textAreaX
+
+    if self.scrollBarVDragging then
+        local totalLines = #self.lines
+        local totalHeight = totalLines * self.lineHeight
+        local thumbHeight = (textAreaHeight / totalHeight) * textAreaHeight
+        local maxScrollY = math.max(0, totalHeight - textAreaHeight)
         
+        local relativeY = my - textAreaY - self.scrollBarDragOffsetY
+        self.scrollOffsetY = (relativeY / (textAreaHeight - thumbHeight)) * maxScrollY
+        self.scrollOffsetY = math.max(0, math.min(self.scrollOffsetY, maxScrollY))
+        return
+    end
+
+    if self.scrollBarHDragging then
+        local maxLineWidth = 0
+        for _, line in ipairs(self.lines) do
+            maxLineWidth = math.max(maxLineWidth, self.font:getWidth(line))
+        end
+        local thumbWidth = (textAreaWidth / maxLineWidth) * textAreaWidth
+        local maxScrollX = math.max(0, maxLineWidth - textAreaWidth)
+        
+        local relativeX = mx - textAreaX - self.scrollBarDragOffsetX
+        self.scrollOffsetX = (relativeX / (textAreaWidth - thumbWidth)) * maxScrollX
+        self.scrollOffsetX = math.max(0, math.min(self.scrollOffsetX, maxScrollX))
+        return
+    end
+
+    if self.selecting then
         -- Convert mouse coordinates to text position
         local relX = mx - textAreaX - 5 + self.scrollOffsetX
         local relY = my - textAreaY + self.scrollOffsetY
@@ -655,6 +737,8 @@ end
 function TextEditor:mousereleased(mx, my, button)
     if button == 1 then
         self.selecting = false
+        self.scrollBarVDragging = false
+        self.scrollBarHDragging = false
     end
 end
 

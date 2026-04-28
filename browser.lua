@@ -392,6 +392,9 @@ function BrowserApp.new()
   self.activeInput = nil
   self.windowWidth = 800
   self.windowHeight = 600
+  self.scrollBarDragging = false
+  self.scrollBarDragStartY = 0
+  self.scrollBarDragStartOffset = 0
   
   -- Functional website state
   self.searchQuery = ""
@@ -1166,10 +1169,16 @@ function BrowserApp:draw(x, y, width, height)
   love.graphics.pop()
   love.graphics.setScissor()
   if self.maxScroll > 0 then
-      local scrollbarHeight = (height - 50) * ((height - 50) / (self.maxScroll + height - 50))
-      local scrollbarY = 130 + (self.scrollOffset / self.maxScroll) * ((height - 50) - scrollbarHeight)
-      love.graphics.setColor(0.7, 0.7, 0.7)
-      love.graphics.rectangle("fill", x + width - 10, scrollbarY, 5, scrollbarHeight)
+      local contentHeight = height - 50
+      local scrollbarHeight = math.max(20, contentHeight * (contentHeight / (self.maxScroll + contentHeight)))
+      local maxThumbTravel = contentHeight - scrollbarHeight
+      local thumbY = contentY + (self.scrollOffset / self.maxScroll) * maxThumbTravel
+      
+      love.graphics.setColor(0.7, 0.7, 0.7, 0.8)
+      if self.scrollBarDragging then
+          love.graphics.setColor(0.5, 0.5, 0.5, 0.8)
+      end
+      love.graphics.rectangle("fill", x + width - 10, thumbY, 8, scrollbarHeight)
   end
 end
 
@@ -1183,6 +1192,28 @@ end
 
 function BrowserApp:mousepressed(x, y, button, X, Y)
   if button == 1 then
+      -- Scrollbar dragging check
+      if self.maxScroll > 0 then
+          local contentY = 50
+          local contentHeight = self.windowHeight - 50
+          local scrollbarHeight = math.max(20, contentHeight * (contentHeight / (self.maxScroll + contentHeight)))
+          local maxThumbTravel = contentHeight - scrollbarHeight
+          local thumbY = contentY + (self.scrollOffset / self.maxScroll) * maxThumbTravel
+          
+          if x >= self.windowWidth - 10 and x <= self.windowWidth and y >= contentY and y <= contentY + contentHeight then
+              if y >= thumbY and y <= thumbY + scrollbarHeight then
+                  self.scrollBarDragging = true
+                  self.scrollBarDragStartY = y
+                  self.scrollBarDragStartOffset = self.scrollOffset
+              else
+                  local clickRelativeY = y - contentY
+                  self.scrollOffset = math.floor((clickRelativeY / contentHeight) * self.maxScroll)
+                  self.scrollOffset = math.max(0, math.min(self.scrollOffset, self.maxScroll))
+              end
+              return
+          end
+      end
+
       if y >= 10 and y <= 40 then
           self.urlActive = not self.urlActive
           self.activeInput = nil
@@ -1196,6 +1227,24 @@ function BrowserApp:mousepressed(x, y, button, X, Y)
       end
       self.activeInput = nil
   end
+end
+
+function BrowserApp:mousemoved(x, y, dx, dy, wx, wy)
+    if self.scrollBarDragging then
+        local contentHeight = self.windowHeight - 50
+        local deltaY = y - self.scrollBarDragStartY
+        local scrollRatio = deltaY / contentHeight
+        self.scrollOffset = math.max(0, math.min(
+            self.scrollBarDragStartOffset + (scrollRatio * self.maxScroll),
+            self.maxScroll
+        ))
+    end
+end
+
+function BrowserApp:mousereleased(x, y, button, wx, wy)
+    if button == 1 then
+        self.scrollBarDragging = false
+    end
 end
 
 function BrowserApp:keypressed(key)
@@ -1321,6 +1370,11 @@ function BrowserApp:update(dt)
           self.activeInput.cursorTimer = self.activeInput.cursorTimer - 0.5
       end
   end
+end
+
+function BrowserApp:resize(width, height)
+    self.windowWidth = width
+    self.windowHeight = height
 end
 
 function BrowserApp:showMessage(message)

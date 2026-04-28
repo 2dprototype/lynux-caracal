@@ -41,6 +41,9 @@ function SettingsApp:setWallpaperTab()
 end
 
 function SettingsApp:draw(x, y, width, height)
+    self.width = width
+    self.height = height
+    
     -- Draw background
     love.graphics.setColor(0.95, 0.95, 0.95)
     love.graphics.rectangle("fill", x, y, width, height)
@@ -313,7 +316,7 @@ end
 
 function SettingsApp:handleWallpaperTabClick(mx, my, wx, wy)
     local padding = 10
-    local availableWidth = wx - 20
+    local availableWidth = (self.width or 500) - 20
     local cols = self.wallpaperGridColumns
     local itemWidth = (availableWidth - (cols - 1) * padding) / cols
     local itemHeight = self.wallpaperPreviewSize + 30
@@ -388,7 +391,8 @@ function SettingsApp:wheelmoved(x, y)
     if self.selectedTab == 1 then
         self.wallpaperScroll = self.wallpaperScroll - y * 20
         local totalContentHeight = math.ceil(#self.availableWallpapers / self.wallpaperGridColumns) * (self.wallpaperPreviewSize + 40)
-        local maxScroll = math.max(0, totalContentHeight - (love.graphics.getHeight() - 150))
+        local windowHeight = self.height or 300
+        local maxScroll = math.max(0, totalContentHeight - windowHeight + 60)
         self.wallpaperScroll = math.max(0, math.min(self.wallpaperScroll, maxScroll))
     end
 end

@@ -50,6 +50,8 @@ function FilesApp:updateFileList()
 end
 
 function FilesApp:draw(x, y, width, height)
+   self.lastWidth = width
+   self.lastHeight = height
    -- Draw background
    love.graphics.setColor(1, 1, 1)
    love.graphics.rectangle("fill", x, y, width, height)
@@ -118,7 +120,12 @@ function FilesApp:draw(x, y, width, height)
        local maxScroll = totalItems - visibleItems
        local thumbHeight = (visibleItems / totalItems) * listAreaHeight
        local thumbY = scrollbarY + (self.scrollOffset / maxScroll) * (listAreaHeight - thumbHeight)
-       love.graphics.setColor(0.8, 0.8, 0.8)
+       
+       if self.scrollBarDragging then
+           love.graphics.setColor(0.5, 0.5, 0.5)
+       else
+           love.graphics.setColor(0.8, 0.8, 0.8)
+       end
        love.graphics.rectangle("fill", scrollbarX, thumbY, scrollbarWidth, thumbHeight)
    end
 end
@@ -127,6 +134,37 @@ function FilesApp:mousepressed(x, y, button)
    if button == 1 then
        local listYStart = 30
        local lineHeight = 20
+       local width = self.lastWidth or 500
+       local height = self.lastHeight or 300
+       local availableHeight = height - 30
+       local visibleItems = math.floor(availableHeight / lineHeight)
+       local totalItems = #self.fileNames
+       
+       if totalItems > visibleItems then
+           local scrollbarWidth = 10
+           local scrollbarX = width - scrollbarWidth - 10
+           local scrollbarY = listYStart
+           local listAreaHeight = visibleItems * lineHeight
+           local maxScroll = totalItems - visibleItems
+           local thumbHeight = (visibleItems / totalItems) * listAreaHeight
+           local thumbY = scrollbarY + (self.scrollOffset / maxScroll) * (listAreaHeight - thumbHeight)
+           
+           if x >= scrollbarX and x <= scrollbarX + scrollbarWidth and y >= scrollbarY and y <= scrollbarY + listAreaHeight then
+               if y >= thumbY and y <= thumbY + thumbHeight then
+                   self.scrollBarDragging = true
+                   self.scrollBarDragOffset = y - thumbY
+               else
+                   -- clicked track
+                   if y < thumbY then
+                       self.scrollOffset = math.max(0, self.scrollOffset - visibleItems)
+                   else
+                       self.scrollOffset = math.min(maxScroll, self.scrollOffset + visibleItems)
+                   end
+               end
+               return
+           end
+       end
+       
        -- Calculate the relative index based on scrollOffset.
        local visibleIndex = math.floor((y - listYStart) / lineHeight) + 1
        local fileIndex = self.scrollOffset + visibleIndex
@@ -142,6 +180,30 @@ function FilesApp:mousepressed(x, y, button)
            self.lastClickIndex = fileIndex
        end
    end
+end
+
+function FilesApp:mousemoved(x, y, dx, dy)
+    if self.scrollBarDragging then
+        local listYStart = 30
+        local lineHeight = 20
+        local height = self.lastHeight or 300
+        local availableHeight = height - 30
+        local visibleItems = math.floor(availableHeight / lineHeight)
+        local totalItems = #self.fileNames
+        local listAreaHeight = visibleItems * lineHeight
+        local maxScroll = totalItems - visibleItems
+        local thumbHeight = (visibleItems / totalItems) * listAreaHeight
+        
+        local relativeY = y - listYStart - self.scrollBarDragOffset
+        self.scrollOffset = (relativeY / (listAreaHeight - thumbHeight)) * maxScroll
+        self.scrollOffset = math.max(0, math.min(math.floor(self.scrollOffset + 0.5), maxScroll))
+    end
+end
+
+function FilesApp:mousereleased(x, y, button)
+    if button == 1 then
+        self.scrollBarDragging = false
+    end
 end
 
 -- Handle key presses: Enter opens the entry; up/down changes the selection.

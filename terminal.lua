@@ -299,7 +299,7 @@ end
 function Terminal:mousepressed(mx, my, button, wx, wy)
     if button == 1 then
         -- Convert to window-relative coordinates
-        local relX, relY = mx - self.windowX, my - self.windowY
+        local relX, relY = mx, my
         
         -- Check if click is on scrollbar
         local wrapped = getWrappedLines(self)
@@ -339,7 +339,7 @@ end
 
 function Terminal:mousemoved(mx, my, dx, dy, wx, wy)
     if self.scrollBarDragging then
-        local relY = my - self.windowY
+        local relY = my
         
         local wrapped = getWrappedLines(self)
         local totalWrapped = #wrapped
@@ -371,6 +371,8 @@ end
 function Terminal:resize(width, height)
     self.wrapWidth = width - 40
     self.maxVisibleLines = math.floor((height - 30) / self.font:getHeight())
+    self.windowWidth = width
+    self.windowHeight = height
 end
 
 -- Delegate command processing to terminal_commands.lua

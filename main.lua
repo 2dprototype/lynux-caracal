@@ -55,6 +55,7 @@ local contextMenuY = 0
 local contextMenuItems = {
     {text = "New Folder", action = "new_folder"},
     {text = "New Text File", action = "new_file"},
+    {text = "New Shortcut", action = "new_shortcut"},
     {text = "Change Wallpaper", action = "change_wallpaper"},
     {text = "Settings", action = "open_settings"},
     {text = "Refresh", action = "refresh"}
@@ -309,42 +310,84 @@ local function createNewFile(name)
     filesystemModule.save(filesystemModule.getFS())
 end
 
+-- Create new shortcut in desktop home
+local function createNewShortcut(name)
+    if not name or name == "" then
+        name = "New Shortcut.lnk"
+    elseif not name:match("%.lnk$") then
+        name = name .. ".lnk"
+    end
+    
+    local baseName = name:gsub("%.lnk$", "")
+    local counter = 1
+    while desktopHome.children[name] do
+        name = baseName .. " (" .. counter .. ").lnk"
+        counter = counter + 1
+    end
+    
+    desktopHome.children[name] = {
+        name = name,
+        type = "file",
+        parent = desktopHome,
+        content = "target=/"
+    }
+    
+    local startX = 10
+    local startY = topBarHeight + 10
+    local iconSize = 40
+    local padding = 20
+    local index = #desktopHomeIcons + 1
+    local col = (index - 1) % 4
+    local row = math.floor((index - 1) / 4)
+    local x = startX + col * (iconSize + padding)
+    local y = startY + row * (iconSize + padding)
+    
+    desktopLayout[name] = {x = x, y = y}
+    filesystemModule.save(filesystemModule.getFS())
+end
+
 -- Draw context menu
 local function drawContextMenu()
-    local menuWidth = 180
-    local menuHeight = #contextMenuItems * 30 + 10
-    local itemHeight = 30
+    local menuWidth = 220
+    local itemHeight = 32
+    local menuPadding = 4
+    local menuHeight = #contextMenuItems * itemHeight + (menuPadding * 2)
     
-    -- Menu background
-    love.graphics.setColor(0.15, 0.15, 0.2, 0.95)
+    -- Menu background (Windows 10 Dark Mode)
+    love.graphics.setColor(0.17, 0.17, 0.17, 0.98)
     love.graphics.rectangle("fill", contextMenuX, contextMenuY, menuWidth, menuHeight)
-    love.graphics.setColor(0.7, 0.8, 1.0)
+    
+    -- Subtle Border
+    love.graphics.setColor(0.3, 0.3, 0.3, 1.0)
     love.graphics.rectangle("line", contextMenuX, contextMenuY, menuWidth, menuHeight)
     
     -- Menu items
     for i, item in ipairs(contextMenuItems) do
-        local itemY = contextMenuY + 5 + (i-1) * itemHeight
+        local itemY = contextMenuY + menuPadding + (i-1) * itemHeight
         
         -- Highlight on hover
         local mouseX, mouseY = love.mouse.getPosition()
-        if mouseX >= contextMenuX and mouseX <= contextMenuX + menuWidth and
-           mouseY >= itemY and mouseY <= itemY + itemHeight then
-            love.graphics.setColor(0.3, 0.4, 0.5, 0.8)
-            love.graphics.rectangle("fill", contextMenuX + 2, itemY, menuWidth - 4, itemHeight - 2)
+        local isHovered = mouseX >= contextMenuX and mouseX <= contextMenuX + menuWidth and
+                          mouseY >= itemY and mouseY <= itemY + itemHeight
+                          
+        if isHovered then
+            love.graphics.setColor(0.3, 0.3, 0.3, 1.0)
+            love.graphics.rectangle("fill", contextMenuX + 2, itemY, menuWidth - 4, itemHeight)
         end
         
-        love.graphics.setColor(1, 1, 1)
-        love.graphics.print(item.text, contextMenuX + 10, itemY + 8)
+        love.graphics.setColor(0.95, 0.95, 0.95)
+        love.graphics.print(item.text, contextMenuX + 32, itemY + 8)
     end
 end
 
 -- Handle context menu actions
 local function handleContextMenuAction(action)
     if action == "new_folder" then
-		print("c!")
         createNewFolder()
     elseif action == "new_file" then
         createNewFile()
+    elseif action == "new_shortcut" then
+        createNewShortcut()
     elseif action == "change_wallpaper" then
         -- Open Settings app to wallpaper section
         for i, app in ipairs(apps) do
@@ -378,32 +421,44 @@ end
 function drawDesktop()
     love.graphics.setFont(font)
     
-    -- Draw top bar (date/time).
-    love.graphics.setColor(0.08, 0.08, 0.1, 0.8)
-    love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), topBarHeight)
-    love.graphics.setColor(0.7, 0.8, 1.0)
-    local currentTime = os.date("%H:%M:%S")
-    local currentDate = os.date("%Y-%m-%d")
-    love.graphics.print(currentDate .. " " .. currentTime, 10, 8)
-    
     -- Draw the desktop "home" area.
     drawDesktopHome()
     
-    -- Draw bottom bar (app icons).
-    love.graphics.setColor(0.08, 0.08, 0.1, 0.8)
+    -- Draw bottom bar (taskbar)
+    love.graphics.setColor(0.1, 0.1, 0.12, 0.95)
     love.graphics.rectangle("fill", 0, love.graphics.getHeight() - bottomBarHeight, love.graphics.getWidth(), bottomBarHeight)
     
     -- Draw start button
-    love.graphics.setColor(0.15, 0.15, 0.2)
-    love.graphics.rectangle("fill", 0, love.graphics.getHeight() - bottomBarHeight, 40, bottomBarHeight)
+    local startBtnWidth = 48
+    if love.mouse.getX() >= 0 and love.mouse.getX() <= startBtnWidth and love.mouse.getY() >= love.graphics.getHeight() - bottomBarHeight then
+        love.graphics.setColor(0.2, 0.2, 0.25, 0.95)
+    else
+        love.graphics.setColor(0.15, 0.15, 0.18, 0.95)
+    end
+    love.graphics.rectangle("fill", 0, love.graphics.getHeight() - bottomBarHeight, startBtnWidth, bottomBarHeight)
     love.graphics.setColor(1, 1, 1)
-    love.graphics.draw(startIcon, 10, love.graphics.getHeight() - bottomBarHeight + (bottomBarHeight - 30) / 2, 0, 30/startIcon:getWidth(), 30/startIcon:getHeight())
+    love.graphics.draw(startIcon, (startBtnWidth - 24) / 2, love.graphics.getHeight() - bottomBarHeight + (bottomBarHeight - 24) / 2, 0, 24/startIcon:getWidth(), 24/startIcon:getHeight())
     
-    -- Draw visible app icons
+    -- Draw date and time on taskbar (right side)
+    love.graphics.setColor(0.9, 0.9, 0.9)
+    local currentTime = os.date("%H:%M")
+    local currentDate = os.date("%Y-%m-%d")
+    local timeWidth = font:getWidth(currentTime)
+    local dateWidth = font:getWidth(currentDate)
+    local maxTextWidth = math.max(timeWidth, dateWidth)
+    local dateTimeX = love.graphics.getWidth() - maxTextWidth - 10
+    love.graphics.print(currentTime, dateTimeX + (maxTextWidth - timeWidth) / 2, love.graphics.getHeight() - bottomBarHeight + 4)
+    love.graphics.print(currentDate, dateTimeX + (maxTextWidth - dateWidth) / 2, love.graphics.getHeight() - bottomBarHeight + 20)
+    
+    -- Draw visible app icons on taskbar
     for _, app in ipairs(visibleApps) do
         local state = "closed"
+        local isFocused = false
         for _, window in ipairs(openApps) do
             if window.app == app then
+                if window == focusedWindow and not window.minimized then
+                    isFocused = true
+                end
                 if window.minimized then
                     state = "minimized"
                 else
@@ -413,23 +468,39 @@ function drawDesktop()
             end
         end
         
-        local iconMargin = 1
-        local targetIconHeight = app.height - iconMargin * 2
+        local iconMargin = 6
+        local targetIconHeight = bottomBarHeight - iconMargin * 2
         local scale = targetIconHeight / app.icon:getHeight()
-        local iconSize = targetIconHeight  -- this will be the square size
+        local iconSize = targetIconHeight
+        local btnWidth = iconSize + iconMargin * 2 + 10
+        local isHovered = love.mouse.getX() >= app.x and love.mouse.getX() <= app.x + btnWidth and love.mouse.getY() >= love.graphics.getHeight() - bottomBarHeight
 
-        -- draw background square
-        if state == "maximized" then
-            love.graphics.setColor(0.3, 0.4, 0.5)
-            love.graphics.rectangle("fill", app.x, app.y, iconSize + iconMargin * 2, iconSize + iconMargin * 2)
-        elseif state == "minimized" then
-            love.graphics.setColor(0.2, 0.3, 0.4)
-            love.graphics.rectangle("fill", app.x, app.y, iconSize + iconMargin * 2, iconSize + iconMargin * 2)
+        -- draw taskbar button background
+        if isFocused then
+            love.graphics.setColor(0.3, 0.3, 0.35, 0.8)
+        elseif isHovered then
+            love.graphics.setColor(0.25, 0.25, 0.3, 0.8)
+        elseif state ~= "closed" then
+            love.graphics.setColor(0.2, 0.2, 0.25, 0.5)
+        else
+            love.graphics.setColor(0, 0, 0, 0)
+        end
+        love.graphics.rectangle("fill", app.x, love.graphics.getHeight() - bottomBarHeight, btnWidth, bottomBarHeight)
+        
+        -- Active indicator line (Windows 10 style)
+        if state ~= "closed" then
+            if isFocused then
+                love.graphics.setColor(0.4, 0.6, 1.0)
+                love.graphics.rectangle("fill", app.x + 4, love.graphics.getHeight() - 3, btnWidth - 8, 3)
+            else
+                love.graphics.setColor(0.5, 0.5, 0.5)
+                love.graphics.rectangle("fill", app.x + 8, love.graphics.getHeight() - 3, btnWidth - 16, 3)
+            end
         end
 
         -- draw the icon
         love.graphics.setColor(1, 1, 1)
-        love.graphics.draw(app.icon, app.x + iconMargin, app.y + iconMargin, 0, scale, scale)
+        love.graphics.draw(app.icon, app.x + 5 + iconMargin, love.graphics.getHeight() - bottomBarHeight + iconMargin, 0, scale, scale)
     end
     
     -- Draw ellipsis button if there are hidden apps
@@ -465,46 +536,61 @@ function drawDesktop()
     
     -- Draw start menu if open
     if startMenuOpen then
-        local menuX = 5
-        local menuY = love.graphics.getHeight() - bottomBarHeight - 300
-        local menuWidth = 300
-        local menuHeight = 300
+        local menuWidth = 400
+        local menuHeight = 450
+        local menuX = 0
+        local menuY = love.graphics.getHeight() - bottomBarHeight - menuHeight
+        local sidebarWidth = 48
         
         -- Calculate content height
-        local headerHeight = 40
         local cols = 3
-        local iconSize = 80
+        local iconSize = 90
         local padding = 10
         local rows = math.ceil(#apps / cols)
-        local contentHeight = headerHeight + rows * (iconSize + padding) + padding
+        local contentHeight = rows * (iconSize + padding) + padding
         
         -- Update max scroll
         startMenuMaxScroll = math.max(0, contentHeight - menuHeight)
         
-        love.graphics.setColor(0.15, 0.15, 0.2, 0.95)
-        love.graphics.rectangle("fill", menuX, menuY, menuWidth, menuHeight)
-        love.graphics.setColor(0.7, 0.8, 1.0)
+        -- Background (Main)
+        love.graphics.setColor(0.12, 0.12, 0.12, 0.98)
+        love.graphics.rectangle("fill", menuX + sidebarWidth, menuY, menuWidth - sidebarWidth, menuHeight)
+        
+        -- Background (Sidebar)
+        love.graphics.setColor(0.1, 0.1, 0.1, 0.98)
+        love.graphics.rectangle("fill", menuX, menuY, sidebarWidth, menuHeight)
+        
+        -- Border
+        love.graphics.setColor(0.2, 0.2, 0.2, 1.0)
         love.graphics.rectangle("line", menuX, menuY, menuWidth, menuHeight)
         
-        -- Set scissor for content area
-        love.graphics.setScissor(menuX, menuY + headerHeight, menuWidth - 15, menuHeight - headerHeight)
+        -- Sidebar icons (Power, Settings, User etc.)
+        love.graphics.setColor(0.8, 0.8, 0.8)
+        love.graphics.rectangle("fill", menuX + 16, menuY + menuHeight - 40, 16, 16) -- Power
+        love.graphics.rectangle("fill", menuX + 16, menuY + menuHeight - 80, 16, 16) -- Settings
+        love.graphics.circle("fill", menuX + 24, menuY + menuHeight - 120, 8) -- User
         
-        love.graphics.setFont(love.graphics.newFont(20))
-        love.graphics.setColor(0.7, 0.8, 1.0)
-        love.graphics.print("Applications", menuX + 10, menuY + 10 - startMenuScroll)
+        -- Set scissor for content area
+        love.graphics.setScissor(menuX + sidebarWidth, menuY, menuWidth - sidebarWidth, menuHeight)
         love.graphics.setFont(font)
         
         -- Draw apps in grid with scroll offset
         for i, app in ipairs(apps) do
             local col = (i-1) % cols
             local row = math.floor((i-1) / cols)
-            local x = menuX + 15 + col * (iconSize + padding)
-            local y = menuY + headerHeight + 5 + row * (iconSize + padding) - startMenuScroll
+            local x = menuX + sidebarWidth + padding + col * (iconSize + padding)
+            local y = menuY + padding + row * (iconSize + padding) - startMenuScroll
             
-            love.graphics.setColor(0.3, 0.4, 0.5, 0.8)
+            local isHovered = love.mouse.getX() >= x and love.mouse.getX() <= x + iconSize and love.mouse.getY() >= y and love.mouse.getY() <= y + iconSize
+            
+            if isHovered then
+                love.graphics.setColor(0.1, 0.35, 0.6) -- Windows Blue hover
+            else
+                love.graphics.setColor(0, 0.47, 0.84) -- Windows Blue tile
+            end
             love.graphics.rectangle("fill", x, y, iconSize, iconSize)
             love.graphics.setColor(1, 1, 1)
-            love.graphics.draw(app.icon, x + (iconSize - 40)/2, y + 10, 0, 40/app.icon:getWidth(), 40/app.icon:getHeight())
+            love.graphics.draw(app.icon, x + (iconSize - 32)/2, y + 15, 0, 32/app.icon:getWidth(), 32/app.icon:getHeight())
             love.graphics.setColor(1, 1, 1)
             love.graphics.printf(app.name, x, y + 55, iconSize, "center")
         end
@@ -513,65 +599,98 @@ function drawDesktop()
         
         -- Draw scrollbar if needed
         if startMenuMaxScroll > 0 then
-            local scrollBarWidth = 10
+            local scrollBarWidth = 4
             local scrollBarX = menuX + menuWidth - scrollBarWidth - 2
-            local scrollTrackHeight = menuHeight - headerHeight
+            local scrollTrackHeight = menuHeight
             scrollBarHeight = (menuHeight / contentHeight) * scrollTrackHeight
             
             -- Scroll track
-            love.graphics.setColor(0.1, 0.1, 0.15, 0.8)
-            love.graphics.rectangle("fill", scrollBarX, menuY + headerHeight, scrollBarWidth, scrollTrackHeight)
+            love.graphics.setColor(0.1, 0.1, 0.1, 0.8)
+            love.graphics.rectangle("fill", scrollBarX, menuY, scrollBarWidth, scrollTrackHeight)
             
             -- Scroll thumb
-            local scrollThumbY = menuY + headerHeight + (startMenuScroll / startMenuMaxScroll) * (scrollTrackHeight - scrollBarHeight)
-            love.graphics.setColor(0.5, 0.6, 0.7, 0.8)
+            local scrollThumbY = menuY + (startMenuScroll / startMenuMaxScroll) * (scrollTrackHeight - scrollBarHeight)
+            love.graphics.setColor(0.3, 0.3, 0.3, 0.8)
+            if scrollBarDragging then love.graphics.setColor(0.5, 0.5, 0.5, 0.8) end
             love.graphics.rectangle("fill", scrollBarX, scrollThumbY, scrollBarWidth, scrollBarHeight)
         end
     end
 
-    -- Draw open app windows (existing code unchanged).
+    -- Draw open app windows.
     for _, window in ipairs(openApps) do
         if not window.minimized then
             love.graphics.setFont(font)
-            -- love.graphics.setColor(0.9, 0.9, 0.95)
-            -- love.graphics.rectangle("fill", window.x, window.y, window.width, window.height)
+            local titleBarHeight = 30
             
+            -- Window content background
+            love.graphics.setColor(0.9, 0.9, 0.95)
+            love.graphics.rectangle("fill", window.x, window.y, window.width, window.height)
+            
+            -- Title bar
             if window == focusedWindow then
-                love.graphics.setColor(0.0, 0.5, 1.0)
+                love.graphics.setColor(0.15, 0.15, 0.18, 1) -- Active window title bar (Windows 10 dark mode)
             else
-                love.graphics.setColor(0.2, 0.3, 0.4)
+                love.graphics.setColor(0.2, 0.2, 0.25, 0.95) -- Inactive window
             end
-            love.graphics.rectangle("fill", window.x, window.y, window.width, 20)
-            love.graphics.setColor(1, 1, 1)
-            love.graphics.print(window.app.name, window.x + 5, window.y + 2)
+            love.graphics.rectangle("fill", window.x, window.y, window.width, titleBarHeight)
             
-            local btnSize = 20
+            love.graphics.setColor(1, 1, 1)
+            love.graphics.print(window.app.name, window.x + 10, window.y + (titleBarHeight - 13)/2)
+            
+            local btnSize = 40
             local closeX = window.x + window.width - btnSize
-            local minX = window.x + window.width - 2 * btnSize
-            love.graphics.setColor(1, 0.3, 0.3)
-            love.graphics.rectangle("fill", closeX, window.y, btnSize, btnSize)
+            local maxX = window.x + window.width - 2 * btnSize
+            local minX = window.x + window.width - 3 * btnSize
+            
+            -- Close button
+            love.graphics.setColor(0.9, 0.2, 0.2)
+            love.graphics.rectangle("fill", closeX, window.y, btnSize, titleBarHeight)
             love.graphics.setColor(1, 1, 1)
-            love.graphics.print("x", closeX + 5, window.y + 2)
+            love.graphics.printf("X", closeX, window.y + (titleBarHeight - 13)/2, btnSize, "center")
             
-            love.graphics.setColor(0.7, 0.8, 1.0)
-            love.graphics.rectangle("fill", minX, window.y, btnSize, btnSize)
-            love.graphics.setColor(0, 0, 0)
-            love.graphics.print("-", minX + 5, window.y + 2)
+            -- Maximize button
+            love.graphics.setColor(0.25, 0.25, 0.3)
+            love.graphics.rectangle("fill", maxX, window.y, btnSize, titleBarHeight)
+            love.graphics.setColor(1, 1, 1)
+            if window.maximized then
+                love.graphics.printf("[-]", maxX, window.y + (titleBarHeight - 13)/2, btnSize, "center")
+            else
+                love.graphics.printf("[+]", maxX, window.y + (titleBarHeight - 13)/2, btnSize, "center")
+            end
             
+            -- Minimize button
+            love.graphics.setColor(0.3, 0.3, 0.35)
+            love.graphics.rectangle("fill", minX, window.y, btnSize, titleBarHeight)
+            love.graphics.setColor(1, 1, 1)
+            love.graphics.printf("_", minX, window.y + (titleBarHeight - 13)/2, btnSize, "center")
+            
+            -- Scissor and draw content
             if window.instance and window.instance.draw then
-                love.graphics.setScissor(window.x, window.y+20, window.width, window.height-20)
+                love.graphics.setColor(1, 1, 1)
+                love.graphics.setScissor(window.x, window.y + titleBarHeight, window.width, window.height - titleBarHeight)
                 love.graphics.push()
-                window.instance:draw(window.x, window.y + 20, window.width, window.height - 20)
+                window.instance:draw(window.x, window.y + titleBarHeight, window.width, window.height - titleBarHeight)
                 love.graphics.pop()
                 love.graphics.setScissor()
             else
                 love.graphics.setColor(0, 0, 0)
-                love.graphics.print("Content of " .. window.app.name, window.x + 10, window.y + 30)
+                love.graphics.print("Content of " .. window.app.name, window.x + 10, window.y + titleBarHeight + 10)
             end
             
-            local handleSize = 10
-            love.graphics.setColor(0.5, 0.6, 0.7)
-            love.graphics.rectangle("fill", window.x + window.width - handleSize, window.y + window.height - handleSize, handleSize, handleSize)
+            -- Resize handle (only if not maximized)
+            if not window.maximized then
+                local handleSize = 12
+                love.graphics.setColor(0.5, 0.6, 0.7)
+                love.graphics.polygon("fill", 
+                    window.x + window.width, window.y + window.height - handleSize,
+                    window.x + window.width - handleSize, window.y + window.height,
+                    window.x + window.width, window.y + window.height
+                )
+            end
+            
+            -- Border
+            love.graphics.setColor(0.1, 0.1, 0.1, 0.5)
+            love.graphics.rectangle("line", window.x, window.y, window.width, window.height)
         end
     end
 end
@@ -618,6 +737,7 @@ end
 function love.load()
     love.graphics.setDefaultFilter("nearest", "nearest")
     love.window.setTitle("Desktop")
+    love.window.setMode(700, 450, {resizable=true, minwidth=600, minheight=400})
     love.keyboard.setTextInput(true)
     love.keyboard.setKeyRepeat(true)
     
@@ -798,6 +918,18 @@ function love.mousepressed(x, y, button)
             return
         end
         
+        -- Check taskbar app clicks
+        for _, app in ipairs(visibleApps) do
+            local iconMargin = 6
+            local iconSize = bottomBarHeight - iconMargin * 2
+            local btnWidth = iconSize + iconMargin * 2 + 10
+            
+            if x >= app.x and x <= app.x + btnWidth and y >= love.graphics.getHeight() - bottomBarHeight then
+                toggleApp(app)
+                return
+            end
+        end
+        
         -- Check ellipsis menu
         if ellipsisMenuOpen then
             local menuX = love.graphics.getWidth() - 160
@@ -816,19 +948,21 @@ function love.mousepressed(x, y, button)
         
         -- Check start menu
         if startMenuOpen then
-            local menuX = 5
-            local menuY = love.graphics.getHeight() - bottomBarHeight - 300
-            local menuWidth = 300
-            local headerHeight = 40
+            local menuWidth = 400
+            local menuHeight = 450
+            local menuX = 0
+            local menuY = love.graphics.getHeight() - bottomBarHeight - menuHeight
+            local sidebarWidth = 48
             
             -- Check scrollbar
             if startMenuMaxScroll > 0 then
-                local scrollBarWidth = 10
+                local scrollBarWidth = 4
                 local scrollBarX = menuX + menuWidth - scrollBarWidth - 2
-                local scrollTrackHeight = 300 - headerHeight
-                local scrollThumbY = menuY + headerHeight + (startMenuScroll / startMenuMaxScroll) * (scrollTrackHeight - scrollBarHeight)
+                local scrollTrackHeight = menuHeight
+                local scrollThumbY = menuY + (startMenuScroll / startMenuMaxScroll) * (scrollTrackHeight - scrollBarHeight)
                 
-                if x >= scrollBarX and x <= scrollBarX + scrollBarWidth and 
+                -- Making hit target wider for usability
+                if x >= scrollBarX - 4 and x <= scrollBarX + scrollBarWidth + 4 and 
                    y >= scrollThumbY and y <= scrollThumbY + scrollBarHeight then
                     scrollBarDragging = true
                     scrollBarDragOffset = y - scrollThumbY
@@ -838,13 +972,13 @@ function love.mousepressed(x, y, button)
             
             -- Check app icons
             local cols = 3
-            local iconSize = 80
+            local iconSize = 90
             local padding = 10
             for i, app in ipairs(apps) do
                 local col = (i-1) % cols
                 local row = math.floor((i-1) / cols)
-                local appX = menuX + 15 + col * (iconSize + padding)
-                local appY = menuY + headerHeight + 5 + row * (iconSize + padding) - startMenuScroll
+                local appX = menuX + sidebarWidth + padding + col * (iconSize + padding)
+                local appY = menuY + padding + row * (iconSize + padding) - startMenuScroll
                 
                 if x >= appX and x <= appX + iconSize and y >= appY and y <= appY + iconSize then
                     toggleApp(app)
@@ -852,6 +986,11 @@ function love.mousepressed(x, y, button)
                     return
                 end
             end
+            
+            if x >= menuX and x <= menuX + menuWidth and y >= menuY and y <= menuY + menuHeight then
+                return -- Clicked inside menu but not on an app
+            end
+            
             -- Clicked outside menu, close it
             startMenuOpen = false
         end
@@ -885,113 +1024,95 @@ function love.mousepressed(x, y, button)
             end
         end
 
-        local resizeHandleSize = 20
-        for _, window in ipairs(openApps) do
-            if not window.minimized then
+        local resizeHandleSize = 12
+        local titleBarHeight = 30
+        
+        -- Check resize handles first, top to bottom
+        for i = #openApps, 1, -1 do
+            local window = openApps[i]
+            if not window.minimized and not window.maximized then
                 if x >= window.x + window.width - resizeHandleSize and x <= window.x + window.width and
                    y >= window.y + window.height - resizeHandleSize and y <= window.y + window.height then
                     resizingWindow = window
                     resizeOffsetX = window.x + window.width - x
                     resizeOffsetY = window.y + window.height - y
-                    return
-                end
-            end
-        end
-
-        if focusedWindow and not focusedWindow.minimized then
-            if x >= focusedWindow.x and x <= focusedWindow.x + focusedWindow.width and
-               y >= focusedWindow.y and y <= focusedWindow.y + focusedWindow.height then
-                local btnSize = 20
-                local closeX = focusedWindow.x + focusedWindow.width - btnSize
-                local minX = focusedWindow.x + focusedWindow.width - 2 * btnSize
-                if x >= closeX and x <= closeX + btnSize and y >= focusedWindow.y and y <= focusedWindow.y + btnSize then
-                    for i, win in ipairs(openApps) do
-                        if win == focusedWindow then
-                            table.remove(openApps, i)
-                            focusedWindow.app.instance = nil
-                            focusedWindow = nil
-                            break
-                        end
-                    end
-                    return
-                elseif x >= minX and x <= minX + btnSize and y >= focusedWindow.y and y <= focusedWindow.y + btnSize then
-                    focusedWindow.minimized = not focusedWindow.minimized
-                    setFocus(focusedWindow)
-                    return
-                end
-                if x >= focusedWindow.x and x <= focusedWindow.x + focusedWindow.width and
-                   y >= focusedWindow.y and y <= focusedWindow.y + 20 then
-                    if x < focusedWindow.x + focusedWindow.width - 2 * btnSize then
-                        setFocus(focusedWindow)
-                        draggingWindow = focusedWindow
-                        dragOffsetX = x - focusedWindow.x
-                        dragOffsetY = y - focusedWindow.y
-                        return
-                    end
-                end
-                if x >= focusedWindow.x and x <= focusedWindow.x + focusedWindow.width and
-                   y >= focusedWindow.y + 20 and y <= focusedWindow.y + focusedWindow.height then
-                    if focusedWindow.instance and focusedWindow.instance.mousepressed then
-                        focusedWindow.instance:mousepressed(x - focusedWindow.x, y - focusedWindow.y - 20, button, x, y)
-                    end
-                end
-                return
-            end
-        end
-
-        for _, window in ipairs(openApps) do
-            local btnSize = 20
-            local closeX = window.x + window.width - btnSize
-            local minX = window.x + window.width - 2 * btnSize
-            if x >= closeX and x <= closeX + btnSize and y >= window.y and y <= window.y + btnSize then
-                if focusedWindow == window then focusedWindow = nil end
-                for i2, win in ipairs(openApps) do
-                    if win == window then
-                        table.remove(openApps, i2)
-                        window.app.instance = nil
-                        break
-                    end
-                end
-                return
-            elseif x >= minX and x <= minX + btnSize and y >= window.y and y <= window.y + btnSize then
-                window.minimized = not window.minimized
-                setFocus(window)
-                return
-            end
-        end
-
-        for _, window in ipairs(openApps) do
-            if x >= window.x and x <= window.x + window.width and
-               y >= window.y and y <= window.y + 20 then
-                local btnSize = 20
-                if x < window.x + window.width - 2 * btnSize then
                     setFocus(window)
-                    draggingWindow = window
-                    dragOffsetX = x - window.x
-                    dragOffsetY = y - window.y
                     return
                 end
             end
         end
 
-        for _, window in ipairs(openApps) do
+        -- Check windows top to bottom
+        for i = #openApps, 1, -1 do
+            local window = openApps[i]
             if not window.minimized then
                 if x >= window.x and x <= window.x + window.width and
-                   y >= window.y + 20 and y <= window.y + window.height then
+                   y >= window.y and y <= window.y + window.height then
+                    
                     setFocus(window)
-                    if window.instance and window.instance.mousepressed then
-                        window.instance:mousepressed(x - window.x, y - window.y - 20, button, x, y)
+                    
+                    local btnSize = 40
+                    local closeX = window.x + window.width - btnSize
+                    local maxX = window.x + window.width - 2 * btnSize
+                    local minX = window.x + window.width - 3 * btnSize
+                    
+                    -- Close button
+                    if x >= closeX and x <= closeX + btnSize and y >= window.y and y <= window.y + titleBarHeight then
+                        for i2, win in ipairs(openApps) do
+                            if win == window then
+                                table.remove(openApps, i2)
+                                if window == focusedWindow then focusedWindow = nil end
+                                if window.app.instance and window.app.instance.close then window.app.instance:close() end
+                                window.app.instance = nil
+                                break
+                            end
+                        end
                         return
                     end
+                    
+                    -- Maximize button
+                    if x >= maxX and x <= maxX + btnSize and y >= window.y and y <= window.y + titleBarHeight then
+                        if not window.maximized then
+                            window.prevX, window.prevY = window.x, window.y
+                            window.prevWidth, window.prevHeight = window.width, window.height
+                            window.x = 0
+                            window.y = topBarHeight
+                            window.width = love.graphics.getWidth()
+                            window.height = love.graphics.getHeight() - topBarHeight - bottomBarHeight
+                            window.maximized = true
+                        else
+                            window.x, window.y = window.prevX, window.prevY
+                            window.width, window.height = window.prevWidth, window.prevHeight
+                            window.maximized = false
+                        end
+                        if window.instance and window.instance.resize then
+                            window.instance:resize(window.width, window.height - titleBarHeight)
+                        end
+                        return
+                    end
+                    
+                    -- Minimize button
+                    if x >= minX and x <= minX + btnSize and y >= window.y and y <= window.y + titleBarHeight then
+                        window.minimized = true
+                        return
+                    end
+                    
+                    -- Title bar drag
+                    if y >= window.y and y <= window.y + titleBarHeight then
+                        if not window.maximized then
+                            draggingWindow = window
+                            dragOffsetX = x - window.x
+                            dragOffsetY = y - window.y
+                        end
+                        return
+                    end
+                    
+                    -- App content click
+                    if window.instance and window.instance.mousepressed then
+                        window.instance:mousepressed(x - window.x, y - window.y - titleBarHeight, button, x, y)
+                    end
+                    return
                 end
-            end
-        end
-
-        for _, app in ipairs(visibleApps) do
-            if x >= app.x and x <= app.x + app.width and
-               y >= app.y and y <= app.y + app.height then
-                toggleApp(app)
-                return
             end
         end
     end
@@ -1005,17 +1126,26 @@ function love.mousemoved(x, y, dx, dy)
         newHeight = math.max(MIN_WINDOW_HEIGHT, math.min(newHeight, MAX_WINDOW_HEIGHT))
         resizingWindow.width = newWidth
         resizingWindow.height = newHeight
+        if resizingWindow.instance and resizingWindow.instance.resize then
+            resizingWindow.instance:resize(newWidth, newHeight - 30)
+        end
     elseif draggingWindow then
         draggingWindow.x = x - dragOffsetX
         draggingWindow.y = y - dragOffsetY
+        
+        -- Constraint to screen boundaries
+        draggingWindow.y = math.max(topBarHeight, draggingWindow.y)
+        draggingWindow.y = math.min(love.graphics.getHeight() - bottomBarHeight - 30, draggingWindow.y)
+        draggingWindow.x = math.max(-draggingWindow.width + 50, draggingWindow.x)
+        draggingWindow.x = math.min(love.graphics.getWidth() - 50, draggingWindow.x)
     elseif draggingIcon then
         desktopLayout[draggingIcon.name].x = x - dragIconOffsetX
         desktopLayout[draggingIcon.name].y = y - dragIconOffsetY
     elseif scrollBarDragging then
-        local menuY = love.graphics.getHeight() - bottomBarHeight - 300
-        local headerHeight = 40
-        local scrollTrackHeight = 300 - headerHeight
-        local relativeY = y - menuY - headerHeight - scrollBarDragOffset
+        local menuHeight = 450
+        local menuY = love.graphics.getHeight() - bottomBarHeight - menuHeight
+        local scrollTrackHeight = menuHeight
+        local relativeY = y - menuY - scrollBarDragOffset
         startMenuScroll = (relativeY / (scrollTrackHeight - scrollBarHeight)) * startMenuMaxScroll
         startMenuScroll = math.max(0, math.min(startMenuScroll, startMenuMaxScroll))
     end
@@ -1028,11 +1158,12 @@ end
 function love.mousereleased(x, y, button)
     -- if button == 1 and contextMenuOpen then
     if button == 1 then
-        local menuWidth = 180
-        local itemHeight = 30
+        local menuWidth = 220
+        local itemHeight = 32
+        local menuPadding = 4
         
         for i, item in ipairs(contextMenuItems) do
-            local itemY = contextMenuY + 5 + (i-1) * itemHeight
+            local itemY = contextMenuY + menuPadding + (i-1) * itemHeight
             if x >= contextMenuX and x <= contextMenuX + menuWidth and
                y >= itemY and y <= itemY + itemHeight then
                 handleContextMenuAction(item.action)
