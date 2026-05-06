@@ -241,17 +241,7 @@ local function createNewFolder(name)
         children = {}
     }
     
-    local startX = 10
-    local startY = topBarHeight + 10
-    local iconSize = 40
-    local padding = 20
-    local index = #desktopHomeIcons + 1
-    local col = (index - 1) % 4
-    local row = math.floor((index - 1) / 4)
-    local x = startX + col * (iconSize + padding)
-    local y = startY + row * (iconSize + padding)
-    
-    desktopLayout[name] = {x = x, y = y}
+    refreshDesktopLayout()
     filesystemModule.save(filesystemModule.getFS())
 end
 
@@ -278,30 +268,16 @@ local function createNewFile(name)
         content = ""
     }
     
-    local startX = 10
-    local startY = topBarHeight + 10
-    local iconSize = 40
-    local padding = 20
-    local index = #desktopHomeIcons + 1
-    local col = (index - 1) % 4
-    local row = math.floor((index - 1) / 4)
-    local x = startX + col * (iconSize + padding)
-    local y = startY + row * (iconSize + padding)
-    
-    desktopLayout[name] = {x = x, y = y}
+    refreshDesktopLayout()
     filesystemModule.save(filesystemModule.getFS())
 end
 
 -- Create new shortcut in desktop home
 local function createNewShortcut(name)
-    if not name or name == "" then
-        name = "New Shortcut.lnk"
-    elseif not name:match("%.lnk$") then
-        name = name .. ".lnk"
-    end
+    name = (name == "" or not name) and "New Shortcut.lnk" or name
+    if not name:match("%.lnk$") then name = name .. ".lnk" end
     
-    local baseName = name:gsub("%.lnk$", "")
-    local counter = 1
+    local baseName, counter = name:gsub("%.lnk$", ""), 1
     while desktopHome.children[name] do
         name = baseName .. " (" .. counter .. ").lnk"
         counter = counter + 1
@@ -309,24 +285,14 @@ local function createNewShortcut(name)
     
     desktopHome.children[name] = {
         name = name,
-        type = "file",
+        type = "shortcut",
         parent = desktopHome,
-        content = "target=/"
+        target = "/" -- Default target
     }
-    
-    local startX = 10
-    local startY = topBarHeight + 10
-    local iconSize = 40
-    local padding = 20
-    local index = #desktopHomeIcons + 1
-    local col = (index - 1) % 4
-    local row = math.floor((index - 1) / 4)
-    local x = startX + col * (iconSize + padding)
-    local y = startY + row * (iconSize + padding)
-    
-    desktopLayout[name] = {x = x, y = y}
+    refreshDesktopLayout()
     filesystemModule.save(filesystemModule.getFS())
 end
+
 
 -- Draw context menu
 local function drawContextMenu()
@@ -390,6 +356,7 @@ local function handleContextMenuAction(action)
         end
     elseif action == "refresh" then
         -- Refresh handled in drawDesktopHome
+        refreshDesktopLayout()
     end
 end
 
@@ -671,38 +638,68 @@ function drawDesktop()
     end
 end
 
--- Draw desktop home icons
+-- Helper function to truncate text with ellipsis
+local function getEllipsisText(text, maxWidth, font)
+    if font:getWidth(text) <= maxWidth then return text end
+    local s = text
+    local ellipsis = "..."
+    while font:getWidth(s .. ellipsis) > maxWidth and #s > 0 do
+        s = s:sub(1, #s - 1)
+    end
+    return s .. ellipsis
+end
+
+-- Refreshes the grid positions (Windows 10 Style: Vertical Columns)
+function refreshDesktopLayout()
+    local startX, startY = 15, 15
+    local iconSize = 42
+    local paddingX, paddingY = 20, 20 -- Extra vertical space for labels
+    local colHeight = love.graphics.getHeight() - bottomBarHeight - 40
+    local iconsPerCol = math.max(1, math.floor(colHeight / (iconSize + paddingY)))
+
+    -- Sort icons: Directories first, then alphabetical
+    local keys = {}
+    for name, _ in pairs(desktopHome.children) do table.insert(keys, name) end
+    table.sort(keys, function(a, b)
+        local nodeA, nodeB = desktopHome.children[a], desktopHome.children[b]
+        if nodeA.type ~= nodeB.type then return nodeA.type == "directory" end
+        return a:lower() < b:lower()
+    end)
+
+    for i, name in ipairs(keys) do
+        local row = (i - 1) % iconsPerCol
+        local col = math.floor((i - 1) / iconsPerCol)
+        desktopLayout[name] = {
+            x = startX + col * (iconSize + paddingX),
+            y = startY + row * (iconSize + paddingY)
+        }
+    end
+end
+
 function drawDesktopHome()
     desktopHomeIcons = {} 
-    local startX = 10
-    local startY = topBarHeight + 10
     local iconSize = 40
-    local padding = 20
-    local index = 0
+    
     if desktopHome and desktopHome.children then
         for name, node in pairs(desktopHome.children) do
-            index = index + 1
-            local x, y
-            if desktopLayout[name] then
-                x = desktopLayout[name].x
-                y = desktopLayout[name].y
-            else
-                local col = (index - 1) % 4
-                local row = math.floor((index - 1) / 4)
-                x = startX + col * (iconSize + padding)
-                y = startY + row * (iconSize + padding)
-                desktopLayout[name] = {x = x, y = y}
+            local pos = desktopLayout[name]
+            if not pos then 
+                refreshDesktopLayout() 
+                pos = desktopLayout[name]
             end
-            local icon = home_fileIcon
-            if node.type == "directory" then
-                icon = home_folderIcon
-            elseif node.name:match("%.lnk$") then
-                icon = home_shortcutIcon
-            end
+            
+            local x, y = pos.x, pos.y
+            local icon = (node.type == "directory") and home_folderIcon or 
+                         (name:match("%.lnk$") and home_shortcutIcon or home_fileIcon)
+
             love.graphics.setColor(1, 1, 1)
             love.graphics.draw(icon, x, y, 0, iconSize / icon:getWidth(), iconSize / icon:getHeight())
-            love.graphics.setColor(0.9, 0.95, 1.0)
-            love.graphics.printf(name, x, y + iconSize + 2, iconSize, "center")
+            
+            -- Add Ellipsis for long names
+            local displayName = getEllipsisText(name, iconSize + 20, font)
+            love.graphics.setColor(1, 1, 1)
+            love.graphics.printf(displayName, x - 10, y + iconSize + 2, iconSize + 20, "center")
+            
             table.insert(desktopHomeIcons, {x = x, y = y, width = iconSize, height = iconSize, node = node, name = name})
         end
     end
@@ -835,11 +832,34 @@ function love.mousepressed(x, y, button)
     
     -- 1. Check Context Menu (Topmost layer)
     if contextMenuOpen then
-        if button == 1 then
-            contextMenuOpen = false
-        elseif button == 2 then
-            contextMenuOpen = false
-            return
+        local menuWidth, itemHeight = 220, 32
+        for i, item in ipairs(contextMenuItems) do
+            local itemY = contextMenuY + 4 + (i-1) * itemHeight
+            if x >= contextMenuX and x <= contextMenuX + menuWidth and y >= itemY and y <= itemY + itemHeight then
+                handleContextMenuAction(item.action)
+                contextMenuOpen = false
+                return -- Stop further processing
+            end
+        end
+        contextMenuOpen = false -- Close if clicked outside the menu
+    end
+    
+    if button == 2 then
+        local onIcon = false
+        for _, icon in ipairs(desktopHomeIcons) do
+            if x >= icon.x and x <= icon.x + icon.width and y >= icon.y and y <= icon.y + icon.height then
+                onIcon = true -- You can add icon-specific right click here
+            end
+        end
+        
+        if not onIcon then
+            contextMenuOpen = true
+            contextMenuX, contextMenuY = x, y
+            -- Adjust menu position if it goes off screen
+            if contextMenuX + 220 > love.graphics.getWidth() then contextMenuX = x - 220 end
+            if contextMenuY + (#contextMenuItems * 32) > love.graphics.getHeight() - bottomBarHeight then
+                contextMenuY = y - (#contextMenuItems * 32)
+            end
         end
     end
 
