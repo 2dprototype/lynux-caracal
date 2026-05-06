@@ -4,32 +4,40 @@ SettingsApp.__index = SettingsApp
 
 function SettingsApp.new(availableWallpapers, currentWallpaper, onWallpaperChange)
     local self = setmetatable({}, SettingsApp)
+    
+    -- Data
     self.availableWallpapers = availableWallpapers or {}
     self.currentWallpaper = currentWallpaper or {}
     self.onWallpaperChange = onWallpaperChange or function() end
+    
+    -- UI State
     self.tabs = {"Wallpaper", "Display", "System"}
     self.selectedTab = 1
+    
+    -- Dimensions & Layout
+    self.width = 0
+    self.height = 0
+    self.tabHeight = 35
+    
+    -- Input State (Relative coordinates)
+    self.mouseX = -1
+    self.mouseY = -1
+    self.mousePressed = false
+    
+    -- Wallpaper Grid Settings
     self.wallpaperPreviewSize = 120
     self.wallpaperGridColumns = 3
     self.wallpaperScroll = 0
+    self.maxScroll = 0
     
-    -- Mouse state tracking
-    self.mouseX = 0
-    self.mouseY = 0
-    self.mousePressed = false
+    -- Scrollbar Interactive State
+    self.isDraggingScrollbar = false
+    self.scrollDragOffset = 0
     
-    -- Tab button dimensions
-    self.tabHeight = 30
-    self.tabWidth = 0  -- Will be set in draw
-    
-    -- Display settings
+    -- Display options
     self.resolutions = {
-        {800, 600},
-        {1024, 768},
-        {1280, 720},
-        {1366, 768},
-        {1600, 900},
-        {1920, 1080}
+        {800, 600}, {1024, 768}, {1280, 720}, 
+        {1366, 768}, {1600, 900}, {1920, 1080}
     }
     self.currentResolution = 1
     
@@ -44,292 +52,350 @@ function SettingsApp:draw(x, y, width, height)
     self.width = width
     self.height = height
     
-    -- Draw background
-    love.graphics.setColor(0.95, 0.95, 0.95)
-    love.graphics.rectangle("fill", x, y, width, height)
+    -- Push transformation to use relative coordinates (0,0 is top-left of app content)
+    love.graphics.push()
+    love.graphics.translate(x, y)
     
-    -- Calculate tab dimensions
-    self.tabWidth = width / #self.tabs
+    -- Background
+    love.graphics.setColor(0.96, 0.96, 0.98)
+    love.graphics.rectangle("fill", 0, 0, width, height)
     
-    -- Draw tabs
+    -- Draw Tabs
+    local tabWidth = width / #self.tabs
     for i, tab in ipairs(self.tabs) do
-        if i == self.selectedTab then
-            love.graphics.setColor(0.7, 0.7, 0.8)
-        else
-            love.graphics.setColor(0.8, 0.8, 0.9)
-        end
-        love.graphics.rectangle("fill", x + (i-1) * self.tabWidth, y, self.tabWidth, self.tabHeight)
+        local tabX = (i - 1) * tabWidth
+        local isHovered = self.mouseX >= tabX and self.mouseX <= tabX + tabWidth and self.mouseY >= 0 and self.mouseY <= self.tabHeight
         
-        love.graphics.setColor(0, 0, 0)
-        love.graphics.printf(tab, x + (i-1) * self.tabWidth, y + 8, self.tabWidth, "center")
+        if i == self.selectedTab then
+            love.graphics.setColor(0.2, 0.45, 0.8) -- Active tab (Blue)
+        elseif isHovered then
+            love.graphics.setColor(0.85, 0.85, 0.9) -- Hover state
+        else
+            love.graphics.setColor(0.9, 0.9, 0.95) -- Inactive tab
+        end
+        
+        love.graphics.rectangle("fill", tabX, 0, tabWidth, self.tabHeight)
+        
+        -- Tab Separator
+        love.graphics.setColor(0.8, 0.8, 0.85)
+        love.graphics.rectangle("line", tabX, 0, tabWidth, self.tabHeight)
+        
+        -- Tab Text
+        if i == self.selectedTab then
+            love.graphics.setColor(1, 1, 1)
+        else
+            love.graphics.setColor(0.3, 0.3, 0.3)
+        end
+        love.graphics.printf(tab, tabX, 10, tabWidth, "center")
     end
     
-    -- Draw tab content
-    local contentY = y + self.tabHeight + 10
-    local contentHeight = height - self.tabHeight - 10
-    
+    -- Draw Active Content
     if self.selectedTab == 1 then
-        self:drawWallpaperTab(x, contentY, width, contentHeight)
+        self:drawWallpaperTab(x, y) -- Pass absolute x,y strictly for the Scissor
     elseif self.selectedTab == 2 then
-        self:drawDisplayTab(x, contentY, width, contentHeight)
+        self:drawDisplayTab()
     elseif self.selectedTab == 3 then
-        self:drawSystemTab(x, contentY, width, contentHeight)
+        self:drawSystemTab()
     end
+    
+    love.graphics.pop()
 end
 
-function SettingsApp:drawWallpaperTab(x, y, width, height)
-    love.graphics.setColor(0, 0, 0)
-    love.graphics.print("Select Wallpaper", x + 10, y)
+function SettingsApp:drawWallpaperTab(absX, absY)
+    local contentY = self.tabHeight
+    local contentHeight = self.height - self.tabHeight
+    
+    love.graphics.setColor(0.1, 0.1, 0.1)
+    love.graphics.print("Current: " .. self:getCurrentWallpaperName(), 15, contentY + 15)
+    
+    local gridStartY = contentY + 45
+    local gridHeight = contentHeight - 45
     
     -- Calculate grid layout
-    local padding = 10
-    local availableWidth = width - 20
+    local padding = 15
+    local scrollbarWidth = 12
+    local availableWidth = self.width - scrollbarWidth - (padding * 2)
     local cols = self.wallpaperGridColumns
     local itemWidth = (availableWidth - (cols - 1) * padding) / cols
-    local itemHeight = self.wallpaperPreviewSize + 30  -- Preview + label
+    local itemHeight = self.wallpaperPreviewSize + 35
     
-    -- Calculate how many rows we have
     local rows = math.ceil(#self.availableWallpapers / cols)
     local totalContentHeight = rows * (itemHeight + padding)
-    local maxScroll = math.max(0, totalContentHeight - height + 20)
     
-    -- Apply scroll
-    self.wallpaperScroll = math.min(self.wallpaperScroll, maxScroll)
-    self.wallpaperScroll = math.max(0, self.wallpaperScroll)
+    self.maxScroll = math.max(0, totalContentHeight - gridHeight + padding)
+    self.wallpaperScroll = math.max(0, math.min(self.wallpaperScroll, self.maxScroll))
     
-    -- Set scissor for scrollable area
-    love.graphics.setScissor(x, y + 30, width, height - 40)
+    -- 1. Apply the main content scissor (mapped to absolute window space)
+    local clipX = absX
+    local clipY = absY + gridStartY
+    local clipWidth = self.width
+    local clipHeight = math.min(gridHeight, self.height - gridStartY)
     
-    -- Draw wallpaper grid
+    love.graphics.setScissor(clipX, clipY, clipWidth, clipHeight)
+    
+    -- Draw grid items
     for i, wallpaper in ipairs(self.availableWallpapers) do
-		-- print(i)
-        local col = (i-1) % cols
-        local row = math.floor((i-1) / cols)
+        local col = (i - 1) % cols
+        local row = math.floor((i - 1) / cols)
         
-        local itemX = x + 10 + col * (itemWidth + padding)
-        local itemY = y + 30 + row * (itemHeight + padding) - self.wallpaperScroll
+        local itemX = padding + col * (itemWidth + padding)
+        local itemY = gridStartY + row * (itemHeight + padding) - self.wallpaperScroll
         
-        -- Check if this is the current wallpaper
-        local isCurrent = false
-        if wallpaper.type == self.currentWallpaper.type then
-            if wallpaper.type == "color" then
-                isCurrent = self:colorsEqual(wallpaper.color, self.currentWallpaper.color)
-            elseif wallpaper.type == "gradient" then
-                isCurrent = self:colorsEqual(wallpaper.gradient.top, self.currentWallpaper.gradient.top) and
-                           self:colorsEqual(wallpaper.gradient.bottom, self.currentWallpaper.gradient.bottom)
-            elseif wallpaper.type == "image" then
-                isCurrent = wallpaper.filename == self.currentWallpaper.filename
+        -- Don't draw if fully outside scissor bounds
+        if itemY + itemHeight > gridStartY and itemY < gridStartY + gridHeight then
+            local isCurrent = self:isCurrentWallpaper(wallpaper)
+            local isHovered = self.mouseX >= itemX and self.mouseX <= itemX + itemWidth and 
+                              self.mouseY >= itemY and self.mouseY <= itemY + itemHeight and
+                              self.mouseY >= gridStartY
+            
+            -- Selection / Hover Background
+            if isCurrent then
+                love.graphics.setColor(0.2, 0.45, 0.8, 0.2)
+                love.graphics.rectangle("fill", itemX - 4, itemY - 4, itemWidth + 8, itemHeight + 8, 4)
+                love.graphics.setColor(0.2, 0.45, 0.8)
+                love.graphics.rectangle("line", itemX - 4, itemY - 4, itemWidth + 8, itemHeight + 8, 4)
+            elseif isHovered then
+                love.graphics.setColor(0.85, 0.85, 0.9)
+                love.graphics.rectangle("fill", itemX - 4, itemY - 4, itemWidth + 8, itemHeight + 8, 4)
             end
-        end
-        
-        -- Draw selection border
-        if isCurrent then
-            love.graphics.setColor(0, 0.5, 1)
-            love.graphics.rectangle("fill", itemX - 2, itemY - 2, itemWidth + 4, itemHeight + 4)
-        end
-        
-        -- Draw preview background
-        love.graphics.setColor(0.8, 0.8, 0.8)
-        love.graphics.rectangle("fill", itemX, itemY, itemWidth, self.wallpaperPreviewSize)
-        
-        -- Draw wallpaper preview
-        if wallpaper.type == "color" then
-            love.graphics.setColor(wallpaper.color)
+            
+            -- Preview Area
+            love.graphics.setColor(0.8, 0.8, 0.8)
             love.graphics.rectangle("fill", itemX, itemY, itemWidth, self.wallpaperPreviewSize)
-        elseif wallpaper.type == "gradient" then
-            -- Simple gradient preview
-            for py = 0, self.wallpaperPreviewSize do
-                local ratio = py / self.wallpaperPreviewSize
-                local r = wallpaper.gradient.top[1] * (1 - ratio) + wallpaper.gradient.bottom[1] * ratio
-                local g = wallpaper.gradient.top[2] * (1 - ratio) + wallpaper.gradient.bottom[2] * ratio
-                local b = wallpaper.gradient.top[3] * (1 - ratio) + wallpaper.gradient.bottom[3] * ratio
-                love.graphics.setColor(r, g, b)
-                love.graphics.line(itemX, itemY + py, itemX + itemWidth, itemY + py)
+            
+            if wallpaper.type == "color" then
+                love.graphics.setColor(wallpaper.color)
+                love.graphics.rectangle("fill", itemX, itemY, itemWidth, self.wallpaperPreviewSize)
+            elseif wallpaper.type == "gradient" then
+                for py = 0, self.wallpaperPreviewSize do
+                    local ratio = py / self.wallpaperPreviewSize
+                    local r = wallpaper.gradient.top[1] * (1 - ratio) + wallpaper.gradient.bottom[1] * ratio
+                    local g = wallpaper.gradient.top[2] * (1 - ratio) + wallpaper.gradient.bottom[2] * ratio
+                    local b = wallpaper.gradient.top[3] * (1 - ratio) + wallpaper.gradient.bottom[3] * ratio
+                    love.graphics.setColor(r, g, b)
+                    love.graphics.line(itemX, itemY + py, itemX + itemWidth, itemY + py)
+                end
+            elseif wallpaper.type == "image" and wallpaper.image then
+                love.graphics.setColor(1, 1, 1)
+                local scale = math.max(itemWidth / wallpaper.image:getWidth(), self.wallpaperPreviewSize / wallpaper.image:getHeight())
+                
+                -- PRO FIX: Push a temporary coordinate boundary with intersectScissor
+                love.graphics.push("all") 
+                
+                -- This automatically respects existing scissor coordinates AND locks down the image bounds
+                love.graphics.intersectScissor(absX + itemX, absY + itemY, itemWidth, self.wallpaperPreviewSize)
+                
+                local drawWidth = wallpaper.image:getWidth() * scale
+                local drawHeight = wallpaper.image:getHeight() * scale
+                local offsetX = (itemWidth - drawWidth) / 2
+                local offsetY = (self.wallpaperPreviewSize - drawHeight) / 2
+                
+                love.graphics.draw(wallpaper.image, itemX + offsetX, itemY + offsetY, 0, scale, scale)
+                
+                -- Revert to original settings/scissor seamlessly
+                love.graphics.pop() 
             end
-        elseif wallpaper.type == "image" and wallpaper.image then
-            love.graphics.setColor(1, 1, 1)
-            local scale = math.min(
-                itemWidth / wallpaper.image:getWidth(),
-                self.wallpaperPreviewSize / wallpaper.image:getHeight()
-            )
-            local drawWidth = wallpaper.image:getWidth() * scale
-            local drawHeight = wallpaper.image:getHeight() * scale
-            local offsetX = (itemWidth - drawWidth) / 2
-            local offsetY = (self.wallpaperPreviewSize - drawHeight) / 2
-            love.graphics.draw(wallpaper.image, itemX + offsetX, itemY + offsetY, 0, scale, scale)
+            
+            love.graphics.setColor(0.6, 0.6, 0.6)
+            love.graphics.rectangle("line", itemX, itemY, itemWidth, self.wallpaperPreviewSize)
+            
+            love.graphics.setColor(0.1, 0.1, 0.1)
+            love.graphics.printf(wallpaper.name, itemX, itemY + self.wallpaperPreviewSize + 8, itemWidth, "center")
         end
-        
-        -- Draw border
-        love.graphics.setColor(0.5, 0.5, 0.5)
-        love.graphics.rectangle("line", itemX, itemY, itemWidth, self.wallpaperPreviewSize)
-        
-        -- Draw label
-        love.graphics.setColor(0, 0, 0)
-        love.graphics.printf(wallpaper.name, itemX, itemY + self.wallpaperPreviewSize + 5, itemWidth, "center")
     end
     
-    love.graphics.setScissor()
+    love.graphics.setScissor() -- Clear the main scissor once complete
     
-    -- Draw scrollbar if needed
-    if maxScroll > 0 then
-        local scrollbarWidth = 10
-        local scrollbarX = x + width - scrollbarWidth - 5
-        local scrollTrackHeight = height - 40
-        local thumbHeight = (height / totalContentHeight) * scrollTrackHeight
-        local thumbY = y + 30 + (self.wallpaperScroll / maxScroll) * (scrollTrackHeight - thumbHeight)
+    -- Draw Custom Interactive Scrollbar
+    if self.maxScroll > 0 then
+        local trackX = self.width - scrollbarWidth - 4
+        local trackY = gridStartY + 4
+        local trackHeight = gridHeight - 8
         
-        -- Scroll track
-        love.graphics.setColor(0.5, 0.5, 0.5, 0.5)
-        love.graphics.rectangle("fill", scrollbarX, y + 30, scrollbarWidth, scrollTrackHeight)
+        local thumbHeight = math.max(30, (gridHeight / totalContentHeight) * trackHeight)
+        local thumbY = trackY + (self.wallpaperScroll / self.maxScroll) * (trackHeight - thumbHeight)
         
-        -- Scroll thumb
-        love.graphics.setColor(0.3, 0.3, 0.3)
-        love.graphics.rectangle("fill", scrollbarX, thumbY, scrollbarWidth, thumbHeight)
+        local thumbHovered = self.mouseX >= trackX and self.mouseX <= trackX + scrollbarWidth and 
+                             self.mouseY >= thumbY and self.mouseY <= thumbY + thumbHeight
+                             
+        love.graphics.setColor(0.85, 0.85, 0.85, 0.5)
+        love.graphics.rectangle("fill", trackX, trackY, scrollbarWidth, trackHeight, 6)
+        
+        if self.isDraggingScrollbar then
+            love.graphics.setColor(0.4, 0.4, 0.4)
+        elseif thumbHovered then
+            love.graphics.setColor(0.5, 0.5, 0.5)
+        else
+            love.graphics.setColor(0.7, 0.7, 0.7)
+        end
+        love.graphics.rectangle("fill", trackX, thumbY, scrollbarWidth, thumbHeight, 6)
     end
-    
-    -- Draw current wallpaper info
-    love.graphics.setColor(0, 0, 0)
-    love.graphics.print("Current Wallpaper: " .. self:getCurrentWallpaperName(), x + 10, y + height - 20)
 end
 
-function SettingsApp:drawDisplayTab(x, y, width, height)
-    love.graphics.setColor(0, 0, 0)
-    love.graphics.print("Display Settings", x + 10, y)
+function SettingsApp:drawDisplayTab()
+    local y = self.tabHeight + 20
     
-    -- Current resolution
+    love.graphics.setColor(0.1, 0.1, 0.1)
+    love.graphics.print("Display Settings", 20, y)
+    
     local res = self.resolutions[self.currentResolution]
-    love.graphics.print("Resolution: " .. res[1] .. "x" .. res[2], x + 20, y + 40)
+    love.graphics.print("Resolution: " .. res[1] .. "x" .. res[2], 20, y + 40)
+    self:drawButton("Previous", 20, y + 70, 100, 30)
+    self:drawButton("Next", 130, y + 70, 100, 30)
     
-    -- Resolution buttons
-    love.graphics.setColor(0.4, 0.4, 0.6)
-    love.graphics.rectangle("fill", x + 20, y + 70, 120, 30)
-    love.graphics.setColor(1, 1, 1)
-    love.graphics.print("Previous", x + 40, y + 78)
+    love.graphics.setColor(0.1, 0.1, 0.1)
+    love.graphics.print("Fullscreen: " .. (love.window.getFullscreen() and "Yes" or "No"), 20, y + 130)
+    self:drawButton("Toggle Fullscreen", 20, y + 160, 150, 30)
     
-    love.graphics.setColor(0.4, 0.4, 0.6)
-    love.graphics.rectangle("fill", x + 150, y + 70, 120, 30)
-    love.graphics.setColor(1, 1, 1)
-    love.graphics.print("Next", x + 185, y + 78)
-    
-    -- Fullscreen status
-    love.graphics.setColor(0, 0, 0)
-    love.graphics.print("Fullscreen: " .. (love.window.getFullscreen() and "Yes" or "No"), x + 20, y + 120)
-    
-    -- Fullscreen toggle button
-    love.graphics.setColor(0.4, 0.4, 0.6)
-    love.graphics.rectangle("fill", x + 20, y + 150, 120, 30)
-    love.graphics.setColor(1, 1, 1)
-    love.graphics.print("Toggle Fullscreen", x + 30, y + 158)
-    
-    -- VSync setting
-    love.graphics.setColor(0, 0, 0)
-    love.graphics.print("VSync: " .. (love.window.getVSync() and "Enabled" or "Disabled"), x + 20, y + 200)
-    
-    -- VSync toggle button
-    love.graphics.setColor(0.4, 0.4, 0.6)
-    love.graphics.rectangle("fill", x + 20, y + 230, 120, 30)
-    love.graphics.setColor(1, 1, 1)
-    love.graphics.print("Toggle VSync", x + 40, y + 238)
+    love.graphics.setColor(0.1, 0.1, 0.1)
+    love.graphics.print("VSync: " .. (love.window.getVSync() == 1 and "Enabled" or "Disabled"), 20, y + 220)
+    self:drawButton("Toggle VSync", 20, y + 250, 150, 30)
 end
 
-function SettingsApp:drawSystemTab(x, y, width, height)
-    love.graphics.setColor(0, 0, 0)
-    love.graphics.print("System Information", x + 10, y)
+function SettingsApp:drawSystemTab()
+    local y = self.tabHeight + 20
+    love.graphics.setColor(0.1, 0.1, 0.1)
     
-    -- System info
-    love.graphics.print("OS: " .. love.system.getOS(), x + 20, y + 40)
-    love.graphics.print("Love2D Version: " .. love.getVersion(), x + 20, y + 70)
+    love.graphics.print("System Information", 20, y)
+    love.graphics.print("OS: " .. love.system.getOS(), 20, y + 40)
+    love.graphics.print("Love2D Version: " .. string.format(love.getVersion()), 20, y + 70)
+    love.graphics.print(string.format("FPS: %d", love.timer.getFPS()), 20, y + 100)
+    love.graphics.print(string.format("Memory: %.2f MB", collectgarbage("count") / 1024), 20, y + 130)
     
-    -- Performance info
-    love.graphics.print(string.format("FPS: %.0f", love.timer.getFPS()), x + 20, y + 100)
-    love.graphics.print(string.format("Memory: %.2f MB", collectgarbage("count") / 1024), x + 20, y + 130)
-    
-    -- GPU info
     local stats = love.graphics.getStats()
-    love.graphics.print(string.format("Draw Calls: %d", stats.drawcalls), x + 20, y + 160)
-    love.graphics.print(string.format("Texture Memory: %.2f MB", stats.texturememory / 1024 / 1024), x + 20, y + 190)
+    love.graphics.print(string.format("Draw Calls: %d", stats.drawcalls), 20, y + 160)
+    love.graphics.print(string.format("Texture Memory: %.2f MB", stats.texturememory / 1024 / 1024), 20, y + 190)
     
-    -- Garbage collection buttons
-    love.graphics.setColor(0.4, 0.4, 0.6)
-    love.graphics.rectangle("fill", x + 20, y + 230, 120, 30)
-    love.graphics.setColor(1, 1, 1)
-    love.graphics.print("Run GC", x + 50, y + 238)
-    
-    love.graphics.setColor(0.4, 0.4, 0.6)
-    love.graphics.rectangle("fill", x + 150, y + 230, 120, 30)
-    love.graphics.setColor(1, 1, 1)
-    love.graphics.print("Reset Stats", x + 165, y + 238)
+    self:drawButton("Run Garbage Collector", 20, y + 230, 200, 30)
 end
 
-function SettingsApp:getCurrentWallpaperName()
-    for _, wallpaper in ipairs(self.availableWallpapers) do
-        if wallpaper.type == self.currentWallpaper.type then
-            if wallpaper.type == "color" and self:colorsEqual(wallpaper.color, self.currentWallpaper.color) then
-                return wallpaper.name
-            elseif wallpaper.type == "gradient" and 
-                   self:colorsEqual(wallpaper.gradient.top, self.currentWallpaper.gradient.top) and
-                   self:colorsEqual(wallpaper.gradient.bottom, self.currentWallpaper.gradient.bottom) then
-                return wallpaper.name
-            elseif wallpaper.type == "image" and wallpaper.filename == self.currentWallpaper.filename then
-                return wallpaper.name
-            end
+function SettingsApp:drawButton(text, x, y, w, h)
+    local isHovered = self.mouseX >= x and self.mouseX <= x + w and self.mouseY >= y and self.mouseY <= y + h
+    
+    if isHovered then
+        if self.mousePressed then
+            love.graphics.setColor(0.15, 0.35, 0.7)
+        else
+            love.graphics.setColor(0.3, 0.55, 0.9)
         end
+    else
+        love.graphics.setColor(0.2, 0.45, 0.8)
     end
-    return "Custom"
+    
+    love.graphics.rectangle("fill", x, y, w, h, 4)
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.printf(text, x, y + (h - 14) / 2, w, "center")
 end
 
-function SettingsApp:colorsEqual(c1, c2)
-    return c1[1] == c2[1] and c1[2] == c2[2] and c1[3] == c2[3]
-end
+-- ================= Interaction Logic =================
 
 function SettingsApp:mousepressed(mx, my, button, wx, wy)
     self.mousePressed = true
     
-    -- Handle tab clicks
+    -- Tab switching
     if my <= self.tabHeight then
-        for i = 1, #self.tabs do
-            if mx >= (i-1) * self.tabWidth and mx <= i * self.tabWidth then
-                self.selectedTab = i
-                return
-            end
+        local tabWidth = self.width / #self.tabs
+        local clickedTab = math.floor(mx / tabWidth) + 1
+        if clickedTab >= 1 and clickedTab <= #self.tabs then
+            self.selectedTab = clickedTab
         end
+        return
     end
     
-    -- Handle tab-specific clicks
+    -- Route to active tab logic
     if self.selectedTab == 1 then
-        self:handleWallpaperTabClick(mx, my, wx, wy)
+        self:handleWallpaperTabClick(mx, my)
     elseif self.selectedTab == 2 then
-        self:handleDisplayTabClick(mx, my, wx, wy)
+        self:handleDisplayTabClick(mx, my)
     elseif self.selectedTab == 3 then
-        self:handleSystemTabClick(mx, my, wx, wy)
+        self:handleSystemTabClick(mx, my)
     end
 end
 
 function SettingsApp:mousemoved(mx, my, dx, dy)
     self.mouseX = mx
     self.mouseY = my
+    
+    -- Handle Scrollbar Dragging
+    if self.selectedTab == 1 and self.isDraggingScrollbar then
+        local gridStartY = self.tabHeight + 45
+        local gridHeight = (self.height - self.tabHeight) - 45
+        local trackHeight = gridHeight - 8
+        
+        local rows = math.ceil(#self.availableWallpapers / self.wallpaperGridColumns)
+        local totalContentHeight = rows * (self.wallpaperPreviewSize + 50)
+        local thumbHeight = math.max(30, (gridHeight / totalContentHeight) * trackHeight)
+        
+        local currentThumbY = my - self.scrollDragOffset
+        local normalizedY = currentThumbY - (gridStartY + 4)
+        
+        local scrollFraction = normalizedY / (trackHeight - thumbHeight)
+        self.wallpaperScroll = scrollFraction * self.maxScroll
+        self.wallpaperScroll = math.max(0, math.min(self.wallpaperScroll, self.maxScroll))
+    end
 end
 
 function SettingsApp:mousereleased(mx, my, button)
     self.mousePressed = false
+    self.isDraggingScrollbar = false
 end
 
-function SettingsApp:handleWallpaperTabClick(mx, my, wx, wy)
-    local padding = 10
-    local availableWidth = (self.width or 500) - 20
+function SettingsApp:wheelmoved(x, y)
+    if self.selectedTab == 1 then
+        self.wallpaperScroll = self.wallpaperScroll - y * 40
+        self.wallpaperScroll = math.max(0, math.min(self.wallpaperScroll, self.maxScroll))
+    end
+end
+
+function SettingsApp:handleWallpaperTabClick(mx, my)
+    local gridStartY = self.tabHeight + 45
+    local gridHeight = (self.height - self.tabHeight) - 45
+    
+    -- Scrollbar Click Detection
+    if self.maxScroll > 0 then
+        local scrollbarWidth = 12
+        local trackX = self.width - scrollbarWidth - 4
+        if mx >= trackX and mx <= trackX + scrollbarWidth and my >= gridStartY then
+            local trackHeight = gridHeight - 8
+            local rows = math.ceil(#self.availableWallpapers / self.wallpaperGridColumns)
+            local totalContentHeight = rows * (self.wallpaperPreviewSize + 50)
+            local thumbHeight = math.max(30, (gridHeight / totalContentHeight) * trackHeight)
+            local thumbY = (gridStartY + 4) + (self.wallpaperScroll / self.maxScroll) * (trackHeight - thumbHeight)
+            
+            if my >= thumbY and my <= thumbY + thumbHeight then
+                self.isDraggingScrollbar = true
+                self.scrollDragOffset = my - thumbY
+                return
+            else
+                -- Clicked track outside thumb - jump scroll
+                if my < thumbY then
+                    self.wallpaperScroll = math.max(0, self.wallpaperScroll - gridHeight)
+                else
+                    self.wallpaperScroll = math.min(self.maxScroll, self.wallpaperScroll + gridHeight)
+                end
+                return
+            end
+        end
+    end
+    
+    -- Wallpaper Grid Click Detection
+    if my < gridStartY then return end 
+    
+    local padding = 15
     local cols = self.wallpaperGridColumns
+    local availableWidth = self.width - 12 - (padding * 2)
     local itemWidth = (availableWidth - (cols - 1) * padding) / cols
-    local itemHeight = self.wallpaperPreviewSize + 30
+    local itemHeight = self.wallpaperPreviewSize + 35
     
     for i, wallpaper in ipairs(self.availableWallpapers) do
-        local col = (i-1) % cols
-        local row = math.floor((i-1) / cols)
+        local col = (i - 1) % cols
+        local row = math.floor((i - 1) / cols)
         
-        local itemX = 10 + col * (itemWidth + padding)
-        local itemY = 70 + row * (itemHeight + padding) - self.wallpaperScroll
+        local itemX = padding + col * (itemWidth + padding)
+        local itemY = gridStartY + row * (itemHeight + padding) - self.wallpaperScroll
         
-        if mx >= itemX and mx <= itemX + itemWidth and
-           my >= itemY and my <= itemY + itemHeight then
+        if mx >= itemX and mx <= itemX + itemWidth and my >= itemY and my <= itemY + itemHeight then
+            -- Deep copy selection to prevent reference sharing
             self.currentWallpaper = {
                 type = wallpaper.type,
                 color = wallpaper.color,
@@ -343,126 +409,76 @@ function SettingsApp:handleWallpaperTabClick(mx, my, wx, wy)
     end
 end
 
-function SettingsApp:handleDisplayTabClick(mx, my, wx, wy)
-    -- Previous resolution button
-    if mx >= 20 and mx <= 140 and my >= 70 and my <= 100 then
+function SettingsApp:handleDisplayTabClick(mx, my)
+    local y = self.tabHeight + 20
+    
+    if self:isButtonClicked(mx, my, 20, y + 70, 100, 30) then
         self.currentResolution = self.currentResolution - 1
-        if self.currentResolution < 1 then
-            self.currentResolution = #self.resolutions
-        end
+        if self.currentResolution < 1 then self.currentResolution = #self.resolutions end
         local res = self.resolutions[self.currentResolution]
         love.window.setMode(res[1], res[2])
     end
     
-    -- Next resolution button
-    if mx >= 150 and mx <= 270 and my >= 70 and my <= 100 then
+    if self:isButtonClicked(mx, my, 130, y + 70, 100, 30) then
         self.currentResolution = self.currentResolution + 1
-        if self.currentResolution > #self.resolutions then
-            self.currentResolution = 1
-        end
+        if self.currentResolution > #self.resolutions then self.currentResolution = 1 end
         local res = self.resolutions[self.currentResolution]
         love.window.setMode(res[1], res[2])
     end
     
-    -- Fullscreen toggle button
-    if mx >= 20 and mx <= 140 and my >= 150 and my <= 180 then
+    if self:isButtonClicked(mx, my, 20, y + 160, 150, 30) then
         love.window.setFullscreen(not love.window.getFullscreen())
     end
     
-    -- VSync toggle button
-    if mx >= 20 and mx <= 140 and my >= 230 and my <= 260 then
+    if self:isButtonClicked(mx, my, 20, y + 250, 150, 30) then
         love.window.setVSync(love.window.getVSync() == 1 and 0 or 1)
     end
 end
 
-function SettingsApp:handleSystemTabClick(mx, my, wx, wy)
-    -- Run GC button
-    if mx >= 20 and mx <= 140 and my >= 230 and my <= 260 then
+function SettingsApp:handleSystemTabClick(mx, my)
+    local y = self.tabHeight + 20
+    if self:isButtonClicked(mx, my, 20, y + 230, 200, 30) then
         collectgarbage("collect")
     end
-    
-    -- Reset Stats button (placeholder - would need custom implementation)
-    if mx >= 150 and mx <= 270 and my >= 230 and my <= 260 then
-        -- This would reset custom performance tracking if implemented
-    end
 end
 
-function SettingsApp:wheelmoved(x, y)
-    if self.selectedTab == 1 then
-        self.wallpaperScroll = self.wallpaperScroll - y * 20
-        local totalContentHeight = math.ceil(#self.availableWallpapers / self.wallpaperGridColumns) * (self.wallpaperPreviewSize + 40)
-        local windowHeight = self.height or 300
-        local maxScroll = math.max(0, totalContentHeight - windowHeight + 60)
-        self.wallpaperScroll = math.max(0, math.min(self.wallpaperScroll, maxScroll))
-    end
+-- ================= Utilities =================
+
+function SettingsApp:isButtonClicked(mx, my, bx, by, bw, bh)
+    return mx >= bx and mx <= bx + bw and my >= by and my <= by + bh
 end
 
-function SettingsApp:keypressed(key)
-    -- Tab navigation with keyboard
-    if key == "tab" then
-        self.selectedTab = self.selectedTab + 1
-        if self.selectedTab > #self.tabs then
-            self.selectedTab = 1
-        end
-    elseif key == "left" then
-        if self.selectedTab > 1 then
-            self.selectedTab = self.selectedTab - 1
-        end
-    elseif key == "right" then
-        if self.selectedTab < #self.tabs then
-            self.selectedTab = self.selectedTab + 1
-        end
-    end
+function SettingsApp:isCurrentWallpaper(wp)
+    if wp.type ~= self.currentWallpaper.type then return false end
     
-    -- Wallpaper tab shortcuts
-    if self.selectedTab == 1 then
-        if key == "up" then
-            self.wallpaperScroll = math.max(0, self.wallpaperScroll - 50)
-        elseif key == "down" then
-            local totalContentHeight = math.ceil(#self.availableWallpapers / self.wallpaperGridColumns) * (self.wallpaperPreviewSize + 40)
-            local maxScroll = math.max(0, totalContentHeight - (love.graphics.getHeight() - 150))
-            self.wallpaperScroll = math.min(maxScroll, self.wallpaperScroll + 50)
-        elseif key == "home" then
-            self.wallpaperScroll = 0
-        elseif key == "end" then
-            local totalContentHeight = math.ceil(#self.availableWallpapers / self.wallpaperGridColumns) * (self.wallpaperPreviewSize + 40)
-            local maxScroll = math.max(0, totalContentHeight - (love.graphics.getHeight() - 150))
-            self.wallpaperScroll = maxScroll
-        end
+    if wp.type == "color" then
+        return self:colorsEqual(wp.color, self.currentWallpaper.color)
+    elseif wp.type == "gradient" then
+        return self:colorsEqual(wp.gradient.top, self.currentWallpaper.gradient.top) and
+               self:colorsEqual(wp.gradient.bottom, self.currentWallpaper.gradient.bottom)
+    elseif wp.type == "image" then
+        return wp.filename == self.currentWallpaper.filename
     end
-    
-    -- Display tab shortcuts
-    if self.selectedTab == 2 then
-        if key == "f" then
-            love.window.setFullscreen(not love.window.getFullscreen())
-        elseif key == "v" then
-            love.window.setVSync(love.window.getVSync() == 1 and 0 or 1)
-        end
-    end
-    
-    -- System tab shortcuts
-    if self.selectedTab == 3 then
-        if key == "g" then
-            collectgarbage("collect")
-        end
-    end
-    
-    -- Escape to close settings (this would need to be handled by main.lua)
-    if key == "escape" then
-        -- This would need to communicate with main.lua to close the window
-    end
+    return false
 end
 
-function SettingsApp:textinput(text)
-    -- Handle text input if needed for any settings
+function SettingsApp:colorsEqual(c1, c2)
+    if not c1 or not c2 then return false end
+    return c1[1] == c2[1] and c1[2] == c2[2] and c1[3] == c2[3]
 end
 
-function SettingsApp:update(dt)
-    -- Update any animations or real-time info
+function SettingsApp:getCurrentWallpaperName()
+    for _, wallpaper in ipairs(self.availableWallpapers) do
+        if self:isCurrentWallpaper(wallpaper) then
+            return wallpaper.name
+        end
+    end
+    return "Custom"
 end
 
-function SettingsApp:resize(w, h)
-    -- Handle window resize if needed
-end
+function SettingsApp:update(dt) end
+function SettingsApp:keypressed(key) end
+function SettingsApp:textinput(text) end
+function SettingsApp:resize(w, h) end
 
 return SettingsApp
