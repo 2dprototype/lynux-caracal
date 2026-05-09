@@ -845,8 +845,8 @@ function drawDesktop()
             love.graphics.setFont(font)
             local titleBarHeight = 25
             
-            love.graphics.setColor(0.9, 0.9, 0.95)
-            love.graphics.rectangle("fill", window.x, window.y, window.width, window.height)
+            -- love.graphics.setColor(0.9, 0.9, 0.95)
+            -- love.graphics.rectangle("fill", window.x, window.y, window.width, window.height)
             
             if window == focusedWindow then
                 love.graphics.setColor(1, 1, 1, 1)

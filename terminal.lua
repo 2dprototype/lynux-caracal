@@ -69,13 +69,13 @@ function Terminal.new()
     self.windowWidth, self.windowHeight = 0, 0
     self.title = "Terminal"
     self.colors = {
-        background = {0.05, 0.05, 0.1},
-        text = {0.8, 1, 0.8},
-        prompt = {0.2, 0.8, 1},
-        error = {1, 0.3, 0.3},
-        success = {0.3, 1, 0.3},
-        directory = {1, 0.8, 0.2},
-        file = {0.8, 0.8, 0.8}
+        background = {0.05, 0.05, 0.05, 0.95},
+        text = {1, 1, 1},
+        prompt = {0, 0.47, 0.84},
+        error = {0.9, 0.1, 0.1},
+        success = {0.1, 0.8, 0.1},
+        directory = {0, 0.6, 0.9},
+        file = {0.9, 0.9, 0.9}
     }
     self.history = {}
     self.historyIndex = 0
@@ -176,29 +176,45 @@ function Terminal:draw(x, y, width, height)
         love.graphics.rectangle("fill", cursorX, inputY, 8, self.font:getHeight())
     end
 
-    -- Draw scrollbar if needed
+    -- Draw professional scrollbar if needed
     if totalWrapped > visibleLines then
-        local scrollbarWidth = 12
-        local scrollbarX = width - scrollbarWidth
-        local scrollbarHeight = contentHeight
-        love.graphics.setColor(0.2, 0.2, 0.3, 0.8)
-        love.graphics.rectangle("fill", scrollbarX, contentY, scrollbarWidth, scrollbarHeight)
+        local scrollbarWidth = 6
+        local scrollbarPadding = 4
+        local scrollbarX = width - scrollbarWidth - scrollbarPadding
+        local scrollbarHeight = height - 10
+        local contentY = 5
+        
+        -- Subtle track
+        love.graphics.setColor(0.5, 0.5, 0.5, 0.1)
+        love.graphics.rectangle("fill", scrollbarX, contentY, scrollbarWidth, scrollbarHeight, 3, 3)
 
-        local thumbHeight = math.max(20, (visibleLines / totalWrapped) * scrollbarHeight)
+        local thumbHeight = math.max(30, (visibleLines / totalWrapped) * scrollbarHeight)
         local maxThumbTravel = scrollbarHeight - thumbHeight
 
         -- thumb position: scrollOffset=0 -> thumb at bottom; scrollOffset=maxScroll -> thumb at top
         local thumbY
-        if maxScroll == 0 then
+        if maxScroll <= 0 then
             thumbY = contentY + maxThumbTravel
         else
             thumbY = contentY + ((maxScroll - self.scrollOffset) / maxScroll) * maxThumbTravel
         end
 
-        love.graphics.setColor(0.5, 0.7, 1, 0.8)
-        love.graphics.rectangle("fill", scrollbarX, thumbY, scrollbarWidth, thumbHeight)
-        love.graphics.setColor(0.3, 0.4, 0.6)
-        love.graphics.rectangle("line", scrollbarX, contentY, scrollbarWidth, scrollbarHeight)
+        -- Professional thumb color
+        if self.scrollBarDragging then
+            love.graphics.setColor(0.6, 0.6, 0.6, 0.8)
+        else
+            -- Check for hover
+            local mx, my = love.mouse.getPosition()
+            local relX, relY = mx - self.windowX, my - self.windowY
+            if relX >= scrollbarX - 2 and relX <= scrollbarX + scrollbarWidth + 2 and
+               relY >= thumbY and relY <= thumbY + thumbHeight then
+                love.graphics.setColor(0.5, 0.5, 0.5, 0.7)
+            else
+                love.graphics.setColor(0.4, 0.4, 0.4, 0.5)
+            end
+        end
+        
+        love.graphics.rectangle("fill", scrollbarX, thumbY, scrollbarWidth, thumbHeight, 3, 3)
     end
 
     love.graphics.pop()
@@ -310,10 +326,10 @@ function Terminal:mousepressed(mx, my, button, wx, wy)
         local visibleLines = self.maxVisibleLines
         
         if totalWrapped > visibleLines then
-            local scrollbarWidth = 12
+            local scrollbarWidth = 10 -- Larger hit area
             local scrollbarX = self.windowWidth - scrollbarWidth
             local contentY = 5
-            local contentHeight = self.windowHeight - contentY - 25
+            local contentHeight = self.windowHeight - 10
             
             if relX >= scrollbarX and relX <= scrollbarX + scrollbarWidth and
                relY >= contentY and relY <= contentY + contentHeight then

@@ -60,14 +60,14 @@ local function parseColor(colorStr)
         return {r, g, b}
     end   
     
-    -- -- Check if it's a hex color (#RRGGBBAA)
-    -- if colorStr:match("^#%x%x%x%x%x%x%x%x$") then
-        -- local r = tonumber(colorStr:sub(2, 3), 16) / 255
-        -- local g = tonumber(colorStr:sub(4, 5), 16) / 255
-        -- local b = tonumber(colorStr:sub(6, 7), 16) / 255
-        -- local a = tonumber(colorStr:sub(8, 9), 16) / 255
-        -- return {r, g, b, a}
-    -- end
+    -- Check if it's a hex color (#RRGGBBAA)
+    if colorStr:match("^#%x%x%x%x%x%x%x%x$") then
+        local r = tonumber(colorStr:sub(2, 3), 16) / 255
+        local g = tonumber(colorStr:sub(4, 5), 16) / 255
+        local b = tonumber(colorStr:sub(6, 7), 16) / 255
+        local a = tonumber(colorStr:sub(8, 9), 16) / 255
+        return {r, g, b, a}
+    end
     
     -- Check if it's RGB values (comma separated)
     local r, g, b = colorStr:match("^(%d+%.?%d*),(%d+%.?%d*),(%d+%.?%d*)$")
@@ -345,6 +345,21 @@ local inlineSubstitutions = {
                     background = {0.1, 0.08, 0, 0.6},
                     text = {1, 0.8, 0.3},
                     prompt = {1, 0.6, 0}
+                },
+                windows = {
+                    background = {0.05, 0.05, 0.05, 0.95},
+                    text = {1, 1, 1},
+                    prompt = {0, 0.47, 0.84}, -- Windows 10 Blue
+                    error = {0.9, 0.1, 0.1},
+                    success = {0.1, 0.8, 0.1},
+                    directory = {0, 0.6, 0.9},
+                    file = {0.9, 0.9, 0.9}
+                },
+                powershell = {
+                    background = {0.01, 0.14, 0.33, 0.95},
+                    text = {1, 1, 1},
+                    prompt = {1, 1, 1},
+                    directory = {1, 1, 0}
                 }
             }
             
@@ -366,7 +381,7 @@ local inlineSubstitutions = {
         
         local color = parseColor(colorStr)
         if not color then
-            return "Invalid color. Use: color name, #RRGGBB, or r,g,b values"
+            return "Invalid color. Use: color name, #RRGGBB, #RRGGBBAA, or r,g,b values"
         end
         
         local elements = {
