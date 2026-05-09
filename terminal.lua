@@ -326,28 +326,40 @@ function Terminal:mousepressed(mx, my, button, wx, wy)
         local visibleLines = self.maxVisibleLines
         
         if totalWrapped > visibleLines then
-            local scrollbarWidth = 10 -- Larger hit area
-            local scrollbarX = self.windowWidth - scrollbarWidth
+            local scrollbarWidth = 10
+            local scrollbarX = self.windowWidth - scrollbarWidth - 4
             local contentY = 5
             local contentHeight = self.windowHeight - 10
             
-            if relX >= scrollbarX and relX <= scrollbarX + scrollbarWidth and
+            local thumbHeight = math.max(30, (visibleLines / totalWrapped) * contentHeight)
+            local maxThumbTravel = contentHeight - thumbHeight
+            local maxScroll = math.max(0, totalWrapped - visibleLines)
+            
+            -- thumb position: scrollOffset=0 -> thumb at bottom; scrollOffset=maxScroll -> thumb at top
+            local thumbY
+            if maxScroll <= 0 then
+                thumbY = contentY + maxThumbTravel
+            else
+                thumbY = contentY + ((maxScroll - self.scrollOffset) / maxScroll) * maxThumbTravel
+            end
+            
+            if relX >= scrollbarX - 10 and relX <= self.windowWidth and
                relY >= contentY and relY <= contentY + contentHeight then
-               
+                
                 self.scrollBarDragging = true
-                self.scrollBarDragStartY = relY
-                self.scrollBarDragStartOffset = self.scrollOffset
-                
-                -- Calculate click position on scrollbar and jump to that position
-                local maxScroll = math.max(0, totalWrapped - visibleLines)
-                local thumbHeight = math.max(20, (visibleLines / totalWrapped) * contentHeight)
-                local maxThumbTravel = contentHeight - thumbHeight
-                local clickRelativeY = relY - contentY
-                
-                -- Convert click position to scroll offset (FIXED: 0=bottom, maxScroll=top)
-                self.scrollOffset = math.floor((1 - clickRelativeY / contentHeight) * maxScroll)
-                self.scrollOffset = math.max(0, math.min(self.scrollOffset, maxScroll))
                 self.autoScroll = false
+                
+                -- If clicking on the thumb, start dragging from that relative point
+                if relY >= thumbY and relY <= thumbY + thumbHeight then
+                    self.scrollBarDragStartY = relY
+                    self.scrollBarDragStartOffset = self.scrollOffset
+                else
+                    -- Clicking on the track: jump to that position
+                    local clickRatio = 1 - ((relY - contentY - thumbHeight/2) / maxThumbTravel)
+                    self.scrollOffset = math.floor(math.max(0, math.min(clickRatio * maxScroll, maxScroll)))
+                    self.scrollBarDragStartY = relY
+                    self.scrollBarDragStartOffset = self.scrollOffset
+                end
                 
                 return true
             end
@@ -366,17 +378,21 @@ function Terminal:mousemoved(mx, my, dx, dy, wx, wy)
         local maxScroll = math.max(0, totalWrapped - visibleLines)
         
         local contentY = 5
-        local contentHeight = self.windowHeight - contentY - 25
+        local contentHeight = self.windowHeight - 10
+        local thumbHeight = math.max(30, (visibleLines / totalWrapped) * contentHeight)
+        local maxThumbTravel = contentHeight - thumbHeight
         
-        local deltaY = relY - self.scrollBarDragStartY
-        local scrollRatio = deltaY / contentHeight
-        
-        -- Update scroll offset (FIXED: inverted relationship)
-        self.scrollOffset = math.max(0, math.min(
-            self.scrollBarDragStartOffset - (scrollRatio * maxScroll),
-            maxScroll
-        ))
-        self.autoScroll = false
+        if maxThumbTravel > 0 then
+            local deltaY = relY - self.scrollBarDragStartY
+            local scrollDelta = (deltaY / maxThumbTravel) * maxScroll
+            
+            -- Dragging down (positive deltaY) should move thumb down, which means scrollOffset DECREASES (towards 0/bottom)
+            self.scrollOffset = math.max(0, math.min(
+                self.scrollBarDragStartOffset - scrollDelta,
+                maxScroll
+            ))
+        end
+        self.autoScroll = (self.scrollOffset <= 0)
     end
 end
 

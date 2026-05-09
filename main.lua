@@ -513,6 +513,15 @@ local function drawPropertiesWindow()
         for _ in pairs(pw.node.children or {}) do count = count + 1 end
         love.graphics.print("Contains: " .. count .. " items", pw.x + 20, cy)
     end
+    cy = cy + 25
+    
+    local created = pw.node.created and os.date("%d/%m/%Y %H:%M", pw.node.created) or "Unknown"
+    love.graphics.print("Created: " .. created, pw.x + 20, cy)
+    cy = cy + 25
+    
+    local modified = pw.node.modified and os.date("%d/%m/%Y %H:%M", pw.node.modified) or "Unknown"
+    love.graphics.print("Modified: " .. modified, pw.x + 20, cy)
+    cy = cy + 25
     
     -- Apply button
     cy = pw.y + pw.h - 50
@@ -653,42 +662,53 @@ function drawDesktop()
     
     drawDesktopHome()
     
-    love.graphics.setColor(0.1, 0.1, 0.12, 0.95)
+    -- Taskbar Background (Win10 Dark)
+    love.graphics.setColor(0.05, 0.05, 0.05, 0.98)
     love.graphics.rectangle("fill", 0, love.graphics.getHeight() - bottomBarHeight, love.graphics.getWidth(), bottomBarHeight)
     
     local startBtnWidth = 48
-    if love.mouse.getX() >= 0 and love.mouse.getX() <= startBtnWidth and love.mouse.getY() >= love.graphics.getHeight() - bottomBarHeight then
-        love.graphics.setColor(0.2, 0.2, 0.25, 0.95)
-    else
-        love.graphics.setColor(0.15, 0.15, 0.18, 0.95)
+    local isStartHovered = love.mouse.getX() >= 0 and love.mouse.getX() <= startBtnWidth and love.mouse.getY() >= love.graphics.getHeight() - bottomBarHeight
+    
+    if startMenuOpen then
+        love.graphics.setColor(1, 1, 1, 0.15)
+        love.graphics.rectangle("fill", 0, love.graphics.getHeight() - bottomBarHeight, startBtnWidth, bottomBarHeight)
+    elseif isStartHovered then
+        love.graphics.setColor(1, 1, 1, 0.1)
+        love.graphics.rectangle("fill", 0, love.graphics.getHeight() - bottomBarHeight, startBtnWidth, bottomBarHeight)
     end
-    love.graphics.rectangle("fill", 0, love.graphics.getHeight() - bottomBarHeight, startBtnWidth, bottomBarHeight)
+    
+    -- Start Logo (Simplified Win10)
     love.graphics.setColor(1, 1, 1)
+    if isStartHovered or startMenuOpen then
+        love.graphics.setColor(0, 0.47, 0.84) -- Win10 Blue on hover
+    end
     
     local cx, cy = startBtnWidth / 2, love.graphics.getHeight() - bottomBarHeight + bottomBarHeight / 2
-    love.graphics.rectangle("fill", cx - 8, cy - 8, 7, 7)
-    love.graphics.rectangle("fill", cx + 1, cy - 8, 7, 7)
-    love.graphics.rectangle("fill", cx - 8, cy + 1, 7, 7)
-    love.graphics.rectangle("fill", cx + 1, cy + 1, 7, 7)
+    local s = 6
+    local g = 2
+    love.graphics.rectangle("fill", cx - s - g/2, cy - s - g/2, s, s)
+    love.graphics.rectangle("fill", cx + g/2, cy - s - g/2, s, s)
+    love.graphics.rectangle("fill", cx - s - g/2, cy + g/2, s, s)
+    love.graphics.rectangle("fill", cx + g/2, cy + g/2, s, s)
     
-    local searchBarWidth = 150
-    local searchBarX = startBtnWidth
-    love.graphics.setColor(0.9, 0.9, 0.9, 0.1)
-    local isSearchHovered = love.mouse.getX() >= searchBarX and love.mouse.getX() <= searchBarX + searchBarWidth and love.mouse.getY() >= love.graphics.getHeight() - bottomBarHeight
-    if isSearchHovered then
-        love.graphics.setColor(0.9, 0.9, 0.9, 0.2)
-    end
-    love.graphics.rectangle("fill", searchBarX, love.graphics.getHeight() - bottomBarHeight, searchBarWidth, bottomBarHeight)
-    love.graphics.setColor(1, 1, 1, 0.7)
-    love.graphics.print("Type here to search", searchBarX + 15, love.graphics.getHeight() - bottomBarHeight + (bottomBarHeight - 13)/2)
-    
+    -- Taskbar Clock Area
     love.graphics.setColor(0.9, 0.9, 0.9)
-    local currentTime = os.date("%H:%M")
-    local currentDate = os.date("%Y-%m-%d")
+    local currentTime = os.date("%I:%M %p")
+    local currentDate = os.date("%d/%m/%Y")
     local timeWidth = font:getWidth(currentTime)
     local dateWidth = font:getWidth(currentDate)
     local maxTextWidth = math.max(timeWidth, dateWidth)
-    local dateTimeX = love.graphics.getWidth() - maxTextWidth - 10
+    local dateTimeX = love.graphics.getWidth() - maxTextWidth - 15
+    
+    -- Subtle hover for tray area
+    if love.mouse.getX() >= dateTimeX - 5 and love.mouse.getY() >= love.graphics.getHeight() - bottomBarHeight then
+        love.graphics.setColor(1, 1, 1, 0.1)
+        love.graphics.rectangle("fill", dateTimeX - 5, love.graphics.getHeight() - bottomBarHeight, maxTextWidth + 20, bottomBarHeight)
+        love.graphics.setColor(1, 1, 1)
+    else
+        love.graphics.setColor(0.9, 0.9, 0.9)
+    end
+    
     love.graphics.print(currentTime, dateTimeX + (maxTextWidth - timeWidth) / 2, love.graphics.getHeight() - bottomBarHeight + 4)
     love.graphics.print(currentDate, dateTimeX + (maxTextWidth - dateWidth) / 2, love.graphics.getHeight() - bottomBarHeight + 20)
     
@@ -1081,7 +1101,7 @@ function love.load()
     iconWidth = 40
     iconHeight = 40
     iconSpacing = 8
-    local startX = 48 + 150 + iconSpacing
+    local startX = 48 + iconSpacing
     for i, app in ipairs(apps) do
         app.x = startX
         app.y = love.graphics.getHeight() - bottomBarHeight + (bottomBarHeight - iconHeight) / 2
@@ -1097,7 +1117,7 @@ end
 
 function updateVisibleApps()
     local availableWidth = love.graphics.getWidth() - 120 
-    local currentX = 48 + 150 + 10  
+    local currentX = 48 + 10  
     visibleApps = {}
     hiddenApps = {}
     
@@ -1214,10 +1234,6 @@ function love.mousepressed(x, y, button)
         if x >= 0 and x <= 48 and y >= love.graphics.getHeight() - bottomBarHeight then
             startMenuOpen = not startMenuOpen
             ellipsisMenuOpen = false
-            return
-        end
-        
-        if x >= 48 and x <= 48 + 150 and y >= love.graphics.getHeight() - bottomBarHeight then
             return
         end
         

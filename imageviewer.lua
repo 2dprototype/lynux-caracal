@@ -93,6 +93,13 @@ function ImageViewer:draw(x, y, width, height)
     
     if not self.image then return end
     
+    -- Capture dimensions and reset view on first draw to ensure fit-to-screen
+    if self.windowWidth <= 1 then
+        self.windowWidth = width
+        self.windowHeight = height
+        self:resetView()
+    end
+    
     local imgW, imgH = self.image:getDimensions()
     
     -- Safe view dimensions (prevent negative numbers)
@@ -230,10 +237,15 @@ function ImageViewer:mousemoved(mx, my)
     if self.dragging then
         local dx = mx - self.lastX
         local dy = my - self.lastY
+        
+        -- Update target offsets directly
         self.targetOffsetX = self.targetOffsetX + dx
         self.targetOffsetY = self.targetOffsetY + dy
-        self.offsetX = self.targetOffsetX -- Instant update for mouse drag feeling
+        
+        -- Sync current offsets for immediate feedback
+        self.offsetX = self.targetOffsetX
         self.offsetY = self.targetOffsetY
+        
         self.lastX, self.lastY = mx, my
         return true 
     end

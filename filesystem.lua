@@ -8,7 +8,12 @@ local sharedFS = nil
 
 -- Recursively "sanitize" a node so it can be saved (remove parent pointers, etc.)
 function filesystem.sanitize(node)
-    local t = { name = node.name, type = node.type }
+    local t = { 
+        name = node.name, 
+        type = node.type,
+        created = node.created,
+        modified = node.modified
+    }
     if node.type == "directory" then
         t.children = {}
         for k, child in pairs(node.children or {}) do
@@ -107,7 +112,9 @@ function filesystem.createDirectory(parent, name)
         name = name,
         type = "directory",
         parent = parent,
-        children = {}
+        children = {},
+        created = os.time(),
+        modified = os.time()
     }
     
     filesystem.save(filesystem.getFS())
@@ -135,7 +142,9 @@ function filesystem.createFile(parent, name, content)
         name = name,
         type = "file",
         parent = parent,
-        content = content
+        content = content,
+        created = os.time(),
+        modified = os.time()
     }
     
     filesystem.save(filesystem.getFS())
