@@ -179,6 +179,31 @@ function FilesApp:mousepressed(x, y, button)
            self.lastClickTime = currentTime
            self.lastClickIndex = fileIndex
        end
+   elseif button == 2 then
+       local listYStart = 30
+       local lineHeight = 20
+       local height = self.lastHeight or 300
+       local availableHeight = height - 30
+       local visibleItems = math.floor(availableHeight / lineHeight)
+       
+       -- Calculate the relative index
+       local visibleIndex = math.floor((y - listYStart) / lineHeight) + 1
+       local fileIndex = self.scrollOffset + visibleIndex
+       
+       if fileIndex >= 1 and fileIndex <= #self.fileNames then
+           local entryName = self.fileNames[fileIndex]
+           if entryName ~= ".." then
+               local node = self.cwd.children[entryName]
+               if _G.showFileContextMenu then
+                   _G.showFileContextMenu(node, self.cwd)
+               end
+           end
+       else
+           -- Right click on empty area
+           if _G.showFolderContextMenu then
+               _G.showFolderContextMenu(self.cwd)
+           end
+       end
    end
 end
 
@@ -221,9 +246,8 @@ function FilesApp:keypressed(key)
    elseif key == "down" then
 	  local listYStart = 30
 	  local lineHeight = 20
-	  local availableHeight = 280 - listYStart
+	  local availableHeight = (self.lastHeight or 300) - listYStart
 	  local visibleItems = math.floor(availableHeight / lineHeight)
-	  -- print(visibleIndex, self.selected)
       if self.selected < #self.fileNames then
          self.selected = self.selected + 1
          if self.selected > self.scrollOffset + visibleItems then
@@ -303,13 +327,13 @@ function FilesApp:wheelmoved(x, y)
    local totalItems = #self.fileNames
    local listYStart = 30
    local lineHeight = 20
-   local availableHeight = 280 - listYStart
+   local availableHeight = (self.lastHeight or 300) - listYStart
    local visibleItems = math.floor(availableHeight / lineHeight)
    local maxScroll = math.max(totalItems - visibleItems, 0)
    if y > 0 then
-      self.scrollOffset = math.min(self.scrollOffset + 1, maxScroll)
-   elseif y < 0 then
       self.scrollOffset = math.max(self.scrollOffset - 1, 0)
+   elseif y < 0 then
+      self.scrollOffset = math.min(self.scrollOffset + 1, maxScroll)
    end
 end
 

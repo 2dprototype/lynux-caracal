@@ -40,6 +40,15 @@ local engine = {}
 
 function engine.loadObj(objPath)
     local obj = ObjReader.load(objPath)
+    return engine.processObjData(obj)
+end
+
+function engine.loadObjFromLines(lines)
+    local obj = ObjReader.parse(lines)
+    return engine.processObjData(obj)
+end
+
+function engine.processObjData(obj)
     local faces = {}
     local verts = {}
 

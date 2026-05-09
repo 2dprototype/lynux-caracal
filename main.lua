@@ -1,4 +1,5 @@
 -- main.lua
+local utf8 = require("utf8")
 local json = require "lib/json"
 local moonshine = require 'lib/moonshine'
 local EmailApp = require("email")
@@ -49,18 +50,20 @@ ellipsisMenuOpen = false
 visibleApps = {}
 hiddenApps = {}
 
--- Desktop context menu
+-- Context menu state
 local contextMenuOpen = false
 local contextMenuX = 0
 local contextMenuY = 0
-local contextMenuItems = {
-    {text = "New Folder", action = "new_folder"},
-    {text = "New Text File", action = "new_file"},
-    {text = "New Shortcut", action = "new_shortcut"},
-    {text = "Change Wallpaper", action = "change_wallpaper"},
-    {text = "Settings", action = "open_settings"},
-    {text = "Refresh", action = "refresh"}
-}
+local contextMenuType = "desktop" -- "desktop" or "file"
+local contextMenuTarget = nil -- The node (file/folder) being right-clicked
+local contextMenuParent = nil -- The parent directory of the target
+local contextMenuItems = {}
+
+-- Clipboard state
+local clipboard = { node = nil, type = nil } -- type: "cut" or "copy"
+
+-- Properties window state
+local propertiesWindow = nil -- { node = node, x = x, y = y, w = 300, h = 400, renameInput = "" }
 
 -- Wallpaper system
 local wallpapers = {}
@@ -151,6 +154,90 @@ local function loadWallpapers()
         name = "Green",
         type = "color",
         color = {0.1, 0.3, 0.2}
+    })
+
+    -- Additional modern colors
+    table.insert(wallpapers, {
+        name = "Soft Teal",
+        type = "color",
+        color = {0.1, 0.35, 0.35}
+    })
+    table.insert(wallpapers, {
+        name = "Warm Coral",
+        type = "color",
+        color = {0.9, 0.4, 0.35}
+    })
+    table.insert(wallpapers, {
+        name = "Deep Purple",
+        type = "color",
+        color = {0.35, 0.2, 0.45}
+    })
+    table.insert(wallpapers, {
+        name = "Mint",
+        type = "color",
+        color = {0.3, 0.7, 0.6}
+    })
+    table.insert(wallpapers, {
+        name = "Sunset Orange",
+        type = "color",
+        color = {0.9, 0.5, 0.2}
+    })
+    table.insert(wallpapers, {
+        name = "Slate",
+        type = "color",
+        color = {0.3, 0.35, 0.4}
+    })
+    table.insert(wallpapers, {
+        name = "Rose Gold",
+        type = "color",
+        color = {0.85, 0.55, 0.6}
+    })
+
+    -- Windows 10 accent colors
+    table.insert(wallpapers, {
+        name = "Win10 Blue",
+        type = "color",
+        color = {0.0, 0.45, 0.7}
+    })
+    table.insert(wallpapers, {
+        name = "Win10 Teal",
+        type = "color",
+        color = {0.0, 0.6, 0.6}
+    })
+    table.insert(wallpapers, {
+        name = "Win10 Green",
+        type = "color",
+        color = {0.5, 0.7, 0.1}
+    })
+    table.insert(wallpapers, {
+        name = "Win10 Purple",
+        type = "color",
+        color = {0.6, 0.2, 0.7}
+    })
+    table.insert(wallpapers, {
+        name = "Win10 Pink",
+        type = "color",
+        color = {0.9, 0.2, 0.5}
+    })
+    table.insert(wallpapers, {
+        name = "Win10 Red",
+        type = "color",
+        color = {0.85, 0.25, 0.25}
+    })
+    table.insert(wallpapers, {
+        name = "Win10 Orange",
+        type = "color",
+        color = {0.9, 0.5, 0.1}
+    })
+    table.insert(wallpapers, {
+        name = "Win10 Yellow",
+        type = "color",
+        color = {0.95, 0.8, 0.1}
+    })
+    table.insert(wallpapers, {
+        name = "Win10 Light Blue",
+        type = "color",
+        color = {0.3, 0.7, 0.9}
     })
     
     -- table.insert(wallpapers, {
@@ -305,10 +392,10 @@ local function drawContextMenu()
     local menuHeight = #contextMenuItems * itemHeight + (menuPadding * 2)
     
     love.graphics.setColor(0.17, 0.17, 0.17, 0.98)
-    love.graphics.rectangle("fill", contextMenuX, contextMenuY, menuWidth, menuHeight)
+    love.graphics.rectangle("fill", contextMenuX, contextMenuY, menuWidth, menuHeight, 4)
     
     love.graphics.setColor(0.3, 0.3, 0.3, 1.0)
-    love.graphics.rectangle("line", contextMenuX, contextMenuY, menuWidth, menuHeight)
+    love.graphics.rectangle("line", contextMenuX, contextMenuY, menuWidth, menuHeight, 4)
     
     for i, item in ipairs(contextMenuItems) do
         local itemY = contextMenuY + menuPadding + (i-1) * itemHeight
@@ -319,12 +406,146 @@ local function drawContextMenu()
                           
         if isHovered then
             love.graphics.setColor(0.3, 0.3, 0.3, 1.0)
-            love.graphics.rectangle("fill", contextMenuX + 2, itemY, menuWidth - 4, itemHeight)
+            love.graphics.rectangle("fill", contextMenuX + 2, itemY, menuWidth - 4, itemHeight, 4)
         end
         
         love.graphics.setColor(0.95, 0.95, 0.95)
         love.graphics.print(item.text, contextMenuX + 32, itemY + 8)
     end
+end
+
+-- Draw properties window
+local function drawPropertiesWindow()
+    if not propertiesWindow then return end
+    local pw = propertiesWindow
+    
+    -- Overlay shadow
+    love.graphics.setColor(0, 0, 0, 0.3)
+    love.graphics.rectangle("fill", pw.x + 4, pw.y + 4, pw.w, pw.h, 8)
+    
+    -- Window background
+    love.graphics.setColor(0.95, 0.95, 0.95)
+    love.graphics.rectangle("fill", pw.x, pw.y, pw.w, pw.h, 8)
+    love.graphics.setColor(0.8, 0.8, 0.8)
+    love.graphics.rectangle("line", pw.x, pw.y, pw.w, pw.h, 8)
+    
+    -- Title bar
+    love.graphics.setColor(0.9, 0.9, 0.9)
+    love.graphics.rectangle("fill", pw.x, pw.y, pw.w, 30, 8, 8, 0, 0)
+    love.graphics.setColor(0.2, 0.2, 0.2)
+    love.graphics.print("Properties: " .. pw.node.name, pw.x + 10, pw.y + 8)
+    
+    -- Close button
+    local closeHovered = love.mouse.getX() >= pw.x + pw.w - 30 and love.mouse.getX() <= pw.x + pw.w and
+                         love.mouse.getY() >= pw.y and love.mouse.getY() <= pw.y + 30
+    if closeHovered then
+        love.graphics.setColor(0.9, 0.2, 0.2)
+    else
+        love.graphics.setColor(0.7, 0.7, 0.7)
+    end
+    love.graphics.print("X", pw.x + pw.w - 20, pw.y + 8)
+    
+    -- Content
+    love.graphics.setColor(0.3, 0.3, 0.3)
+    local cy = pw.y + 50
+    
+    -- Icon (large)
+    local icon = (pw.node.type == "directory") and home_folderIcon or home_fileIcon
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.draw(icon, pw.x + 20, cy, 0, 48/icon:getWidth(), 48/icon:getHeight())
+    
+    -- Name / Rename
+    love.graphics.setColor(0.2, 0.2, 0.2)
+    love.graphics.print("Name:", pw.x + 80, cy)
+    
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.rectangle("fill", pw.x + 80, cy + 20, pw.w - 100, 24, 4)
+    love.graphics.setColor(0.7, 0.7, 0.7)
+    love.graphics.rectangle("line", pw.x + 80, cy + 20, pw.w - 100, 24, 4)
+    
+    love.graphics.setColor(0, 0, 0)
+    love.graphics.print(pw.renameInput, pw.x + 85, cy + 24)
+    
+    -- Cursor for rename
+    if math.floor(love.timer.getTime() * 2) % 2 == 0 then
+        local tw = love.graphics.getFont():getWidth(pw.renameInput)
+        love.graphics.line(pw.x + 85 + tw, cy + 22, pw.x + 85 + tw, cy + 42)
+    end
+    
+    cy = cy + 70
+    love.graphics.setColor(0.4, 0.4, 0.4)
+    love.graphics.line(pw.x + 20, cy, pw.x + pw.w - 20, cy)
+    cy = cy + 20
+    
+    -- Info
+    love.graphics.setColor(0.3, 0.3, 0.3)
+    love.graphics.print("Type: " .. pw.node.type:gsub("^%l", string.upper), pw.x + 20, cy)
+    cy = cy + 25
+    
+    local path = filesystemModule.getPath(pw.node)
+    love.graphics.print("Location: " .. path, pw.x + 20, cy)
+    cy = cy + 25
+    
+    if pw.node.type == "file" then
+        local size = pw.node.content and #pw.node.content or 0
+        love.graphics.print("Size: " .. size .. " bytes", pw.x + 20, cy)
+    else
+        local count = 0
+        for _ in pairs(pw.node.children or {}) do count = count + 1 end
+        love.graphics.print("Contains: " .. count .. " items", pw.x + 20, cy)
+    end
+    
+    -- Apply button
+    cy = pw.y + pw.h - 50
+    local btnHovered = love.mouse.getX() >= pw.x + pw.w - 100 and love.mouse.getX() <= pw.x + pw.w - 20 and
+                       love.mouse.getY() >= cy and love.mouse.getY() <= cy + 30
+    love.graphics.setColor(btnHovered and {0.2, 0.5, 0.8} or {0.3, 0.6, 0.9})
+    love.graphics.rectangle("fill", pw.x + pw.w - 100, cy, 80, 30, 4)
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.printf("Apply", pw.x + pw.w - 100, cy + 8, 80, "center")
+end
+
+function _G.showFileContextMenu(node, parent)
+    local x, y = love.mouse.getPosition()
+    contextMenuOpen = true
+    contextMenuX, contextMenuY = x, y
+    contextMenuType = "file"
+    contextMenuTarget = node
+    contextMenuParent = parent
+    contextMenuItems = {
+        {text = "Cut", action = "cut"},
+        {text = "Copy", action = "copy"},
+        {text = "Delete", action = "delete"},
+        {text = "Properties", action = "properties"}
+    }
+    -- Adjust menu position
+    if contextMenuX + 220 > love.graphics.getWidth() then contextMenuX = x - 220 end
+    local menuH = #contextMenuItems * 32 + 8
+    if contextMenuY + menuH > love.graphics.getHeight() - 40 then contextMenuY = y - menuH end
+end
+
+function _G.showFolderContextMenu(parent)
+    local x, y = love.mouse.getPosition()
+    contextMenuOpen = true
+    contextMenuX, contextMenuY = x, y
+    contextMenuType = "desktop"
+    contextMenuTarget = nil
+    contextMenuParent = parent
+    contextMenuItems = {
+        {text = "New Folder", action = "new_folder"},
+        {text = "New Text File", action = "new_file"},
+        {text = "Paste", action = "paste"},
+        {text = "Refresh", action = "refresh"}
+    }
+    if not clipboard.node then
+        for i, item in ipairs(contextMenuItems) do
+            if item.action == "paste" then table.remove(contextMenuItems, i); break end
+        end
+    end
+    -- Adjust menu position
+    if contextMenuX + 220 > love.graphics.getWidth() then contextMenuX = x - 220 end
+    local menuH = #contextMenuItems * 32 + 8
+    if contextMenuY + menuH > love.graphics.getHeight() - 40 then contextMenuY = y - menuH end
 end
 
 -- Handle context menu actions
@@ -358,8 +579,46 @@ local function handleContextMenuAction(action)
             end
         end
     elseif action == "refresh" then
-        -- Refresh handled in drawDesktopHome
         refreshDesktopLayout()
+    elseif action == "delete" then
+        if contextMenuTarget then
+            filesystemModule.delete(contextMenuTarget)
+            refreshDesktopLayout()
+        end
+    elseif action == "cut" then
+        clipboard.node = contextMenuTarget
+        clipboard.type = "cut"
+    elseif action == "copy" then
+        clipboard.node = contextMenuTarget
+        clipboard.type = "copy"
+    elseif action == "paste" then
+        if clipboard.node then
+            local dest = contextMenuParent or desktopHome
+            if clipboard.type == "cut" then
+                filesystemModule.move(clipboard.node, dest)
+                clipboard.node = nil -- Clear after move
+            else
+                filesystemModule.copy(clipboard.node, dest)
+            end
+            refreshDesktopLayout()
+            -- Refresh any open file explorer apps
+            for _, win in ipairs(openApps) do
+                if win.app.name == "Files" and win.instance then
+                    win.instance:updateFileList()
+                end
+            end
+        end
+    elseif action == "properties" then
+        if contextMenuTarget then
+            propertiesWindow = {
+                node = contextMenuTarget,
+                x = love.graphics.getWidth()/2 - 150,
+                y = love.graphics.getHeight()/2 - 200,
+                w = 300,
+                h = 400,
+                renameInput = contextMenuTarget.name
+            }
+        end
     end
 end
 
@@ -832,6 +1091,10 @@ function love.draw()
     if contextMenuOpen then
         drawContextMenu()
     end
+
+    if propertiesWindow then
+        drawPropertiesWindow()
+    end
 end
 
 function love.mousepressed(x, y, button)
@@ -856,18 +1119,48 @@ function love.mousepressed(x, y, button)
         local onIcon = false
         for _, icon in ipairs(desktopHomeIcons) do
             if x >= icon.x and x <= icon.x + icon.width and y >= icon.y and y <= icon.y + icon.height then
-                onIcon = true -- You can add icon-specific right click here
+                onIcon = true
+                contextMenuOpen = true
+                contextMenuX, contextMenuY = x, y
+                contextMenuType = "file"
+                contextMenuTarget = icon.node
+                contextMenuParent = desktopHome
+                contextMenuItems = {
+                    {text = "Cut", action = "cut"},
+                    {text = "Copy", action = "copy"},
+                    {text = "Delete", action = "delete"},
+                    {text = "Properties", action = "properties"}
+                }
             end
         end
         
         if not onIcon then
             contextMenuOpen = true
             contextMenuX, contextMenuY = x, y
-            -- Adjust menu position if it goes off screen
-            if contextMenuX + 220 > love.graphics.getWidth() then contextMenuX = x - 220 end
-            if contextMenuY + (#contextMenuItems * 32) > love.graphics.getHeight() - bottomBarHeight then
-                contextMenuY = y - (#contextMenuItems * 32)
+            contextMenuType = "desktop"
+            contextMenuTarget = nil
+            contextMenuParent = desktopHome
+            contextMenuItems = {
+                {text = "New Folder", action = "new_folder"},
+                {text = "New Text File", action = "new_file"},
+                {text = "New Shortcut", action = "new_shortcut"},
+                {text = "Paste", action = "paste"},
+                {text = "Change Wallpaper", action = "change_wallpaper"},
+                {text = "Settings", action = "open_settings"},
+                {text = "Refresh", action = "refresh"}
+            }
+            -- Disable paste if clipboard empty
+            if not clipboard.node then
+                for i, item in ipairs(contextMenuItems) do
+                    if item.action == "paste" then table.remove(contextMenuItems, i); break end
+                end
             end
+        end
+        
+        -- Adjust menu position
+        if contextMenuX + 220 > love.graphics.getWidth() then contextMenuX = x - 220 end
+        if contextMenuY + (#contextMenuItems * 32) > love.graphics.getHeight() - bottomBarHeight then
+            contextMenuY = y - (#contextMenuItems * 32)
         end
     end
 
@@ -1050,6 +1343,35 @@ function love.mousepressed(x, y, button)
         end
     end
 
+    -- Check Properties Window
+    if propertiesWindow then
+        local pw = propertiesWindow
+        -- Close button
+        if x >= pw.x + pw.w - 30 and x <= pw.x + pw.w and y >= pw.y and y <= pw.y + 30 then
+            propertiesWindow = nil
+            return
+        end
+        -- Apply button
+        if x >= pw.x + pw.w - 100 and x <= pw.x + pw.w - 20 and y >= pw.y + pw.h - 50 and y <= pw.y + pw.h - 20 then
+            if pw.renameInput ~= "" and pw.renameInput ~= pw.node.name then
+                filesystemModule.rename(pw.node, pw.renameInput)
+                refreshDesktopLayout()
+                -- Refresh any open file explorer apps
+                for _, win in ipairs(openApps) do
+                    if win.app.name == "Files" and win.instance then
+                        win.instance:updateFileList()
+                    end
+                end
+            end
+            propertiesWindow = nil
+            return
+        end
+        -- Consume clicks inside properties window
+        if x >= pw.x and x <= pw.x + pw.w and y >= pw.y and y <= pw.y + pw.h then
+            return
+        end
+    end
+
     -- 4. Check Desktop Icons (Behind everything)
     local onIcon = false
     for _, icon in ipairs(desktopHomeIcons) do
@@ -1176,12 +1498,38 @@ function love.wheelmoved(x, y)
 end
 
 function love.textinput(text)
+    if propertiesWindow then
+        propertiesWindow.renameInput = propertiesWindow.renameInput .. text
+        return
+    end
     if focusedWindow and (not focusedWindow.minimized) and focusedWindow.instance and focusedWindow.instance.textinput then
         focusedWindow.instance:textinput(text)
     end
 end
 
 function love.keypressed(key)
+    if propertiesWindow then
+        if key == "backspace" then
+            local byteoffset = utf8.offset(propertiesWindow.renameInput, -1)
+            if byteoffset then
+                propertiesWindow.renameInput = string.sub(propertiesWindow.renameInput, 1, byteoffset - 1)
+            end
+        elseif key == "return" then
+            -- Trigger the apply button logic manually or similar
+            local pw = propertiesWindow
+            if pw.renameInput ~= "" and pw.renameInput ~= pw.node.name then
+                filesystemModule.rename(pw.node, pw.renameInput)
+                refreshDesktopLayout()
+                for _, win in ipairs(openApps) do
+                    if win.app.name == "Files" and win.instance then win.instance:updateFileList() end
+                end
+            end
+            propertiesWindow = nil
+        elseif key == "escape" then
+            propertiesWindow = nil
+        end
+        return
+    end
     if key == "g" and love.keyboard.isDown("lctrl") then
         effectEnabled = not effectEnabled
     end

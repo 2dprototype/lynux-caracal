@@ -142,6 +142,88 @@ function filesystem.createFile(parent, name, content)
     return parent.children[name]
 end
 
+-- Delete a node
+function filesystem.delete(node)
+    if not node.parent then return false end
+    node.parent.children[node.name] = nil
+    filesystem.save(filesystem.getFS())
+    return true
+end
+
+-- Rename a node
+function filesystem.rename(node, newName)
+    if not node.parent then return false end
+    if node.parent.children[newName] then return false end
+    
+    local oldName = node.name
+    node.parent.children[oldName] = nil
+    node.name = newName
+    node.parent.children[newName] = node
+    
+    filesystem.save(filesystem.getFS())
+    return true
+end
+
+-- Move a node to a new parent (Cut/Paste)
+function filesystem.move(node, newParent)
+    if not node.parent or not newParent.children then return false end
+    
+    -- Ensure unique name in new parent
+    local name = node.name
+    local baseName = name:match("(.+)%..+") or name
+    local ext = name:match("(%..+)$") or ""
+    if node.type == "directory" then baseName = name; ext = "" end
+    local counter = 1
+    while newParent.children[name] do
+        name = baseName .. " (" .. counter .. ")" .. ext
+        counter = counter + 1
+    end
+    
+    node.parent.children[node.name] = nil
+    node.parent = newParent
+    node.name = name
+    newParent.children[name] = node
+    
+    filesystem.save(filesystem.getFS())
+    return true
+end
+
+-- Copy a node to a new parent
+function filesystem.copy(node, newParent)
+    if not newParent.children then return false end
+    
+    local newNode = {
+        name = node.name,
+        type = node.type,
+        parent = newParent
+    }
+    
+    if node.type == "directory" then
+        newNode.children = {}
+        for k, v in pairs(node.children) do
+            filesystem.copy(v, newNode)
+        end
+    else
+        newNode.content = node.content
+    end
+    
+    -- Ensure unique name
+    local name = newNode.name
+    local baseName = name:match("(.+)%..+") or name
+    local ext = name:match("(%..+)$") or ""
+    if node.type == "directory" then baseName = name; ext = "" end
+    local counter = 1
+    while newParent.children[name] do
+        name = baseName .. " (" .. counter .. ")" .. ext
+        counter = counter + 1
+    end
+    newNode.name = name
+    newParent.children[name] = newNode
+    
+    filesystem.save(filesystem.getFS())
+    return true
+end
+
 -- Generate a tree view (array of strings) for a directory.
 function filesystem.generateTree(node, prefix)
     prefix = prefix or ""
