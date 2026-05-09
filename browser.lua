@@ -15,8 +15,6 @@ local urlMapping = {
 -- Chrome-like Professional Light Theme
 local Theme = {
     headerBg = {0.87, 0.88, 0.90}, -- #DEE1E6
-    tabActive = {1, 1, 1},
-    tabInactive = {0.87, 0.88, 0.90},
     urlBarBg = {0.945, 0.953, 0.957}, -- #F1F3F4
     urlBarBorder = {0.9, 0.9, 0.9},
     textPrimary = {0.235, 0.25, 0.263}, -- #3C4043
@@ -46,19 +44,13 @@ function BrowserApp.new()
     self.loadTimer = 0
     self.loadDuration = 0
     
-    -- Tabs
-    self.tabs = {
-        { title = "New Tab", url = "http://home.com" }
-    }
-    self.activeTab = 1
-    
     -- Dimensions (Relative)
     self.w, self.h = 800, 600
-    self.tabBarHeight = 36
     self.navBarHeight = 44
-    self.headerHeight = self.tabBarHeight + self.navBarHeight
+    self.headerHeight = self.navBarHeight
     
     self.ui = {}
+    self.title = "Browser"
     
     self:loadURL("http://home.com")
     
@@ -114,12 +106,13 @@ function BrowserApp:finishLoading()
         self.siteInstance = self:create404()
     end
     
-    -- Update tab title
+    -- Update window title
     if self.siteInstance and self.siteInstance.title then
-        self.tabs[self.activeTab].title = self.siteInstance.title
+        self.title = self.siteInstance.title
     else
         local title = self.currentURL:gsub("http://", ""):gsub("https://", "")
-        self.tabs[self.activeTab].title = title
+        if title == "" then title = "Browser" end
+        self.title = title
     end
 end
 
@@ -138,7 +131,8 @@ function BrowserApp:create404()
             love.graphics.printf(self.currentURL .. " refused to connect.", x, y + h*0.2 + 110, w, "center")
         end,
         maxScroll = 0,
-        scroll = 0
+        scroll = 0,
+        title = "404 Not Found"
     }
 end
 
@@ -218,25 +212,9 @@ function BrowserApp:drawHeader(w)
     local mx, my = love.mouse.getPosition()
     mx, my = mx - self.ax, my - self.ay -- Relative mouse
     
-    -- Tab Bar
-    love.graphics.setColor(Theme.headerBg)
-    love.graphics.rectangle("fill", 0, 0, w, self.tabBarHeight)
-    
-    -- Active Tab
-    local tabW = 200
-    local tabX = 10
-    love.graphics.setColor(Theme.tabActive)
-    love.graphics.rectangle("fill", tabX, 6, tabW, self.tabBarHeight - 6, 8, 8)
-    
-    love.graphics.setColor(Theme.textPrimary)
-    love.graphics.setFont(self.font)
-    local displayTitle = self.tabs[self.activeTab].title or "New Tab"
-    if #displayTitle > 25 then displayTitle = displayTitle:sub(1, 22) .. "..." end
-    love.graphics.print(displayTitle, tabX + 12, 14)
-    
     -- Nav Bar
-    local navY = self.tabBarHeight
-    love.graphics.setColor(Theme.tabActive)
+    local navY = 0
+    love.graphics.setColor(0.98, 0.98, 0.98)
     love.graphics.rectangle("fill", 0, navY, w, self.navBarHeight)
     love.graphics.setColor(0.85, 0.85, 0.85)
     love.graphics.line(0, navY + self.navBarHeight, w, navY + self.navBarHeight)

@@ -10,7 +10,7 @@ function Bing.new(browser)
     
     self.query = ""
     self.inputActive = false
-    self.title = "Microsoft Bing"
+    self.title = "Bing"
     
     return self
 end
@@ -32,7 +32,7 @@ function Bing:draw(x, y, w, h)
     -- Logo
     love.graphics.setColor(1, 1, 1)
     love.graphics.setFont(self.logoFont)
-    love.graphics.printf("Microsoft Bing", x, cy, w, "center")
+    love.graphics.printf("Bing", x, cy, w, "center")
     
     cy = cy + 80
     

@@ -94,7 +94,7 @@ function Twitter:draw(x, y, w, h)
         
         -- Actions
         love.graphics.setColor(0.5, 0.5, 0.5)
-        love.graphics.print("💬 12    🔁 " .. t.rt .. "    ❤️ " .. t.likes .. "    📊 10K", cx + 60, cy + tweetH - 30)
+        love.graphics.print("C 12    R " .. t.rt .. "    H " .. t.likes .. "    V 10K", cx + 60, cy + tweetH - 30)
         
         love.graphics.setColor(0.9, 0.9, 0.9)
         love.graphics.line(cx, cy + tweetH, cx + colW, cy + tweetH)

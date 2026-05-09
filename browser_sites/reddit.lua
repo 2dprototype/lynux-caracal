@@ -72,7 +72,7 @@ function Reddit:draw(x, y, w, h)
         -- Upvote
         local upX, upY = px + 10, cy + 10
         if p.upvoted then love.graphics.setColor(1, 0.27, 0) else love.graphics.setColor(0.6, 0.6, 0.6) end
-        love.graphics.printf("▲", px, cy + 10, 40, "center")
+        love.graphics.printf("U", px, cy + 10, 40, "center")
         
         -- Count
         love.graphics.setColor(0.1, 0.1, 0.1)
@@ -81,7 +81,7 @@ function Reddit:draw(x, y, w, h)
         
         -- Downvote
         if p.downvoted then love.graphics.setColor(0.4, 0.4, 1) else love.graphics.setColor(0.6, 0.6, 0.6) end
-        love.graphics.printf("▼", px, cy + 65, 40, "center")
+        love.graphics.printf("D", px, cy + 65, 40, "center")
         
         -- Store interaction areas
         table.insert(self.ui_elements, {id=p.id, type="up", x=px, y=cy, w=40, h=35})

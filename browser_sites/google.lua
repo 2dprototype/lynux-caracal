@@ -17,6 +17,8 @@ function Google.new(browser)
     self.scroll = 0
     self.maxScroll = 0
     
+    self.ui = { results = {} }
+    
     self.title = "Google"
     
     -- Parse URL for search query
@@ -33,7 +35,7 @@ function Google.new(browser)
 end
 
 function Google:performSearch()
-    -- Mock search results
+    -- Mock search results + Dynamic results from mapping
     local searchDB = {
         {
             title = "LÖVE - Free 2D Game Engine",
@@ -46,26 +48,41 @@ function Google:performSearch()
             desc = "Lua is a powerful, efficient, lightweight, embeddable scripting language. It supports procedural programming, object-oriented programming, functional programming, etc."
         },
         {
+            title = "Twitter",
+            url = "http://twitter.com",
+            desc = "Social network to stay informed about what's happening in the world."
+        },
+        {
+            title = "Reddit: The front page of the internet",
+            url = "http://reddit.com",
+            desc = "Reddit is a network of communities where people can dive into their interests, hobbies and passions."
+        },
+        {
+            title = "Bing",
+            url = "http://bing.com",
+            desc = "Microsoft's search engine. Provides search results, news, and more."
+        },
+        {
+            title = "4chan /g/ - Technology",
+            url = "http://4chan.org",
+            desc = "A simple image-based bulletin board where anyone can post comments and share images."
+        },
+        {
+            title = "Global News Network",
+            url = "http://news.com",
+            desc = "Latest breaking news, pictures, videos, and special reports from around the world."
+        },
+        {
             title = "GitHub: Let's build from here",
             url = "https://github.com",
             desc = "GitHub is where over 100 million developers shape the future of software, together. Contribute to the open source community, manage your Git repositories."
-        },
-        {
-            title = "Stack Overflow - Where Developers Learn, Share, & Build",
-            url = "https://stackoverflow.com",
-            desc = "Stack Overflow is the largest, most trusted online community for developers to learn, share their programming knowledge, and build their careers."
-        },
-        {
-            title = "Google News - Top Stories",
-            url = "https://news.google.com",
-            desc = "Comprehensive up-to-date news coverage, aggregated from sources all over the world by Google News."
         }
     }
     
     self.results = {}
     local queryLower = self.query:lower()
     for _, item in ipairs(searchDB) do
-        if item.title:lower():find(queryLower, 1, true) or item.desc:lower():find(queryLower, 1, true) then
+        if item.title:lower():find(queryLower, 1, true) or item.desc:lower():find(queryLower, 1, true) or item.url:lower():find(queryLower, 1, true) then
             table.insert(self.results, item)
         end
     end
@@ -147,7 +164,7 @@ function Google:drawHome(x, y, w, h)
     
     love.graphics.setColor(0.6, 0.6, 0.6)
     love.graphics.setFont(self.font)
-    love.graphics.print("🔍", inputX + 16, cy + 14)
+    love.graphics.print("S", inputX + 16, cy + 14)
     
     love.graphics.setColor(0.2, 0.2, 0.2)
     love.graphics.print(self.query, inputX + 45, cy + 14)
@@ -181,6 +198,8 @@ function Google:drawHome(x, y, w, h)
 end
 
 function Google:drawResults(x, y, w, h)
+    self.ui.results = {}
+    
     -- Results header
     love.graphics.setColor(1, 1, 1)
     love.graphics.rectangle("fill", x, y, w, 110)
@@ -225,6 +244,8 @@ function Google:drawResults(x, y, w, h)
     love.graphics.print("About " .. #self.results .. " results", x + 160, ry)
     ry = ry + 30
     
+    local mx, my = love.mouse.getPosition()
+    
     for i, res in ipairs(self.results) do
         -- URL
         love.graphics.setColor(0.23, 0.25, 0.26)
@@ -233,9 +254,24 @@ function Google:drawResults(x, y, w, h)
         
         -- Title
         ry = ry + 18
-        love.graphics.setColor(0.1, 0.27, 0.63)
+        local tw = self.fontTitle:getWidth(res.title)
+        local th = self.fontTitle:getHeight()
+        local hovered = mx >= x + 160 and mx <= x + 160 + tw and my >= ry and my <= ry + th
+        
+        if hovered and res.url ~= "" then
+            love.graphics.setColor(0.1, 0.45, 0.9)
+            love.graphics.line(x + 160, ry + th, x + 160 + tw, ry + th)
+        else
+            love.graphics.setColor(0.1, 0.27, 0.63)
+        end
+        
         love.graphics.setFont(self.fontTitle)
         love.graphics.print(res.title, x + 160, ry)
+        
+        -- Add to UI hitboxes
+        if res.url ~= "" then
+            table.insert(self.ui.results, {x = x + 160, y = ry, w = tw, h = th, url = res.url})
+        end
         
         -- Desc
         ry = ry + 30
@@ -264,12 +300,17 @@ function Google:mousepressed(mx, my, button)
         end
         self.inputActive = false
         
-        -- Search button check (just one for now)
-        if my >= cy + 80 and my <= cy + 116 then
+        -- Search button check
+        local btnW = 140
+        local btnH = 36
+        local centerX = self.x + self.w/2
+        local b1x = centerX - btnW - 10
+        if mx >= b1x and mx <= b1x + btnW and my >= cy + 80 and my <= cy + 80 + btnH then
             if self.query ~= "" then
                 self:performSearch()
                 self.state = "results"
             end
+            return
         end
     else
         -- Check search bar in results
@@ -277,6 +318,15 @@ function Google:mousepressed(mx, my, button)
         if mx >= inputX and mx <= inputX + 600 and my >= self.y + 20 and my <= self.y + 60 then
             self.state = "home"
             self.inputActive = true
+            return
+        end
+        
+        -- Check results
+        for _, res in ipairs(self.ui.results) do
+            if mx >= res.x and mx <= res.x + res.w and my >= res.y and my <= res.y + res.h then
+                self.browser:loadURL(res.url)
+                return
+            end
         end
     end
 end
