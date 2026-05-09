@@ -1,7 +1,7 @@
--- nexusai.lua
+-- chat.lua
 local utf8 = require("utf8")
-local NexusAI = {}
-NexusAI.__index = NexusAI
+local ChatApp = {}
+ChatApp.__index = ChatApp
 
 -- Modern color palette for LINE
 local colors = {
@@ -26,8 +26,8 @@ local dummyResponses = {
     "Let me check on that.", "I'll let you know.", "Thanks!", "No way!", "Agreed."
 }
 
-function NexusAI.new()
-    local self = setmetatable({}, NexusAI)
+function ChatApp.new()
+    local self = setmetatable({}, ChatApp)
     
     self.users = {
         { id = 1, name = "NexusBot", color = {0.2, 0.6, 0.8}, messages = { {text="Hello! I'm NexusBot.", sender="ai", time="10:00"} } },
@@ -63,7 +63,7 @@ function NexusAI.new()
     return self
 end
 
-function NexusAI:update(dt)
+function ChatApp:update(dt)
     self.cursorTimer = self.cursorTimer + dt
     if self.cursorTimer > 0.5 then
         self.cursorVisible = not self.cursorVisible
@@ -92,7 +92,7 @@ function NexusAI:update(dt)
     end
 end
 
-function NexusAI:calculateScroll()
+function ChatApp:calculateScroll()
     if self.currentView == "inbox" then
         local itemHeight = 60
         local totalHeight = #self.users * itemHeight
@@ -121,19 +121,19 @@ function NexusAI:calculateScroll()
     end
 end
 
-function NexusAI:scrollToBottom()
+function ChatApp:scrollToBottom()
     self:calculateScroll()
     self.chatScroll = self.chatMaxScroll
 end
 
-function NexusAI:getActiveUser()
+function ChatApp:getActiveUser()
     for _, u in ipairs(self.users) do
         if u.id == self.activeUserId then return u end
     end
     return nil
 end
 
-function NexusAI:draw(x, y, width, height)
+function ChatApp:draw(x, y, width, height)
     self.windowX, self.windowY, self.windowWidth, self.windowHeight = x, y, width, height
     
     if self.currentView == "inbox" then
@@ -143,7 +143,7 @@ function NexusAI:draw(x, y, width, height)
     end
 end
 
-function NexusAI:drawInbox(x, y, width, height)
+function ChatApp:drawInbox(x, y, width, height)
     -- Background
     love.graphics.setColor(colors.inboxBg)
     love.graphics.rectangle("fill", x, y, width, height)
@@ -208,7 +208,7 @@ function NexusAI:drawInbox(x, y, width, height)
     self:drawScrollbar(x, viewY, width, viewHeight, self.inboxScroll, self.inboxMaxScroll)
 end
 
-function NexusAI:drawChat(x, y, width, height)
+function ChatApp:drawChat(x, y, width, height)
     local user = self:getActiveUser()
     if not user then return end
     
@@ -340,7 +340,7 @@ function NexusAI:drawChat(x, y, width, height)
     love.graphics.printf("Send", x + width - 60, inputY + 16, 50, "center")
 end
 
-function NexusAI:drawScrollbar(x, y, width, height, scroll, maxScroll)
+function ChatApp:drawScrollbar(x, y, width, height, scroll, maxScroll)
     if maxScroll > 0 then
         local trackHeight = height
         local visibleRatio = height / (maxScroll + height)
@@ -352,7 +352,7 @@ function NexusAI:drawScrollbar(x, y, width, height, scroll, maxScroll)
     end
 end
 
-function NexusAI:mousepressed(mx, my, button, wx, wy)
+function ChatApp:mousepressed(mx, my, button, wx, wy)
     if button == 1 then
         if self.currentView == "inbox" then
             local viewY = 30
@@ -382,7 +382,7 @@ function NexusAI:mousepressed(mx, my, button, wx, wy)
     end
 end
 
-function NexusAI:wheelmoved(x, y)
+function ChatApp:wheelmoved(x, y)
     if self.currentView == "inbox" then
         self.inboxScroll = math.max(0, math.min(self.inboxScroll - y * 40, self.inboxMaxScroll))
     elseif self.currentView == "chat" then
@@ -390,13 +390,13 @@ function NexusAI:wheelmoved(x, y)
     end
 end
 
-function NexusAI:textinput(text)
+function ChatApp:textinput(text)
     if self.currentView == "chat" then
         self.inputText = self.inputText .. text
     end
 end
 
-function NexusAI:keypressed(key)
+function ChatApp:keypressed(key)
     if self.currentView == "chat" then
         if key == "backspace" then
             -- UTF8 robust backspace
@@ -410,7 +410,7 @@ function NexusAI:keypressed(key)
     end
 end
 
-function NexusAI:sendMessage()
+function ChatApp:sendMessage()
     if #self.inputText == 0 then return end
     
     local user = self:getActiveUser()
@@ -433,10 +433,10 @@ function NexusAI:sendMessage()
     end
 end
 
-function NexusAI:resize(w, h)
+function ChatApp:resize(w, h)
     if self.windowHeight then
         self:calculateScroll()
     end
 end
 
-return NexusAI
+return ChatApp

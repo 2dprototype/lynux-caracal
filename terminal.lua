@@ -142,21 +142,24 @@ function Terminal:draw(x, y, width, height)
     local yPos = contentY
     for i = startIndex, endIndex do
         local line = wrapped[i]
-        -- color logic (unchanged)
-        if line:find("error") or line:find("Error") or line:find("not found") then
-            love.graphics.setColor(self.colors.error)
-        elseif line:find("success") or line:find("Success") or line:find("created") then
-            love.graphics.setColor(self.colors.success)
-        elseif line:match("%$ [^ ]+") then
-            love.graphics.setColor(self.colors.prompt)
-        elseif line:match("/$") or line:match("Directory") then
-            love.graphics.setColor(self.colors.directory)
-        else
-            love.graphics.setColor(self.colors.text)
-        end
         
-        love.graphics.print(line, 10, yPos)
-        yPos = yPos + self.font:getHeight()
+        if line ~= nil then
+            -- color logic (unchanged)
+            if line:find("error") or line:find("Error") or line:find("not found") then
+                love.graphics.setColor(self.colors.error)
+            elseif line:find("success") or line:find("Success") or line:find("created") then
+                love.graphics.setColor(self.colors.success)
+            elseif line:match("%$ [^ ]+") then
+                love.graphics.setColor(self.colors.prompt)
+            elseif line:match("/$") or line:match("Directory") then
+                love.graphics.setColor(self.colors.directory)
+            else
+                love.graphics.setColor(self.colors.text)
+            end
+            
+            love.graphics.print(line, 10, yPos)
+            yPos = yPos + self.font:getHeight()
+        end
     end
 
     -- Draw input line (always after the visible lines)

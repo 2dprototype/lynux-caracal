@@ -10,12 +10,15 @@ local DinoApp = require("dino")
 local TessarectApp = require("tessarect")
 local ImageViewer = require("imageviewer")
 local ObjViewer = require("objviewer")
-local NexusAI = require("nexusai")
+local ChatApp = require("chat")
 local SettingsApp = require("settings")
 local filesystemModule = require("filesystem")
 
-effect = moonshine(moonshine.effects.scanlines).chain(moonshine.effects.crt)
-effect.scanlines.opacity = 0.6
+-- effect = moonshine(moonshine.effects.scanlines).chain(moonshine.effects.crt).chain(moonshine.effects.godsray)
+effect = moonshine(moonshine.effects.filmgrain).chain(moonshine.effects.godsray)
+-- effect.scanlines.opacity = 0.6
+effect.godsray.exposure= 0.09
+effect.godsray.density = 0.04
 
 focusedWindow = nil  -- global variable tracking the focused window
 
@@ -150,22 +153,22 @@ local function loadWallpapers()
         color = {0.1, 0.3, 0.2}
     })
     
-    table.insert(wallpapers, {
-        name = "Blue Gradient",
-        type = "gradient",
-        gradient = {
-            top = {0.15, 0.25, 0.35},
-            bottom = {0.25, 0.35, 0.45}
-        }
-    })
-    table.insert(wallpapers, {
-        name = "Sunset",
-        type = "gradient",
-        gradient = {
-            top = {0.8, 0.2, 0.2},
-            bottom = {0.2, 0.1, 0.4}
-        }
-    })
+    -- table.insert(wallpapers, {
+        -- name = "Blue Gradient",
+        -- type = "gradient",
+        -- gradient = {
+            -- top = {0.15, 0.25, 0.35},
+            -- bottom = {0.25, 0.35, 0.45}
+        -- }
+    -- })
+    -- table.insert(wallpapers, {
+        -- name = "Sunset",
+        -- type = "gradient",
+        -- gradient = {
+            -- top = {0.8, 0.2, 0.2},
+            -- bottom = {0.2, 0.1, 0.4}
+        -- }
+    -- })
     
     if love.filesystem.getInfo("wallpaper") then
         local wallpaperFiles = love.filesystem.getDirectoryItems("wallpaper")
@@ -556,7 +559,7 @@ function drawDesktop()
     for _, window in ipairs(openApps) do
         if not window.minimized then
             love.graphics.setFont(font)
-            local titleBarHeight = 30
+            local titleBarHeight = 25
             
             love.graphics.setColor(0.9, 0.9, 0.95)
             love.graphics.rectangle("fill", window.x, window.y, window.width, window.height)
@@ -573,7 +576,12 @@ function drawDesktop()
             else
                 love.graphics.setColor(0.5, 0.5, 0.5)
             end
-            love.graphics.print(window.app.name, window.x + 10, window.y + (titleBarHeight - 13)/2)
+            
+            if window.app.instance then
+                love.graphics.print(window.app.instance.title or window.app.name, window.x + 10, window.y + (titleBarHeight - 20)/2)
+            else 
+                love.graphics.print(window.app.name, window.x + 10, window.y + (titleBarHeight - 20)/2)
+            end
             
             local btnSize = 40
             local closeX = window.x + window.width - btnSize
@@ -588,7 +596,7 @@ function drawDesktop()
             else
                 if window == focusedWindow then love.graphics.setColor(0, 0, 0) else love.graphics.setColor(0.5, 0.5, 0.5) end
             end
-            love.graphics.printf("X", closeX, window.y + (titleBarHeight - 13)/2, btnSize, "center")
+            love.graphics.printf("X", closeX, window.y + (titleBarHeight - 20)/2, btnSize, "center")
             
             local isMaxHovered = love.mouse.getX() >= maxX and love.mouse.getX() <= maxX + btnSize and love.mouse.getY() >= window.y and love.mouse.getY() <= window.y + titleBarHeight
             if isMaxHovered then
@@ -597,9 +605,9 @@ function drawDesktop()
             end
             if window == focusedWindow or isMaxHovered then love.graphics.setColor(0, 0, 0) else love.graphics.setColor(0.5, 0.5, 0.5) end
             if window.maximized then
-                love.graphics.printf("[-]", maxX, window.y + (titleBarHeight - 13)/2, btnSize, "center")
+                love.graphics.printf("[-]", maxX, window.y + (titleBarHeight - 20)/2, btnSize, "center")
             else
-                love.graphics.printf("[+]", maxX, window.y + (titleBarHeight - 13)/2, btnSize, "center")
+                love.graphics.printf("[+]", maxX, window.y + (titleBarHeight - 20)/2, btnSize, "center")
             end
             
             local isMinHovered = love.mouse.getX() >= minX and love.mouse.getX() <= minX + btnSize and love.mouse.getY() >= window.y and love.mouse.getY() <= window.y + titleBarHeight
@@ -608,7 +616,7 @@ function drawDesktop()
                 love.graphics.rectangle("fill", minX, window.y, btnSize, titleBarHeight)
             end
             if window == focusedWindow or isMinHovered then love.graphics.setColor(0, 0, 0) else love.graphics.setColor(0.5, 0.5, 0.5) end
-            love.graphics.printf("_", minX, window.y + (titleBarHeight - 13)/2, btnSize, "center")
+            love.graphics.printf("-", minX, window.y + (titleBarHeight - 20)/2, btnSize, "center")
             
             if window.instance and window.instance.draw then
                 love.graphics.setColor(1, 1, 1)
@@ -622,18 +630,18 @@ function drawDesktop()
                 love.graphics.print("Content of " .. window.app.name, window.x + 10, window.y + titleBarHeight + 10)
             end
             
-            if not window.maximized then
-                local handleSize = 12
-                love.graphics.setColor(0.5, 0.6, 0.7)
-                love.graphics.polygon("fill", 
-                    window.x + window.width, window.y + window.height - handleSize,
-                    window.x + window.width - handleSize, window.y + window.height,
-                    window.x + window.width, window.y + window.height
-                )
-            end
+            -- if not window.maximized then
+                -- local handleSize = 12
+                -- love.graphics.setColor(0.5, 0.6, 0.7)
+                -- love.graphics.polygon("fill", 
+                    -- window.x + window.width, window.y + window.height - handleSize,
+                    -- window.x + window.width - handleSize, window.y + window.height,
+                    -- window.x + window.width, window.y + window.height
+                -- )
+            -- end
             
-            love.graphics.setColor(0.1, 0.1, 0.1, 0.5)
-            love.graphics.rectangle("line", window.x, window.y, window.width, window.height)
+            -- love.graphics.setColor(0.1, 0.1, 0.1, 0.5)
+            -- love.graphics.rectangle("line", window.x, window.y, window.width, window.height)
         end
     end
 end
@@ -762,7 +770,7 @@ function love.load()
         { name = "Dino", module = DinoApp, instance = nil, icon = dinoIcon },
         { name = "ImageViewer", module = ImageViewer, instance = nil, icon = imageviewerIcon },
         { name = "ObjViewer", module = ObjViewer, instance = nil, icon = objviewerIcon },
-        { name = "NexusAI", module = NexusAI, instance = nil, icon = chatIcon },
+        { name = "ChatApp", module = ChatApp, instance = nil, icon = chatIcon },
         { name = "Settings", module = SettingsApp, instance = nil, icon = settingsIcon },
     }
 
@@ -1189,6 +1197,7 @@ function love.resize(w, h)
         end
     end
     updateVisibleApps()
+    refreshDesktopLayout()
     
     -- Resize visual effects when screen resolution updates
     if effect and effect.resize then

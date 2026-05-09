@@ -58,7 +58,16 @@ local function parseColor(colorStr)
         local g = tonumber(colorStr:sub(4, 5), 16) / 255
         local b = tonumber(colorStr:sub(6, 7), 16) / 255
         return {r, g, b}
-    end
+    end   
+    
+    -- -- Check if it's a hex color (#RRGGBBAA)
+    -- if colorStr:match("^#%x%x%x%x%x%x%x%x$") then
+        -- local r = tonumber(colorStr:sub(2, 3), 16) / 255
+        -- local g = tonumber(colorStr:sub(4, 5), 16) / 255
+        -- local b = tonumber(colorStr:sub(6, 7), 16) / 255
+        -- local a = tonumber(colorStr:sub(8, 9), 16) / 255
+        -- return {r, g, b, a}
+    -- end
     
     -- Check if it's RGB values (comma separated)
     local r, g, b = colorStr:match("^(%d+%.?%d*),(%d+%.?%d*),(%d+%.?%d*)$")
@@ -379,6 +388,7 @@ local inlineSubstitutions = {
             return "Current title: " .. self.title
         end
         self:setTitle(newTitle)
+        -- self.title = newTitle
         return "Terminal title set to: " .. newTitle
     end,
     history = function(self, ...)
