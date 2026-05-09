@@ -1,0 +1,195 @@
+{
+    "children": {
+        "boot": {
+            "children": [
+            ],
+            "type": "directory",
+            "name": "boot"
+        },
+        "media": {
+            "children": [
+            ],
+            "type": "directory",
+            "name": "media"
+        },
+        "home": {
+            "children": {
+                "user": {
+                    "children": {
+                        "Documents": {
+                            "children": {
+                                "notes.txt": {
+                                    "content": "[12 Jun, 2018]\nTut. off\n\n[18 Jun 2018]\nBought umbrella\n\n[5 July 2018]\nDepr.\n",
+                                    "type": "file",
+                                    "name": "notes.txt"
+                                }
+                            },
+                            "type": "directory",
+                            "name": "Documents"
+                        },
+                        "Downloads": {
+                            "children": [
+                            ],
+                            "type": "directory",
+                            "name": "Downloads"
+                        }
+                    },
+                    "type": "directory",
+                    "name": "user"
+                },
+                "images": {
+                    "children": {
+                        "img1.jpg": {
+                            "content": "",
+                            "type": "file",
+                            "name": "img1.jpg"
+                        },
+                        "img3.jpg": {
+                            "content": "",
+                            "type": "file",
+                            "name": "img3.jpg"
+                        },
+                        "img2.jpg": {
+                            "content": "",
+                            "type": "file",
+                            "name": "img2.jpg"
+                        }
+                    },
+                    "type": "directory",
+                    "name": "images"
+                },
+                "shared": {
+                    "children": {
+                        "ProjectQ": {
+                            "children": {
+                                "basic.q": {
+                                    "content": "",
+                                    "type": "file",
+                                    "name": "basic.q"
+                                },
+                                "bindings.q": {
+                                    "content": "",
+                                    "type": "file",
+                                    "name": "bindings.q"
+                                },
+                                "quantam_api.q": {
+                                    "content": "",
+                                    "type": "file",
+                                    "name": "quantam_api.q"
+                                },
+                                "energy_64.q": {
+                                    "content": "use q_gates\nuse *q\n\nphi :=  sin(e^ln(g)) - inte(pi,inf,fn(x){x^cos(lambda)})\nx_trans = y / y ^ phi -  tan(q) * time_constant",
+                                    "type": "file",
+                                    "name": "energy_64.q"
+                                },
+                                "lhc.q": {
+                                    "content": "",
+                                    "type": "file",
+                                    "name": "lhc.q"
+                                },
+                                "energy.q": {
+                                    "content": "",
+                                    "type": "file",
+                                    "name": "energy.q"
+                                }
+                            },
+                            "type": "directory",
+                            "name": "ProjectQ"
+                        }
+                    },
+                    "type": "directory",
+                    "name": "shared"
+                },
+                "models": {
+                    "children": {
+                        "model.obj": {
+                            "content": "",
+                            "type": "file",
+                            "name": "model.obj"
+                        },
+                        "cube.obj": {
+                            "content": "",
+                            "type": "file",
+                            "name": "cube.obj"
+                        },
+                        "monkey.obj": {
+                            "content": "",
+                            "type": "file",
+                            "name": "monkey.obj"
+                        }
+                    },
+                    "type": "directory",
+                    "name": "models"
+                }
+            },
+            "type": "directory",
+            "name": "home"
+        },
+        "bin": {
+            "children": [
+            ],
+            "type": "directory",
+            "name": "bin"
+        },
+        "root": {
+            "children": [
+            ],
+            "type": "directory",
+            "name": "root"
+        },
+        "entropy": {
+            "children": {
+                "no_log": {
+                    "content": ":/",
+                    "type": "file",
+                    "name": "no_log"
+                }
+            },
+            "type": "directory",
+            "name": "entropy"
+        },
+        "dev": {
+            "children": [
+            ],
+            "type": "directory",
+            "name": "dev"
+        },
+        "usr": {
+            "children": {
+                "bin": {
+                    "children": [
+                    ],
+                    "type": "directory",
+                    "name": "bin"
+                },
+                "local": {
+                    "children": [
+                    ],
+                    "type": "directory",
+                    "name": "local"
+                },
+                "lib": {
+                    "children": [
+                    ],
+                    "type": "directory",
+                    "name": "lib"
+                }
+            },
+            "type": "directory",
+            "name": "usr"
+        },
+        "tmp": {
+            "children": {
+                "wooh.sh": {
+                    "content": "clear\necho \"#     #                      ###\"\necho \"#  #  #  ####   ####  #    # ###\"\necho \"#  #  # #    # #    # #    # ###\"\necho \"#  #  # #    # #    # ######  # \"\necho \"#  #  # #    # #    # #    #    \"\necho \"#  #  # #    # #    # #    # ###\"\necho \" ## ##   ####   ####  #    # ###\"",
+                    "type": "file",
+                    "name": "wooh.sh"
+                }
+            },
+            "type": "directory",
+            "name": "tmp"
+        }
+    },
+    "type": "directory",
+    "name": "/"
+}

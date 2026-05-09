@@ -2,15 +2,26 @@
     "children": {
         "boot": {
             "children": [
+                "kernel.x69",
+                "initrd.img",
+                "config.x69",
+                "splash.x69"
             ],
             "type": "directory",
-            "name": "boot"
+            "name": "boot",
+            "created": 1577836800,
+            "modified": 1583020800
         },
         "media": {
             "children": [
+                "cdrom",
+                "usb",
+                "floppy"
             ],
             "type": "directory",
-            "name": "media"
+            "name": "media",
+            "created": 1577836800,
+            "modified": 1580515200
         },
         "home": {
             "children": {
@@ -19,177 +30,583 @@
                         "Documents": {
                             "children": {
                                 "notes.txt": {
-                                    "content": "[12 Jun, 2018]\nTut. off\n\n[18 Jun 2018]\nBought umbrella\n\n[5 July 2018]\nDepr.\n",
+                                    "content": "[12 Jun, 2018] - Tutorial cancelled due to 'technical difficulties' (teacher's cat walked on keyboard)\n\n[18 Jun 2018] - Bought umbrella. It's sunny. Murphy's law at work.\n\n[5 July 2018] - Depression. Also discovered my umbrella is upside down.\n\n[23 Jan 2020] - Finally figured out why my code wasn't working... missing semicolon. Classic.\n\n[14 Feb 2020] - Valentine's Day alone. At least my computer loves me.\n\n[01 Apr 2020] - Joke's on me, I thought 2020 would be a good year.\n\n[25 Dec 2020] - Santa brought me a debugging session. Thanks, I guess?",
                                     "type": "file",
-                                    "name": "notes.txt"
+                                    "name": "notes.txt",
+                                    "created": 1577836800,
+                                    "modified": 1608912000
+                                },
+                                "passwords.txt": {
+                                    "content": "WARNING: This is a parody OS. DO NOT store real passwords here!\n\n- WiFi: password123 (don't judge me)\n- Email: hunter2 (very secure)\n- Bank: mydogschipsname (please don't hack me)\n- Secret Lair: thekeyisundertherug\n\nP.S. If you're reading this, you have too much free time.",
+                                    "type": "file",
+                                    "name": "passwords.txt",
+                                    "created": 1583020800,
+                                    "modified": 1596240000
+                                },
+                                "resume.docx": {
+                                    "content": "EXPERIENCE:\n- Professional meme connoisseur (2019-present)\n- Expert in copying code from Stack Overflow (2018-present)\n- Professional coffee drinker (2015-present)\n\nSKILLS:\n- Ctrl+C, Ctrl+V mastery\n- Advanced Google searching\n- Turning it off and on again\n- Blaming the compiler\n\nREFERENCES:\n- My cat (she's very supportive)\n- Stack Overflow community (they tolerate me)\n- The IT guy (he sighs a lot when I call)",
+                                    "type": "file",
+                                    "name": "resume.docx",
+                                    "created": 1588291200,
+                                    "modified": 1606780800
+                                },
+                                "todo.x69": {
+                                    "content": "[✓] Install x69 OS\n[✓] Wonder why I installed x69 OS\n[ ] Actually do something productive\n[ ] Learn to code (maybe next year)\n[ ] Touch grass (optional)\n[ ] Find the meaning of life (probably 42)\n[ ] Pet cat (urgent priority)",
+                                    "type": "file",
+                                    "name": "todo.x69",
+                                    "created": 1609459200,
+                                    "modified": 1612137600
                                 }
                             },
                             "type": "directory",
-                            "name": "Documents"
+                            "name": "Documents",
+                            "created": 1577836800,
+                            "modified": 1612137600
                         },
                         "Downloads": {
-                            "children": [
-                            ],
+                            "children": {
+                                "totally_not_a_virus.exe": {
+                                    "content": "print('Just kidding! This is a parody OS. No viruses here!')",
+                                    "type": "file",
+                                    "name": "totally_not_a_virus.exe",
+                                    "created": 1598918400,
+                                    "modified": 1598918400
+                                },
+                                "ubuntu.iso": {
+                                    "content": "Just a text file pretending to be an ISO. Don't actually try to boot this.",
+                                    "type": "file",
+                                    "name": "ubuntu.iso",
+                                    "created": 1585708800,
+                                    "modified": 1585708800
+                                },
+                                "important_document.pdf": {
+                                    "content": "This is a very important document.\n\nIt says: 'Stay hydrated and take breaks while coding.'\n\nThat's it. That's the document.\n\nYou're welcome.",
+                                    "type": "file",
+                                    "name": "important_document.pdf",
+                                    "created": 1590969600,
+                                    "modified": 1590969600
+                                }
+                            },
                             "type": "directory",
-                            "name": "Downloads"
+                            "name": "Downloads",
+                            "created": 1577836800,
+                            "modified": 1598918400
+                        },
+                        "Pictures": {
+                            "children": {
+                                "screenshot_2020.png": {
+                                    "content": "It's a picture of a blue screen. How ironic.",
+                                    "type": "file",
+                                    "name": "screenshot_2020.png",
+                                    "created": 1601510400,
+                                    "modified": 1601510400
+                                },
+                                "cat.jpg": {
+                                    "content": "A majestic photo of a cat sitting on a keyboard. Probably writing better code than me.",
+                                    "type": "file",
+                                    "name": "cat.jpg",
+                                    "created": 1580515200,
+                                    "modified": 1580515200
+                                },
+                                "memes": {
+                                    "children": {
+                                        "drake_hotline_coding.jpg": {
+                                            "content": "[No] Writing documentation\n[Yes] Writing more code that breaks everything",
+                                            "type": "file",
+                                            "name": "drake_hotline_coding.jpg",
+                                            "created": 1593648000,
+                                            "modified": 1593648000
+                                        },
+                                        "its_not_much_but_its_honest_work.jpg": {
+                                            "content": "Me: *changes one line of code*\nAlso me: 'I have altered the code. Pray I do not alter it further.'",
+                                            "type": "file",
+                                            "name": "its_not_much_but_its_honest_work.jpg",
+                                            "created": 1598918400,
+                                            "modified": 1598918400
+                                        }
+                                    },
+                                    "type": "directory",
+                                    "name": "memes",
+                                    "created": 1593648000,
+                                    "modified": 1598918400
+                                }
+                            },
+                            "type": "directory",
+                            "name": "Pictures",
+                            "created": 1577836800,
+                            "modified": 1601510400
                         }
                     },
                     "type": "directory",
-                    "name": "user"
+                    "name": "user",
+                    "created": 1577836800,
+                    "modified": 1612137600
                 },
                 "images": {
                     "children": {
                         "img1.jpg": {
-                            "content": "",
+                            "content": "Stock photo of a person smiling while looking at graphs. Probably faking it.",
                             "type": "file",
-                            "name": "img1.jpg"
+                            "name": "img1.jpg",
+                            "created": 1583020800,
+                            "modified": 1583020800
                         },
                         "img3.jpg": {
-                            "content": "",
+                            "content": "Blurry photo of what might be a UFO. Or a smudge on the lens. We'll never know.",
                             "type": "file",
-                            "name": "img3.jpg"
+                            "name": "img3.jpg",
+                            "created": 1590969600,
+                            "modified": 1590969600
                         },
                         "img2.jpg": {
-                            "content": "",
+                            "content": "A picture of nothing. Literally just a blank white image. Art.",
                             "type": "file",
-                            "name": "img2.jpg"
+                            "name": "img2.jpg",
+                            "created": 1585708800,
+                            "modified": 1585708800
+                        },
+                        "rickroll.gif": {
+                            "content": "Never gonna give you up, never gonna let you down... You've been tricked by a text file.",
+                            "type": "file",
+                            "name": "rickroll.gif",
+                            "created": 1593648000,
+                            "modified": 1593648000
                         }
                     },
                     "type": "directory",
-                    "name": "images"
+                    "name": "images",
+                    "created": 1577836800,
+                    "modified": 1593648000
                 },
                 "shared": {
                     "children": {
                         "ProjectQ": {
                             "children": {
                                 "basic.q": {
-                                    "content": "",
+                                    "content": "// Quantum hello world\nq[0] = |0>\nH(q[0])\nmeasure(q[0])\n// Result: 50/50 chance of being useful\nprint('Hello from the quantum realm!')",
                                     "type": "file",
-                                    "name": "basic.q"
+                                    "name": "basic.q",
+                                    "created": 1580515200,
+                                    "modified": 1580515200
                                 },
                                 "bindings.q": {
-                                    "content": "",
+                                    "content": "# Quantum bindings\n# Warning: May cause reality to glitch\n# Use at your own risk (and maybe a helmet)",
                                     "type": "file",
-                                    "name": "bindings.q"
+                                    "name": "bindings.q",
+                                    "created": 1583020800,
+                                    "modified": 1583020800
                                 },
                                 "quantam_api.q": {
-                                    "content": "",
+                                    "content": "// The API is both here and not here simultaneously\n// Please observe it to collapse the waveform\n// (Results may vary based on your expectations)",
                                     "type": "file",
-                                    "name": "quantam_api.q"
+                                    "name": "quantam_api.q",
+                                    "created": 1588291200,
+                                    "modified": 1588291200
                                 },
                                 "energy_64.q": {
-                                    "content": "use q_gates\nuse *q\n\nphi :=  sin(e^ln(g)) - inte(pi,inf,fn(x){x^cos(lambda)})\nx_trans = y / y ^ phi -  tan(q) * time_constant",
+                                    "content": "use q_gates\nuse *q\n\n// E = mc^2 but make it quantum\nphi := sin(e^ln(g)) - inte(pi,inf,fn(x){x^cos(lambda)})\nx_trans = y / y ^ phi - tan(q) * time_constant\n\n// TODO: Add more math symbols to look smart\n// Note: Not actually tested. May explode universe.",
                                     "type": "file",
-                                    "name": "energy_64.q"
+                                    "name": "energy_64.q",
+                                    "created": 1590969600,
+                                    "modified": 1601510400
                                 },
                                 "lhc.q": {
-                                    "content": "",
+                                    "content": "// Large Hadron Collider simulator\n// Don't actually create black holes please\nparticle.accelerate()\nif particle.speed > lightspeed then\n    print('Physics would like a word')\nend",
                                     "type": "file",
-                                    "name": "lhc.q"
+                                    "name": "lhc.q",
+                                    "created": 1596240000,
+                                    "modified": 1596240000
                                 },
                                 "energy.q": {
-                                    "content": "",
+                                    "content": "// Renewable energy simulator\n// Currently running on hopes and dreams\n// And maybe some coffee",
                                     "type": "file",
-                                    "name": "energy.q"
+                                    "name": "energy.q",
+                                    "created": 1598918400,
+                                    "modified": 1598918400
+                                },
+                                "readme.md": {
+                                    "content": "# Project Quantum\n\n## Status: ¯\\_(ツ)_/¯\n\nThis project exists in a superposition of working and not working.\n\n## Contributors\n- You (probably)\n- Your cat (maybe)\n- Stack Overflow (definitely)\n\n## License\nWTFPL - Do What The Fuck You Want To Public License",
+                                    "type": "file",
+                                    "name": "readme.md",
+                                    "created": 1606780800,
+                                    "modified": 1606780800
                                 }
                             },
                             "type": "directory",
-                            "name": "ProjectQ"
+                            "name": "ProjectQ",
+                            "created": 1580515200,
+                            "modified": 1606780800
+                        },
+                        "easter_eggs": {
+                            "children": {
+                                "konami_code.txt": {
+                                    "content": "↑ ↑ ↓ ↓ ← → ← → B A\n\nCongratulations! You found the easter egg!\nToo bad nothing happens... or does it?\n\n(P.S. It doesn't)",
+                                    "type": "file",
+                                    "name": "konami_code.txt",
+                                    "created": 1601510400,
+                                    "modified": 1601510400
+                                },
+                                "the_answer.txt": {
+                                    "content": "42\n\nThat's the answer to life, the universe, and everything.\nNow stop asking.\n\n- Deep Thought",
+                                    "type": "file",
+                                    "name": "the_answer.txt",
+                                    "created": 1606780800,
+                                    "modified": 1606780800
+                                }
+                            },
+                            "type": "directory",
+                            "name": "easter_eggs",
+                            "created": 1601510400,
+                            "modified": 1606780800
                         }
                     },
                     "type": "directory",
-                    "name": "shared"
+                    "name": "shared",
+                    "created": 1577836800,
+                    "modified": 1606780800
                 },
                 "models": {
                     "children": {
                         "model.obj": {
-                            "content": "",
+                            "content": "# Blender model of a teapot\n# The classic 3D test model\n# Fun fact: It's not actually a teapot, it's a metaphor",
                             "type": "file",
-                            "name": "model.obj"
+                            "name": "model.obj",
+                            "created": 1588291200,
+                            "modified": 1588291200
                         },
                         "cube.obj": {
-                            "content": "",
+                            "content": "# The most complex shape known to 3D artists\n# It's a cube. It does cube things.\n# Groundbreaking.",
                             "type": "file",
-                            "name": "cube.obj"
+                            "name": "cube.obj",
+                            "created": 1593648000,
+                            "modified": 1593648000
                         },
                         "monkey.obj": {
-                            "content": "",
+                            "content": "# Suzanne the monkey\n# Blender's unofficial mascot\n# She judges your modeling skills\n# And finds them wanting",
                             "type": "file",
-                            "name": "monkey.obj"
+                            "name": "monkey.obj",
+                            "created": 1598918400,
+                            "modified": 1598918400
+                        },
+                        "death_star.obj": {
+                            "content": "# That's no moon...\n# It's a fully operational battle station\n# Please don't blow up any planets\n# HR would like a word",
+                            "type": "file",
+                            "name": "death_star.obj",
+                            "created": 1601510400,
+                            "modified": 1601510400
                         }
                     },
                     "type": "directory",
-                    "name": "models"
+                    "name": "models",
+                    "created": 1577836800,
+                    "modified": 1601510400
+                },
+                ".config": {
+                    "children": {
+                        "x69_theme.conf": {
+                            "content": "[Theme]\nname = x69_radical\ncolor_scheme = cyberpunk_dream\nicons = leet_hacker\nwallpaper = matrix_rain.gif\nanimations = max_particles\n\n[Sound]\nstartup = windows_xp_error.wav\nerror = dialup_internet.mp3\nclick = meow.wav\n\n[Meme]\nenabled = true\nintensity = over_9000",
+                                    "type": "file",
+                                    "name": "x69_theme.conf",
+                                    "created": 1609459200,
+                                    "modified": 1609459200
+                        },
+                        "secrets.json": {
+                            "content": "{\n    \"truth\": \"The cake is a lie\",\n    \"philosophy\": \"I think, therefore I am... confused\",\n    \"life_hack\": \"Turn it off and on again\",\n    \"hidden_level\": \"There is no secret level, stop looking\",\n    \"easter_egg\": \"You're already in it\"\n}",
+                                    "type": "file",
+                                    "name": "secrets.json",
+                                    "created": 1612137600,
+                                    "modified": 1612137600
+                        }
+                    },
+                    "type": "directory",
+                    "name": ".config",
+                    "created": 1609459200,
+                    "modified": 1612137600
                 }
             },
             "type": "directory",
-            "name": "home"
+            "name": "home",
+            "created": 1577836800,
+            "modified": 1612137600
         },
         "bin": {
-            "children": [
-            ],
+            "children": {
+                "ls.x69": {
+                    "content": "#!/bin/x69\n# List files but with extra memes\n# Try 'ls -meme' for enhanced experience",
+                    "type": "file",
+                    "name": "ls.x69",
+                    "created": 1577836800,
+                    "modified": 1583020800
+                },
+                "sudo.x69": {
+                    "content": "#!/bin/x69\n# sudo: make me a sandwich\n# Error: You are not in the sudoers file. This incident will be reported to the cat.",
+                    "type": "file",
+                    "name": "sudo.x69",
+                    "created": 1580515200,
+                    "modified": 1580515200
+                },
+                "cowsay.x69": {
+                    "content": "#!/bin/x69\n# _________________\n# < I'm a real OS! >\n# -----------------\n#        \\   ^__^\n#         \\  (oo)\\_______\n#            (__)\\       )\\/\\\n#                ||----w |\n#                ||     ||",
+                    "type": "file",
+                    "name": "cowsay.x69",
+                    "created": 1585708800,
+                    "modified": 1585708800
+                }
+            },
             "type": "directory",
-            "name": "bin"
+            "name": "bin",
+            "created": 1577836800,
+            "modified": 1585708800
         },
         "root": {
-            "children": [
-            ],
+            "children": {
+                ".bash_history": {
+                    "content": "sudo rm -rf /\n# Just kidding! I like my computer\nls -la\ncat /dev/urandom\n# Don't actually do that\nhelp\nman woman\n# That command doesn't exist",
+                    "type": "file",
+                    "name": ".bash_history",
+                    "created": 1593648000,
+                    "modified": 1593648000
+                },
+                "secret_plan.txt": {
+                    "content": "Step 1: Install x69 OS\nStep 2: ???\nStep 3: Profit!\n\nP.S. The ??? is 'take over the world'\nP.P.S. Please don't tell anyone",
+                    "type": "file",
+                    "name": "secret_plan.txt",
+                    "created": 1601510400,
+                    "modified": 1601510400
+                }
+            },
             "type": "directory",
-            "name": "root"
+            "name": "root",
+            "created": 1577836800,
+            "modified": 1601510400
         },
         "entropy": {
             "children": {
                 "no_log": {
-                    "content": ":/",
+                    "content": "Everything is chaos\nOrder is an illusion\nNothing makes sense\nWelcome to x69 OS\n\nP.S. Your files are fine (probably)",
                     "type": "file",
-                    "name": "no_log"
+                    "name": "no_log",
+                    "created": 1577836800,
+                    "modified": 1583020800
+                },
+                "quantum_state": {
+                    "content": "This file both exists and doesn't exist.\nPlease don't observe it too hard.\n\n(It's currently questioning its existence)",
+                    "type": "file",
+                    "name": "quantum_state",
+                    "created": 1596240000,
+                    "modified": 1596240000
                 }
             },
             "type": "directory",
-            "name": "entropy"
+            "name": "entropy",
+            "created": 1577836800,
+            "modified": 1596240000
         },
         "dev": {
-            "children": [
-            ],
+            "children": {
+                "null": {
+                    "content": "/dev/null - The void\nIt stares back\nAnd it's very polite\nPlease don't send anything important here",
+                    "type": "file",
+                    "name": "null",
+                    "created": 1577836800,
+                    "modified": 1577836800
+                },
+                "random": {
+                    "content": "4 8 15 16 23 42\nThese numbers mean something\nOr nothing\nWho knows?\n- The Numbers Station",
+                    "type": "file",
+                    "name": "random",
+                    "created": 1580515200,
+                    "modified": 1580515200
+                }
+            },
             "type": "directory",
-            "name": "dev"
+            "name": "dev",
+            "created": 1577836800,
+            "modified": 1580515200
         },
         "usr": {
             "children": {
                 "bin": {
-                    "children": [
-                    ],
+                    "children": {
+                        "fortune.x69": {
+                            "content": "Your fortune: You will find a semicolon exactly when you need it.\n(Probably not though, good luck)",
+                            "type": "file",
+                            "name": "fortune.x69",
+                            "created": 1588291200,
+                            "modified": 1588291200
+                        },
+                        "sl.x69": {
+                            "content": "CHOO CHOO\nIt's a train. In your terminal.\nBecause why not?\n(_)/ (_)",
+                            "type": "file",
+                            "name": "sl.x69",
+                            "created": 1593648000,
+                            "modified": 1593648000
+                        }
+                    },
                     "type": "directory",
-                    "name": "bin"
+                    "name": "bin",
+                    "created": 1577836800,
+                    "modified": 1593648000
                 },
                 "local": {
-                    "children": [
-                    ],
+                    "children": {
+                        "games": {
+                            "children": {
+                                "snake.x69": {
+                                    "content": "Snake game but the snake is self-aware\nIt's questioning why it keeps running into walls\nPhilosophical snake is philosophical",
+                                    "type": "file",
+                                    "name": "snake.x69",
+                                    "created": 1601510400,
+                                    "modified": 1601510400
+                                }
+                            },
+                            "type": "directory",
+                            "name": "games",
+                            "created": 1601510400,
+                            "modified": 1601510400
+                        }
+                    },
                     "type": "directory",
-                    "name": "local"
+                    "name": "local",
+                    "created": 1577836800,
+                    "modified": 1601510400
                 },
                 "lib": {
-                    "children": [
-                    ],
+                    "children": {
+                        "libc.x69": {
+                            "content": "The standard library\nContains everything you need\nAnd many things you don't\nUse at your own risk\n(Might cause existential dread)",
+                            "type": "file",
+                            "name": "libc.x69",
+                            "created": 1577836800,
+                            "modified": 1583020800
+                        },
+                        "libmeme.so": {
+                            "content": "Shared meme library\nFunction: generate_dank_meme()\nReturn: comedy_gold\nMay cause spontaneous laughter",
+                            "type": "file",
+                            "name": "libmeme.so",
+                            "created": 1590969600,
+                            "modified": 1590969600
+                        }
+                    },
                     "type": "directory",
-                    "name": "lib"
+                    "name": "lib",
+                    "created": 1577836800,
+                    "modified": 1590969600
+                },
+                "share": {
+                    "children": {
+                        "wallpapers": {
+                            "children": {
+                                "default.x69": {
+                                    "content": "Just a plain black background\nVery minimalist\nVery artistic\nVery 'I didn't have time to make a real wallpaper'",
+                                    "type": "file",
+                                    "name": "default.x69",
+                                    "created": 1606780800,
+                                    "modified": 1606780800
+                                }
+                            },
+                            "type": "directory",
+                            "name": "wallpapers",
+                            "created": 1606780800,
+                            "modified": 1606780800
+                        }
+                    },
+                    "type": "directory",
+                    "name": "share",
+                    "created": 1606780800,
+                    "modified": 1606780800
                 }
             },
             "type": "directory",
-            "name": "usr"
+            "name": "usr",
+            "created": 1577836800,
+            "modified": 1606780800
         },
         "tmp": {
             "children": {
                 "wooh.sh": {
-                    "content": "clear\necho \"#     #                      ###\"\necho \"#  #  #  ####   ####  #    # ###\"\necho \"#  #  # #    # #    # #    # ###\"\necho \"#  #  # #    # #    # ######  # \"\necho \"#  #  # #    # #    # #    #    \"\necho \"#  #  # #    # #    # #    # ###\"\necho \" ## ##   ####   ####  #    # ###\"",
+                    "content": "#!/bin/bash\necho \"#     #                      ###\"\necho \"#  #  #  ####   ####  #    # ###\"\necho \"#  #  # #    # #    # #    # ###\"\necho \"#  #  # #    # #    # ######  # \"\necho \"#  #  # #    # #    # #    #    \"\necho \"#  #  # #    # #    # #    # ###\"\necho \" ## ##   ####   ####  #    # ###\"\necho \"\"\necho \"You just got ASCII art'd!\"\necho \"Your day is now 10% better (statistically speaking)\"",
                     "type": "file",
-                    "name": "wooh.sh"
+                    "name": "wooh.sh",
+                    "created": 1577836800,
+                    "modified": 1583020800
+                },
+                "temp_file_please_delete.txt": {
+                    "content": "I'm just a temporary file\nPlease don't delete me\nI have feelings too\n\n(But actually you can delete me, I'm just text)",
+                    "type": "file",
+                    "name": "temp_file_please_delete.txt",
+                    "created": 1609459200,
+                    "modified": 1609459200
+                },
+                "download.exe": {
+                    "content": "Congratulations! You downloaded something from /tmp\nThat's like eating from the trash\nBut you do you",
+                    "type": "file",
+                    "name": "download.exe",
+                    "created": 1612137600,
+                    "modified": 1612137600
                 }
             },
             "type": "directory",
-            "name": "tmp"
+            "name": "tmp",
+            "created": 1577836800,
+            "modified": 1612137600
+        },
+        "opt": {
+            "children": {
+                "x69_games": {
+                    "children": {
+                        "adventure": {
+                            "content": "You are standing in a field of asterisks.\nExits are north, south, and east.\n> go north\nYou are eaten by a grue.\n\nGame over. Try again?",
+                            "type": "file",
+                            "name": "adventure",
+                            "created": 1596240000,
+                            "modified": 1596240000
+                        },
+                        "rpg_simulator": {
+                            "content": "Your character: A programmer\nHP: 100 (reduced by 50 after reading documentation)\nMP: 50 (coffee points)\nInventory: [Laptop, Caffeine, Crushed Dreams]",
+                            "type": "file",
+                            "name": "rpg_simulator",
+                            "created": 1601510400,
+                            "modified": 1601510400
+                        }
+                    },
+                    "type": "directory",
+                    "name": "x69_games",
+                    "created": 1596240000,
+                    "modified": 1601510400
+                }
+            },
+            "type": "directory",
+            "name": "opt",
+            "created": 1596240000,
+            "modified": 1601510400
+        },
+        "srv": {
+            "children": {
+                "www": {
+                    "children": {
+                        "index.html": {
+                            "content": "<!DOCTYPE html>\n<html>\n<head>\n    <title>Welcome to x69 OS Server</title>\n    <style>\n        body { background: #000; color: #0f0; font-family: monospace; }\n        h1 { text-align: center; margin-top: 20%; }\n    </style>\n</head>\n<body>\n    <h1>It works! (Sort of)</h1>\n    <p>This is a text file pretending to be a webserver.</p>\n    <p>How very 1995 of us.</p>\n</body>\n</html>",
+                            "type": "file",
+                            "name": "index.html",
+                            "created": 1598918400,
+                            "modified": 1598918400
+                        }
+                    },
+                    "type": "directory",
+                    "name": "www",
+                    "created": 1598918400,
+                    "modified": 1598918400
+                }
+            },
+            "type": "directory",
+            "name": "srv",
+            "created": 1598918400,
+            "modified": 1598918400
         }
     },
     "type": "directory",
-    "name": "/"
+    "name": "/",
+    "created": 1577836800,
+    "modified": 1612137600
 }

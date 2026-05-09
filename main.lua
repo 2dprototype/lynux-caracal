@@ -332,11 +332,14 @@ local function createNewFolder(name)
         counter = counter + 1
     end
     
+    local currentTime = os.time()
     desktopHome.children[name] = {
         name = name,
         type = "directory",
         parent = desktopHome,
-        children = {}
+        children = {},
+        created = currentTime,
+        modified = currentTime
     }
     
     refreshDesktopLayout()
@@ -359,11 +362,14 @@ local function createNewFile(name)
         counter = counter + 1
     end
     
+    local currentTime = os.time()
     desktopHome.children[name] = {
         name = name,
         type = "file",
         parent = desktopHome,
-        content = ""
+        content = "",
+        created = currentTime,
+        modified = currentTime
     }
     
     refreshDesktopLayout()
@@ -376,17 +382,21 @@ local function createNewShortcut(targetNode, parent)
     local targetPath = filesystemModule.getPath(targetNode)
     local name = targetNode.name .. " - Shortcut.lnk"
     
-    local baseName, counter = name:gsub("%.lnk$", ""), 1
+    local baseName = name:gsub("%.lnk$", "")
+    local counter = 1
     while parent.children[name] do
         name = baseName .. " (" .. counter .. ").lnk"
         counter = counter + 1
     end
     
+    local currentTime = os.time()
     parent.children[name] = {
         name = name,
         type = "file",
         parent = parent,
-        content = targetPath
+        content = targetPath,
+        created = currentTime,
+        modified = currentTime
     }
     
     if parent == desktopHome then

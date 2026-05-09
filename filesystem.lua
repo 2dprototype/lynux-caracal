@@ -25,15 +25,56 @@ function filesystem.sanitize(node)
     return t
 end
 
+
 -- Recursively restore parent pointers (after loading from file)
 function filesystem.restore(node, parent)
     node.parent = parent
     if node.type == "directory" and node.children then
-        for k, child in pairs(node.children) do
-            filesystem.restore(child, node)
+        -- Handle both array-style and object-style children
+        local newChildren = {}
+        
+        if type(node.children) == "table" then
+            -- Check if it's an array (sequential indices) or object (named keys)
+            local isArray = true
+            local maxIdx = 0
+            for k, v in pairs(node.children) do
+                if type(k) == "number" then
+                    maxIdx = math.max(maxIdx, k)
+                else
+                    isArray = false
+                    break
+                end
+            end
+            
+            if isArray and maxIdx > 0 then
+                -- Convert array to object structure
+                for i, child in ipairs(node.children) do
+                    if type(child) == "table" and child.name then
+                        newChildren[child.name] = child
+                        filesystem.restore(child, node)
+                    end
+                end
+                node.children = newChildren
+            else
+                -- Object-style children (regular case)
+                for k, child in pairs(node.children) do
+                    if type(child) == "table" then
+                        filesystem.restore(child, node)
+                    end
+                end
+            end
         end
     end
 end
+-- Recursively restore parent pointers (after loading from file)
+-- function filesystem.restore(node, parent)
+    -- node.parent = parent
+    -- if node.type == "directory" and node.children then
+        -- for k, child in pairs(node.children) do
+            -- filesystem.restore(child, node)
+        -- end
+    -- end
+-- end
 
 -- Save the file system to disk.
 function filesystem.save(fs)
@@ -94,13 +135,19 @@ function filesystem.getPath(node)
     end
 end
 
+function filesystem.updateModified(node)
+    if node then
+        node.modified = os.time()
+        filesystem.save(filesystem.getFS())
+    end
+end
+
 -- Create a new directory
 function filesystem.createDirectory(parent, name)
     if not parent.children then
         parent.children = {}
     end
     
-    -- Ensure unique name
     local baseName = name
     local counter = 1
     while parent.children[name] do
@@ -108,15 +155,18 @@ function filesystem.createDirectory(parent, name)
         counter = counter + 1
     end
     
+    local currentTime = os.time()
     parent.children[name] = {
         name = name,
         type = "directory",
         parent = parent,
         children = {},
-        created = os.time(),
-        modified = os.time()
+        created = currentTime,
+        modified = currentTime
     }
     
+    -- Also update parent's modified time
+    filesystem.updateModified(parent)
     filesystem.save(filesystem.getFS())
     return parent.children[name]
 end
@@ -129,7 +179,6 @@ function filesystem.createFile(parent, name, content)
     
     content = content or ""
     
-    -- Ensure unique name
     local baseName = name:gsub("%..+$", "")
     local ext = name:match("(%..+)$") or ""
     local counter = 1
@@ -138,15 +187,18 @@ function filesystem.createFile(parent, name, content)
         counter = counter + 1
     end
     
+    local currentTime = os.time()
     parent.children[name] = {
         name = name,
         type = "file",
         parent = parent,
         content = content,
-        created = os.time(),
-        modified = os.time()
+        created = currentTime,
+        modified = currentTime
     }
     
+    -- Update parent's modified time
+    filesystem.updateModified(parent)
     filesystem.save(filesystem.getFS())
     return parent.children[name]
 end
@@ -154,7 +206,9 @@ end
 -- Delete a node
 function filesystem.delete(node)
     if not node.parent then return false end
+    local parent = node.parent
     node.parent.children[node.name] = nil
+    filesystem.updateModified(parent)
     filesystem.save(filesystem.getFS())
     return true
 end
@@ -169,6 +223,9 @@ function filesystem.rename(node, newName)
     node.name = newName
     node.parent.children[newName] = node
     
+    -- Update modification time
+    filesystem.updateModified(node)
+    filesystem.updateModified(node.parent)
     filesystem.save(filesystem.getFS())
     return true
 end
@@ -177,7 +234,6 @@ end
 function filesystem.move(node, newParent)
     if not node.parent or not newParent.children then return false end
     
-    -- Ensure unique name in new parent
     local name = node.name
     local baseName = name:match("(.+)%..+") or name
     local ext = name:match("(%..+)$") or ""
@@ -188,11 +244,16 @@ function filesystem.move(node, newParent)
         counter = counter + 1
     end
     
+    local oldParent = node.parent
     node.parent.children[node.name] = nil
     node.parent = newParent
     node.name = name
     newParent.children[name] = node
     
+    -- Update modification times
+    filesystem.updateModified(node)
+    filesystem.updateModified(oldParent)
+    filesystem.updateModified(newParent)
     filesystem.save(filesystem.getFS())
     return true
 end
@@ -201,10 +262,13 @@ end
 function filesystem.copy(node, newParent)
     if not newParent.children then return false end
     
+    local currentTime = os.time()
     local newNode = {
         name = node.name,
         type = node.type,
-        parent = newParent
+        parent = newParent,
+        created = currentTime,
+        modified = currentTime
     }
     
     if node.type == "directory" then
@@ -216,7 +280,6 @@ function filesystem.copy(node, newParent)
         newNode.content = node.content
     end
     
-    -- Ensure unique name
     local name = newNode.name
     local baseName = name:match("(.+)%..+") or name
     local ext = name:match("(%..+)$") or ""
@@ -229,8 +292,17 @@ function filesystem.copy(node, newParent)
     newNode.name = name
     newParent.children[name] = newNode
     
+    filesystem.updateModified(newParent)
     filesystem.save(filesystem.getFS())
     return true
+end
+
+function filesystem.updateFileContent(node, newContent)
+    if node.type == "file" then
+        node.content = newContent
+        node.modified = os.time()
+        filesystem.save(filesystem.getFS())
+    end
 end
 
 -- Generate a tree view (array of strings) for a directory.

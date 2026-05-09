@@ -746,6 +746,7 @@ end
 function TextEditor:saveFile()
     if self.fileNode then
         self.fileNode.content = table.concat(self.lines, "\n")
+        self.fileNode.modified = os.time()  -- Add this line
         filesystem.save(filesystem.getFS())
         self.dirty = false
     end
