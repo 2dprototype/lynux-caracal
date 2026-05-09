@@ -1,4 +1,6 @@
 local utf8 = require("utf8")
+local Websites = require("websites")
+local HTMLRenderer = require("browser_sites.html_renderer")
 local BrowserApp = {}
 BrowserApp.__index = BrowserApp
 
@@ -96,14 +98,19 @@ function BrowserApp:finishLoading()
             self.siteInstance = self:create404()
         end
     else
-        if self.currentURL:match("search%?q=") then
+        -- Try loading as HTML from websites/
+        local dom = Websites.load(self.currentURL)
+        if dom then
+            self.siteInstance = HTMLRenderer.new(self, dom)
+        elseif self.currentURL:match("search%?q=") then
             local ok, siteModule = pcall(require, "browser_sites.google")
             if ok and siteModule and siteModule.new then
                 self.siteInstance = siteModule.new(self)
                 return
             end
+        else
+            self.siteInstance = self:create404()
         end
-        self.siteInstance = self:create404()
     end
     
     -- Update window title

@@ -23,6 +23,8 @@ function Home.new(browser)
         {name="News", url="http://news.com", color={0.7, 0, 0}},
         {name="Github", url="http://github.com", color={0.15, 0.15, 0.15}},
         {name="YouTube", url="http://youtube.com", color={1, 0, 0}},
+        {name="HTML Home", url="http://lynux.home", color={0.4, 0.4, 0.4}},
+        {name="Directory", url="http://links.lynux", color={0.2, 0.6, 0.2}},
     }
     
     self.title = "New Tab"
