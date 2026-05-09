@@ -3,6 +3,42 @@ local json = require "lib/json"  -- ensure you have a json module
 local filesystem = require("filesystem")
 local TerminalCommands = require("terminal_commands")
 
+local THEMES = {
+    default = {
+        background = {0.0, 0.0, 0.0, 1.0},     -- Pure black background
+        text       = {0.98, 0.98, 0.98},       -- Almost white text
+        prompt     = {0.5, 0.8, 0.5},          -- Soft green prompt
+        error      = {1.0, 0.3, 0.3},          -- Bright red error
+        success    = {0.4, 0.9, 0.4},          -- Green success
+        directory  = {0.6, 0.6, 1.0}           -- Light blue directory
+    },
+    unix = {
+        background = {0.18, 0.02, 0.15, 0.98}, -- Classic Ubuntu Purple
+        text       = {0.95, 0.95, 0.95},
+        prompt     = {0.52, 0.89, 0.11},       -- Green prompt
+        error      = {0.9, 0.2, 0.2},
+        success    = {0.2, 0.9, 0.2},
+        directory  = {0.3, 0.6, 1.0}
+    },
+    monokai = {
+        background = {0.16, 0.17, 0.15, 0.98},
+        text       = {0.97, 0.97, 0.95},
+        prompt     = {0.64, 0.89, 0.14},       -- Lime
+        error      = {0.97, 0.15, 0.45},       -- Pinkish red
+        success    = {0.4, 0.86, 0.9},        -- Cyan
+        directory  = {0.68, 0.51, 1.0}         -- Purple
+    },
+    one_dark = {
+        background = {0.16, 0.18, 0.22, 0.98},
+        text       = {0.67, 0.72, 0.8},
+        prompt     = {0.59, 0.77, 0.45},
+        error      = {0.88, 0.4, 0.44},
+        success    = {0.37, 0.68, 0.53},
+        directory  = {0.38, 0.69, 0.94}
+    }
+}
+
+
 local Terminal = {}
 Terminal.__index = Terminal
 
@@ -68,15 +104,7 @@ function Terminal.new()
     self.maxVisibleLines = math.floor((300 - 20) / self.font:getHeight()) - 2
     self.windowWidth, self.windowHeight = 0, 0
     self.title = "Terminal"
-    self.colors = {
-        background = {0.05, 0.05, 0.05, 0.95},
-        text = {1, 1, 1},
-        prompt = {0, 0.47, 0.84},
-        error = {0.9, 0.1, 0.1},
-        success = {0.1, 0.8, 0.1},
-        directory = {0, 0.6, 0.9},
-        file = {0.9, 0.9, 0.9}
-    }
+    self.colors = THEMES.default
     self.history = {}
     self.historyIndex = 0
     self.commandStartTime = 0
@@ -396,6 +424,28 @@ function Terminal:mousemoved(mx, my, dx, dy, wx, wy)
     end
 end
 
+-- function Terminal:mousemoved(mx, my)
+    -- if self.scrollBarDragging then
+        -- local relY = my - (self.windowY or 0)
+        -- local wrapped = getWrappedLines(self)
+        -- local totalWrapped = #wrapped
+        -- local maxScroll = math.max(0, totalWrapped - self.maxVisibleLines)
+        
+        -- local contentHeight = self.windowHeight - 10
+        -- local thumbHeight = math.max(30, (self.maxVisibleLines / totalWrapped) * contentHeight)
+        -- local maxThumbTravel = contentHeight - thumbHeight
+        
+        -- if maxThumbTravel > 0 then
+            -- local deltaY = relY - self.scrollBarDragStartY
+            -- -- Calculate new offset: dragging DOWN (positive delta) 
+            -- -- should DECREASE scrollOffset to move toward newest lines (0).
+            -- local scrollChange = (deltaY / maxThumbTravel) * maxScroll
+            -- self.scrollOffset = math.max(0, math.min(maxScroll, self.scrollBarDragStartOffset - scrollChange))
+        -- end
+        -- self.autoScroll = (self.scrollOffset <= 0)
+    -- end
+-- end
+
 function Terminal:mousereleased(mx, my, button, wx, wy)
     if button == 1 then
         self.scrollBarDragging = false
@@ -415,6 +465,15 @@ function Terminal:processCommand(command)
     table.insert(self.rawLines, self.prompt .. command)
     self.commandStartTime = love.timer.getTime()
     TerminalCommands.process(self, command)
+end
+
+function Terminal:applyTheme(name)
+    if THEMES[name] then
+        self.colors = THEMES[name]
+        self:saveTheme()
+        return true
+    end
+    return false
 end
 
 function Terminal:print(str)

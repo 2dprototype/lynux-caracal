@@ -422,8 +422,16 @@ local inlineSubstitutions = {
         self:clearHistory()
         return "Command history cleared"
     end,
-    theme = function(self, ...)
-        return "Use 'color preset <name>' to change themes. Available: classic, dark, blue, green, amber"
+    theme = function(self, name)
+        if not name then
+            return "Usage: theme <default|unix|monokai|one_dark>"
+        end
+        
+        if self:applyTheme(name:lower()) then
+            return "Theme changed to " .. name
+        else
+            return "Unknown theme: " .. name .. ". Try: unix, monokai, one_dark"
+            end
     end,
     calc = function(self, ...)
         local expr = table.concat({...}, " ")
