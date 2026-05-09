@@ -248,4 +248,25 @@ function filesystem.generateTree(node, prefix)
     return lines
 end
 
+-- Find a node by its absolute path
+function filesystem.getNodeByPath(path)
+    if not path or path == "" then return nil end
+    if path == "/" then return filesystem.getFS() end
+    
+    local parts = {}
+    for part in path:gmatch("[^/]+") do
+        table.insert(parts, part)
+    end
+    
+    local current = filesystem.getFS()
+    for _, part in ipairs(parts) do
+        if current.children and current.children[part] then
+            current = current.children[part]
+        else
+            return nil
+        end
+    end
+    return current
+end
+
 return filesystem

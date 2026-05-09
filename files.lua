@@ -24,6 +24,7 @@ function FilesApp.new()
    -- Load icons (ensure these files exist in your project folder)
    self.folderIcon = love.graphics.newImage("assets/folder.png")
    self.fileIcon   = love.graphics.newImage("assets/file.png")
+   self.shortcutIcon = love.graphics.newImage("assets/shortcut.png")
 
    return self
 end
@@ -102,11 +103,38 @@ function FilesApp:draw(x, y, width, height)
        -- Draw the icon scaled to iconSize.
        local scaleX = iconSize / icon:getWidth()
        local scaleY = iconSize / icon:getHeight()
-       love.graphics.draw(icon, x + 15, posY + 2, 0, scaleX, scaleY)
+       
+       local isShortcut = file:match("%.lnk$")
+       if isShortcut then
+          local node = self.cwd.children[file]
+          local targetPath = node.content or node.target
+          local targetNode = targetPath and filesystem.getNodeByPath(targetPath) or nil
+          if targetNode and targetNode.type == "directory" then
+             icon = self.folderIcon
+          else
+             icon = self.fileIcon
+          end
+          
+          love.graphics.setShader(_G.bw_shader)
+          love.graphics.setColor(1, 1, 1)
+          love.graphics.draw(icon, x + 15, posY + 2, 0, scaleX, scaleY)
+          love.graphics.setShader()
+          
+          -- Draw little link icon at bottom right of the icon
+          local overlaySize = iconSize * 0.4
+          local osX = overlaySize / self.shortcutIcon:getWidth()
+          local osY = overlaySize / self.shortcutIcon:getHeight()
+          love.graphics.setColor(1, 1, 1)
+          love.graphics.draw(self.shortcutIcon, x + 15 + iconSize - overlaySize, posY + 2 + iconSize - overlaySize, 0, osX, osY)
+       else
+          love.graphics.setColor(1, 1, 1)
+          love.graphics.draw(icon, x + 15, posY + 2, 0, scaleX, scaleY)
+       end
        
        -- Draw the text offset by the icon width plus margin.
        love.graphics.setColor(0, 0, 0)
        love.graphics.print(file, x + 15 + iconSize + margin, posY + 2)
+
    end
 
    -- Draw scrollbar if needed.
@@ -129,6 +157,7 @@ function FilesApp:draw(x, y, width, height)
        love.graphics.rectangle("fill", scrollbarX, thumbY, scrollbarWidth, thumbHeight)
    end
 end
+
 
 function FilesApp:mousepressed(x, y, button)
    if button == 1 then
@@ -274,48 +303,20 @@ function FilesApp:openSelectedEntry()
 		local ext = node.name:match("^.+(%..+)$") or ""
 		ext = ext:lower()
 	
-	  if ext == ".obj" then
-        -- Open in ObjViewer
-        local ObjViewer = require("objviewer")
-        local viewer = ObjViewer.new(filesystem.getPath(node), node)
-        for i, app in ipairs(apps) do
-            if app.name == "ObjViewer" then
-                app.instance = viewer
-                toggleApp(app)
-                break
+        if ext == ".lnk" then
+            local targetPath = node.content or node.target
+            local targetNode = targetPath and filesystem.getNodeByPath(targetPath) or nil
+            if targetNode then
+                if targetNode.type == "directory" then
+                    self.cwd = targetNode
+                    self:updateFileList()
+                else
+                    _G.openFileDirectly(targetNode)
+                end
             end
+        else
+            _G.openFileDirectly(node)
         end
-		elseif ext == ".png" or ext == ".jpg" or ext == ".jpeg" then
-			-- Open in ImageViewer
-			local viewer = ImageViewer.new(filesystem.getPath(node), node)
-			for i, app in ipairs(apps) do
-				if app.name == "ImageViewer" then
-					app.instance = viewer
-					toggleApp(app)
-					break
-				end
-			end
-		else
-			 local editor = TextEditor.new(filesystem.getPath(node), node)
-			 if node.content and node.content ~= "" then
-				editor.lines = {}
-				for line in node.content:gmatch("([^\n]*)\n?") do
-				   table.insert(editor.lines, line)
-				end
-			 else
-				editor.lines = {""}
-			 end
-			 editor.filename = entry
-			 editor.fileNode = node  -- This should now stick.
-			 -- Set the TextEditor app's instance to your custom editor
-			 for i, app in ipairs(apps) do
-				if app.name == "TextEditor" then
-				   app.instance = editor
-				   toggleApp(app)
-				   break
-				end
-			 end
-		end
       end
    end
 end

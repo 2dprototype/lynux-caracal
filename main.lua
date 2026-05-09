@@ -15,6 +15,14 @@ local ChatApp = require("chat")
 local SettingsApp = require("settings")
 local filesystemModule = require("filesystem")
 
+_G.bw_shader = love.graphics.newShader[[
+    vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords) {
+        vec4 texcolor = Texel(texture, texture_coords);
+        float gray = dot(texcolor.rgb, vec3(0.299, 0.587, 0.114));
+        return vec4(gray, gray, gray, texcolor.a) * color;
+    }
+]]
+
 -- effect = moonshine(moonshine.effects.scanlines).chain(moonshine.effects.crt).chain(moonshine.effects.godsray)
 effect = moonshine(moonshine.effects.filmgrain).chain(moonshine.effects.godsray)
 -- effect.scanlines.opacity = 0.6
@@ -362,25 +370,36 @@ local function createNewFile(name)
     filesystemModule.save(filesystemModule.getFS())
 end
 
--- Create new shortcut in desktop home
-local function createNewShortcut(name)
-    name = (name == "" or not name) and "New Shortcut.lnk" or name
-    if not name:match("%.lnk$") then name = name .. ".lnk" end
+-- Create new shortcut
+local function createNewShortcut(targetNode, parent)
+    parent = parent or desktopHome
+    local targetPath = filesystemModule.getPath(targetNode)
+    local name = targetNode.name .. " - Shortcut.lnk"
     
     local baseName, counter = name:gsub("%.lnk$", ""), 1
-    while desktopHome.children[name] do
+    while parent.children[name] do
         name = baseName .. " (" .. counter .. ").lnk"
         counter = counter + 1
     end
     
-    desktopHome.children[name] = {
+    parent.children[name] = {
         name = name,
-        type = "shortcut",
-        parent = desktopHome,
-        target = "/" -- Default target
+        type = "file",
+        parent = parent,
+        content = targetPath
     }
-    refreshDesktopLayout()
+    
+    if parent == desktopHome then
+        refreshDesktopLayout()
+    end
     filesystemModule.save(filesystemModule.getFS())
+    
+    -- Refresh any open file explorer apps
+    for _, win in ipairs(openApps) do
+        if win.app.name == "Files" and win.instance then
+            win.instance:updateFileList()
+        end
+    end
 end
 
 
@@ -515,6 +534,7 @@ function _G.showFileContextMenu(node, parent)
     contextMenuItems = {
         {text = "Cut", action = "cut"},
         {text = "Copy", action = "copy"},
+        {text = "Create Shortcut", action = "create_shortcut"},
         {text = "Delete", action = "delete"},
         {text = "Properties", action = "properties"}
     }
@@ -554,8 +574,13 @@ local function handleContextMenuAction(action)
         createNewFolder()
     elseif action == "new_file" then
         createNewFile()
+    elseif action == "create_shortcut" then
+        if contextMenuTarget then
+            createNewShortcut(contextMenuTarget, contextMenuParent)
+        end
     elseif action == "new_shortcut" then
-        createNewShortcut()
+        -- This was the old desktop context menu action, let's just make it create a shortcut to root for now or remove it
+        createNewShortcut(filesystemModule.getFS(), desktopHome)
     elseif action == "change_wallpaper" then
         for i, app in ipairs(apps) do
             if app.name == "Settings" then
@@ -956,11 +981,31 @@ function drawDesktopHome()
             end
             
             local x, y = pos.x, pos.y
-            local icon = (node.type == "directory") and home_folderIcon or 
-                         (name:match("%.lnk$") and home_shortcutIcon or home_fileIcon)
+            local icon = (node.type == "directory") and home_folderIcon or home_fileIcon
+            local isShortcut = name:match("%.lnk$")
 
-            love.graphics.setColor(1, 1, 1)
-            love.graphics.draw(icon, x, y, 0, iconSize / icon:getWidth(), iconSize / icon:getHeight())
+            if isShortcut then
+                local targetPath = node.content or node.target
+                local targetNode = targetPath and filesystemModule.getNodeByPath(targetPath) or nil
+                if targetNode and targetNode.type == "directory" then
+                    icon = home_folderIcon
+                else
+                    icon = home_fileIcon
+                end
+                
+                love.graphics.setShader(_G.bw_shader)
+                love.graphics.setColor(1, 1, 1)
+                love.graphics.draw(icon, x, y, 0, iconSize / icon:getWidth(), iconSize / icon:getHeight())
+                love.graphics.setShader()
+                
+                -- Draw little link icon at bottom right
+                local shortcutSize = iconSize * 0.4
+                love.graphics.setColor(1, 1, 1)
+                love.graphics.draw(home_shortcutIcon, x + iconSize - shortcutSize, y + iconSize - shortcutSize, 0, shortcutSize / home_shortcutIcon:getWidth(), shortcutSize / home_shortcutIcon:getHeight())
+            else
+                love.graphics.setColor(1, 1, 1)
+                love.graphics.draw(icon, x, y, 0, iconSize / icon:getWidth(), iconSize / icon:getHeight())
+            end
             
             -- Add Ellipsis for long names
             local displayName = getEllipsisText(name, iconSize + 20, font)
@@ -1383,16 +1428,30 @@ function love.mousepressed(x, y, button)
                     dragIconOffsetX = x - icon.x
                     dragIconOffsetY = y - icon.y
                 else
-                    local FilesApp = require("files")
-                    local fileExplorer = FilesApp.new()
-                    fileExplorer.cwd = icon.node
-                    fileExplorer:updateFileList()
-                    for i, app in ipairs(apps) do
-                        if app.name == "Files" then
-                            app.instance = fileExplorer
-                            toggleApp(app)
-                            break
+                    local targetNode = icon.node
+                    if icon.name:match("%.lnk$") then
+                        local path = icon.node.content or icon.node.target
+                        targetNode = path and filesystemModule.getNodeByPath(path) or icon.node
+                    end
+                    
+                    if targetNode.type == "directory" then
+                        local FilesApp = require("files")
+                        local fileExplorer = FilesApp.new()
+                        fileExplorer.cwd = targetNode
+                        fileExplorer:updateFileList()
+                        for i, app in ipairs(apps) do
+                            if app.name == "Files" then
+                                app.instance = fileExplorer
+                                toggleApp(app)
+                                break
+                            end
                         end
+                    else
+                        -- Launch file
+                        -- We need a global way to open files. 
+                        -- For now, let's trigger the file opening logic by simulating a double click in a temporary FilesApp or similar.
+                        -- Actually, let's just use the same logic as FilesApp:openSelectedEntry
+                        openFileDirectly(targetNode)
                     end
                 end
                 return
@@ -1550,6 +1609,50 @@ function love.resize(w, h)
     -- Resize visual effects when screen resolution updates
     if effect and effect.resize then
         effect.resize(w, h)
+    end
+end
+
+function _G.openFileDirectly(node)
+    local ext = node.name:match("^.+(%..+)$") or ""
+    ext = ext:lower()
+
+    if ext == ".obj" then
+        local viewer = ObjViewer.new(filesystemModule.getPath(node), node)
+        for i, app in ipairs(apps) do
+            if app.name == "ObjViewer" then
+                app.instance = viewer
+                toggleApp(app)
+                break
+            end
+        end
+    elseif ext == ".png" or ext == ".jpg" or ext == ".jpeg" then
+        local viewer = ImageViewer.new(filesystemModule.getPath(node), node)
+        for i, app in ipairs(apps) do
+            if app.name == "ImageViewer" then
+                app.instance = viewer
+                toggleApp(app)
+                break
+            end
+        end
+    else
+        local editor = TextEditor.new(filesystemModule.getPath(node), node)
+        if node.content and node.content ~= "" then
+            editor.lines = {}
+            for line in node.content:gmatch("([^\n]*)\n?") do
+                table.insert(editor.lines, line)
+            end
+        else
+            editor.lines = {""}
+        end
+        editor.filename = node.name
+        editor.fileNode = node
+        for i, app in ipairs(apps) do
+            if app.name == "TextEditor" then
+                app.instance = editor
+                toggleApp(app)
+                break
+            end
+        end
     end
 end
 
