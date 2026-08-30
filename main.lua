@@ -7,7 +7,6 @@ local BrowserApp = require("browser")
 local FilesApp = require("files")
 local TerminalApp = require("terminal") 
 local TextEditor = require("texteditor")
-local DinoApp = require("dino")
 local TessarectApp = require("tessarect")
 local ImageViewer = require("imageviewer")
 local ObjViewer = require("objviewer")
@@ -1068,7 +1067,6 @@ function love.load()
     texteditorIcon = love.graphics.newImage("assets/file.png")
     tessarectIcon = love.graphics.newImage("assets/box.png")
     objviewerIcon = love.graphics.newImage("assets/cube.png")
-    dinoIcon = love.graphics.newImage("assets/dino.png")
     chatIcon = love.graphics.newImage("assets/chat.png")
     imageviewerIcon = love.graphics.newImage("assets/image.png")
     startIcon = love.graphics.newImage("assets/layers.png")
@@ -1101,7 +1099,6 @@ function love.load()
         { name = "Terminal", module = TerminalApp, instance = nil, icon = terminalIcon },
         { name = "TextEditor", module = TextEditor, instance = nil, icon = texteditorIcon },
         { name = "Tessarect", module = TessarectApp, instance = nil, icon = tessarectIcon },
-        { name = "Dino", module = DinoApp, instance = nil, icon = dinoIcon },
         { name = "ImageViewer", module = ImageViewer, instance = nil, icon = imageviewerIcon },
         { name = "ObjViewer", module = ObjViewer, instance = nil, icon = objviewerIcon },
         { name = "ChatApp", module = ChatApp, instance = nil, icon = chatIcon },
