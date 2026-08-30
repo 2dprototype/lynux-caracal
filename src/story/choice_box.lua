@@ -117,15 +117,15 @@ function ChoiceBox.draw()
     love.graphics.push()
 
     -- Dark backdrop overlay
-    love.graphics.setColor(0.04, 0.06, 0.09, 0.65)
+    love.graphics.setColor(0.08, 0.07, 0.1, 0.65)
     love.graphics.rectangle("fill", 0, 0, screenW, screenH)
 
-    -- Prompt Text
+    -- Prompt Text (Sunny Gold)
     love.graphics.setFont(ChoiceBox.promptFont or ChoiceBox.font)
-    love.graphics.setColor(0.92, 0.95, 1.0)
+    love.graphics.setColor(1.0, 0.92, 0.75)
     love.graphics.printf(ChoiceBox.prompt, 0, startY - 30, screenW, "center")
 
-    -- Choice Option Cards
+    -- Choice Option Cards (Retro Yellow Gaming)
     for i, opt in ipairs(ChoiceBox.options) do
         local optY = startY + (i - 1) * (itemH + 10)
         local optX = (screenW - itemW) / 2
@@ -137,18 +137,18 @@ function ChoiceBox.draw()
 
         -- Background
         if isSelected then
-            love.graphics.setColor(0.15, 0.28, 0.42, 0.96)
+            love.graphics.setColor(0.24, 0.2, 0.16, 0.96)
         else
-            love.graphics.setColor(0.1, 0.13, 0.18, 0.92)
+            love.graphics.setColor(0.14, 0.13, 0.17, 0.92)
         end
         love.graphics.rectangle("fill", optX, optY, itemW, itemH, 4, 4)
 
-        -- Border (Retro Electric Azure when selected)
+        -- Border
         if isSelected then
-            love.graphics.setColor(0.2, 0.75, 1.0, 1.0)
-            love.graphics.setLineWidth(1.5)
+            love.graphics.setColor(1.0, 0.82, 0.25, 1.0) -- Sunny Yellow
+            love.graphics.setLineWidth(1.4)
         else
-            love.graphics.setColor(0.2, 0.26, 0.35, 0.7)
+            love.graphics.setColor(0.3, 0.26, 0.32, 0.7)
             love.graphics.setLineWidth(1)
         end
         love.graphics.rectangle("line", optX, optY, itemW, itemH, 4, 4)
@@ -156,13 +156,13 @@ function ChoiceBox.draw()
         -- Number Tag
         love.graphics.setFont(ChoiceBox.font)
         if isSelected then
-            love.graphics.setColor(0.3, 0.85, 1.0)
+            love.graphics.setColor(1.0, 0.85, 0.3)
             love.graphics.print("▶ [" .. tostring(i) .. "]", optX + 12, optY + 10)
-            love.graphics.setColor(1, 1, 1)
+            love.graphics.setColor(1.0, 0.98, 0.94)
         else
-            love.graphics.setColor(0.5, 0.6, 0.7)
+            love.graphics.setColor(0.7, 0.65, 0.55)
             love.graphics.print("  [" .. tostring(i) .. "]", optX + 12, optY + 10)
-            love.graphics.setColor(0.85, 0.88, 0.92)
+            love.graphics.setColor(0.88, 0.86, 0.82)
         end
 
         -- Option Text

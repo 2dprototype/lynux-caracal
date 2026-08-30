@@ -3,7 +3,7 @@ local CharacterManager = require("src.story.character_mgr")
 
 local HistoryLog = {
     visible = false,
-    entries = {}, -- array of { speaker = "...", text = "...", isMonologue = false }
+    entries = {},
     scrollOffset = 0,
     maxScroll = 0,
     font = nil,
@@ -72,18 +72,18 @@ function HistoryLog.draw()
 
     love.graphics.push()
 
-    -- Dim background
-    love.graphics.setColor(0.08, 0.1, 0.15, 0.96)
+    -- Dim background (Warm Charcoal)
+    love.graphics.setColor(0.11, 0.1, 0.14, 0.96)
     love.graphics.rectangle("fill", marginX, marginY, logW, logH, 6, 6)
-    love.graphics.setColor(0.2, 0.65, 0.95, 0.85)
-    love.graphics.setLineWidth(1.2)
+    love.graphics.setColor(1.0, 0.82, 0.25, 0.9) -- Sunny Yellow Border
+    love.graphics.setLineWidth(1.4)
     love.graphics.rectangle("line", marginX, marginY, logW, logH, 6, 6)
 
-    -- Header
-    love.graphics.setColor(0.3, 0.85, 1.0)
+    -- Header (Sunny Gold)
+    love.graphics.setColor(1.0, 0.85, 0.3)
     love.graphics.setFont(HistoryLog.nameFont)
-    love.graphics.print("📖 Dialogue Transcript (Press ESC or H to close)", marginX + 16, marginY + 14)
-    love.graphics.setColor(0.2, 0.3, 0.42, 0.6)
+    love.graphics.print("★ Dialogue Transcript (Press ESC or H to close)", marginX + 16, marginY + 14)
+    love.graphics.setColor(1.0, 0.82, 0.25, 0.3)
     love.graphics.line(marginX + 16, marginY + 38, marginX + logW - 16, marginY + 38)
 
     -- Content list
@@ -93,20 +93,20 @@ function HistoryLog.draw()
     for _, entry in ipairs(HistoryLog.entries) do
         local nameStr = entry.isMonologue and "[Thought]" or (entry.speaker or "Protagonist")
         local charInfo = CharacterManager.get(entry.speaker)
-        local color = entry.isMonologue and {0.4, 0.8, 1.0} or (charInfo.color or {0.9, 0.9, 0.9})
+        local color = entry.isMonologue and {1.0, 0.85, 0.3} or (charInfo.color or {1.0, 0.9, 0.8})
 
         if contentY + 40 >= marginY + 50 and contentY <= marginY + logH - 20 then
-            love.graphics.setColor(color[1], color[2], color[3], 0.9)
+            love.graphics.setColor(color[1], color[2], color[3], 0.95)
             love.graphics.setFont(HistoryLog.nameFont)
-            love.graphics.print(nameStr .. ":", marginX + 30, contentY)
+            love.graphics.print(nameStr .. ":", marginX + 24, contentY)
 
-            love.graphics.setColor(0.9, 0.9, 0.9, 0.9)
+            love.graphics.setColor(0.96, 0.94, 0.9)
             love.graphics.setFont(HistoryLog.font)
-            love.graphics.printf(entry.text, marginX + 160, contentY, logW - 190, "left")
+            love.graphics.printf(entry.text, marginX + 150, contentY, logW - 175, "left")
         end
 
-        local textH = HistoryLog.font:getHeight() * math.ceil(HistoryLog.font:getWidth(entry.text) / (logW - 190))
-        local itemH = math.max(30, textH + 12)
+        local textH = HistoryLog.font:getHeight() * math.ceil(HistoryLog.font:getWidth(entry.text) / (logW - 175))
+        local itemH = math.max(28, textH + 10)
         contentY = contentY + itemH
         totalHeight = totalHeight + itemH
     end

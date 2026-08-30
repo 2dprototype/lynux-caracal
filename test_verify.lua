@@ -100,17 +100,21 @@ local function runTests()
     assert(type(prologueScript) == "table" and #prologueScript > 5, "Prologue script should be valid table with multiple steps")
     log("[PASS] Prologue Story Script Integrity")
 
-    -- Test 6: Desktop & Window Manager
+    -- Test 6: Desktop & Window Manager & File Opening
     local WindowManager = require("src.desktop.window_mgr")
     local DesktopManager = require("src.desktop.desktop_mgr")
     DesktopManager.init()
     assert(#DesktopManager.apps >= 5, "DesktopManager should have registered apps")
-    local textEditorApp = DesktopManager.openAppByName("TextEditor")
-    assert(textEditorApp ~= nil, "Should be able to open TextEditor")
-    assert(#WindowManager.openApps == 1, "WindowManager should have 1 open window")
+    assert(type(_G.openFileDirectly) == "function", "_G.openFileDirectly should be defined")
+    
+    local dummyNode = { name = "notes.txt", type = "file", content = "Hello World" }
+    _G.openFileDirectly(dummyNode)
+    assert(#WindowManager.openApps == 1, "Opening file should open TextEditor window")
+    assert(WindowManager.openApps[1].app.name == "TextEditor", "Opened window should be TextEditor")
+    assert(WindowManager.openApps[1].instance.filename == "notes.txt", "TextEditor should have loaded filename")
     WindowManager.closeWindow(WindowManager.openApps[1])
     assert(#WindowManager.openApps == 0, "WindowManager should have closed window")
-    log("[PASS] Desktop & Window Management")
+    log("[PASS] Desktop, Window Management & Direct File Opening")
 
     -- Test 7: Transitions
     local Transitions = require("src.core.transitions")

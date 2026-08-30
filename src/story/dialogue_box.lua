@@ -11,7 +11,7 @@ local DialogueBox = {
     isMonologue = false,
     charIndex = 0,
     typeTimer = 0,
-    typeSpeed = 0.022, -- fast and responsive typewriter
+    typeSpeed = 0.022,
     isTyping = false,
     promptPulseTimer = 0,
     font = nil,
@@ -52,10 +52,10 @@ function DialogueBox.advance()
     if DialogueBox.isTyping then
         DialogueBox.finishTyping()
         AudioManager.playSFX("click", 1.2)
-        return false -- consumed to reveal entire line
+        return false
     else
         AudioManager.playSFX("click", 1.0)
-        return true -- ready for next line
+        return true
     end
 end
 
@@ -79,12 +79,11 @@ function DialogueBox.update(dt)
                 DialogueBox.displayText = DialogueBox.fullText
             end
 
-            -- Subtle audio click on characters
             if DialogueBox.charIndex % 3 == 1 then
                 if DialogueBox.isMonologue then
-                    AudioManager.playSFX("typewriter", 0.95 + math.random() * 0.1, 0.35)
+                    AudioManager.playSFX("typewriter", 1.0 + math.random() * 0.1, 0.35)
                 else
-                    AudioManager.playSFX("blip_low", 1.0 + math.random() * 0.1, 0.35)
+                    AudioManager.playSFX("blip_low", 1.05 + math.random() * 0.1, 0.35)
                 end
             end
         end
@@ -114,81 +113,81 @@ function DialogueBox.draw()
     love.graphics.push()
 
     if DialogueBox.isMonologue then
-        -- Minimalist Monologue Panel (Sleek Dark Indigo Plate)
+        -- Monologue: Warm Retro Charcoal with Sunny Gold Border
         -- Drop Shadow
-        love.graphics.setColor(0, 0, 0, 0.4)
+        love.graphics.setColor(0, 0, 0, 0.35)
         love.graphics.rectangle("fill", boxX + 3, boxY + 3, boxW, boxH, 6, 6)
 
         -- Panel Background
-        love.graphics.setColor(0.08, 0.1, 0.16, 0.94)
+        love.graphics.setColor(0.12, 0.11, 0.15, 0.96)
         love.graphics.rectangle("fill", boxX, boxY, boxW, boxH, 6, 6)
 
-        -- Retro Cyan Accent Border
-        love.graphics.setColor(0.2, 0.7, 0.95, 0.85)
-        love.graphics.setLineWidth(1.2)
+        -- Retro Sunny Yellow Accent Border
+        love.graphics.setColor(1.0, 0.82, 0.25, 0.9)
+        love.graphics.setLineWidth(1.4)
         love.graphics.rectangle("line", boxX, boxY, boxW, boxH, 6, 6)
 
-        -- Thought Badge Pill
-        love.graphics.setColor(0.12, 0.25, 0.38, 0.95)
+        -- Thought Badge Pill (Warm Amber/Gold)
+        love.graphics.setColor(0.24, 0.2, 0.16, 0.95)
         love.graphics.rectangle("fill", boxX + 16, boxY - 12, 115, 20, 4, 4)
-        love.graphics.setColor(0.3, 0.85, 1.0, 0.9)
+        love.graphics.setColor(1.0, 0.82, 0.25, 0.95)
         love.graphics.rectangle("line", boxX + 16, boxY - 12, 115, 20, 4, 4)
         
         love.graphics.setFont(DialogueBox.nameFont or DialogueBox.font)
-        love.graphics.setColor(0.4, 0.9, 1.0)
-        love.graphics.print("« Thought »", boxX + 26, boxY - 10)
+        love.graphics.setColor(1.0, 0.85, 0.3)
+        love.graphics.print("★ Thought", boxX + 26, boxY - 10)
 
-        -- Text Content
+        -- Text Content (Crisp Warm Cream)
         love.graphics.setFont(DialogueBox.italicFont or DialogueBox.font)
-        love.graphics.setColor(0.9, 0.95, 1.0)
+        love.graphics.setColor(1.0, 0.97, 0.92)
         love.graphics.printf(DialogueBox.displayText, boxX + 22, boxY + 20, boxW - 44, "left")
 
     else
-        -- Standard Dialogue Panel (Minimalist Retro Charcoal)
+        -- Standard Dialogue: Cute Retro Card
         local charInfo = CharacterManager.get(DialogueBox.speaker)
-        local accentColor = charInfo.color or {0.2, 0.7, 0.95}
+        local accentColor = charInfo.color or {1.0, 0.82, 0.25}
 
         -- Drop Shadow
-        love.graphics.setColor(0, 0, 0, 0.4)
+        love.graphics.setColor(0, 0, 0, 0.35)
         love.graphics.rectangle("fill", boxX + 3, boxY + 3, boxW, boxH, 6, 6)
 
         -- Background
-        love.graphics.setColor(0.09, 0.11, 0.16, 0.95)
+        love.graphics.setColor(0.12, 0.11, 0.15, 0.96)
         love.graphics.rectangle("fill", boxX, boxY, boxW, boxH, 6, 6)
 
         -- Accent Border
-        love.graphics.setColor(accentColor[1], accentColor[2], accentColor[3], 0.85)
-        love.graphics.setLineWidth(1.2)
+        love.graphics.setColor(accentColor[1], accentColor[2], accentColor[3], 0.9)
+        love.graphics.setLineWidth(1.4)
         love.graphics.rectangle("line", boxX, boxY, boxW, boxH, 6, 6)
 
-        -- Speaker Name Tag (Left Card)
+        -- Speaker Name Tag (Left Pill)
         local nameStr = charInfo.name or DialogueBox.speaker or "???"
-        local nameWidth = (DialogueBox.nameFont or DialogueBox.font):getWidth(nameStr) + 32
+        local nameWidth = (DialogueBox.nameFont or DialogueBox.font):getWidth(nameStr) + 36
         
-        love.graphics.setColor(0.14, 0.17, 0.24, 0.98)
+        love.graphics.setColor(0.2, 0.18, 0.24, 0.98)
         love.graphics.rectangle("fill", boxX + 16, boxY - 12, nameWidth, 22, 4, 4)
-        love.graphics.setColor(accentColor[1], accentColor[2], accentColor[3], 0.9)
+        love.graphics.setColor(accentColor[1], accentColor[2], accentColor[3], 0.95)
         love.graphics.rectangle("line", boxX + 16, boxY - 12, nameWidth, 22, 4, 4)
 
-        -- Character Color Dot
+        -- Cute Kawaii Heart/Star prefix
         love.graphics.setColor(accentColor[1], accentColor[2], accentColor[3])
-        love.graphics.circle("fill", boxX + 25, boxY - 1, 4)
+        love.graphics.setFont(DialogueBox.nameFont or DialogueBox.font)
+        love.graphics.print("♥", boxX + 22, boxY - 10)
 
         -- Name Text
-        love.graphics.setFont(DialogueBox.nameFont or DialogueBox.font)
-        love.graphics.setColor(1, 1, 1)
+        love.graphics.setColor(1.0, 0.98, 0.94)
         love.graphics.print(nameStr, boxX + 34, boxY - 10)
 
         -- Text Content
         love.graphics.setFont(DialogueBox.font)
-        love.graphics.setColor(0.95, 0.96, 0.98)
+        love.graphics.setColor(1.0, 0.97, 0.92)
         love.graphics.printf(DialogueBox.displayText, boxX + 22, boxY + 20, boxW - 44, "left")
     end
 
-    -- Minimalist Pulsing Prompt Indicator
+    -- Minimalist Blinking Sunny Yellow Arrow
     if not DialogueBox.isTyping then
         local pulseAlpha = 0.4 + 0.6 * math.abs(math.sin(DialogueBox.promptPulseTimer * 4))
-        love.graphics.setColor(0.3, 0.85, 1.0, pulseAlpha)
+        love.graphics.setColor(1.0, 0.85, 0.3, pulseAlpha) -- Sunny Yellow
         local arrowX = boxX + boxW - 24
         local arrowY = boxY + boxH - 18
         love.graphics.polygon("fill", arrowX, arrowY, arrowX + 8, arrowY, arrowX + 4, arrowY + 6)

@@ -126,49 +126,49 @@ function WindowManager.draw()
             love.graphics.setColor(0, 0, 0, isFocused and 0.35 or 0.18)
             love.graphics.rectangle("fill", win.x + 3, win.y + 3, win.width, win.height, 6, 6)
 
-            -- Window Body Background (Clean Dark Slate)
-            love.graphics.setColor(0.11, 0.13, 0.17)
+            -- Window Body Background (Clean Warm Slate)
+            love.graphics.setColor(0.12, 0.11, 0.15)
             love.graphics.rectangle("fill", win.x, win.y, win.width, win.height, 6, 6)
 
-            -- Title Bar (Minimalist Charcoal)
+            -- Title Bar (Warm Retro Toast / Charcoal)
             if isFocused then
-                love.graphics.setColor(0.16, 0.19, 0.26)
+                love.graphics.setColor(0.18, 0.16, 0.22)
             else
-                love.graphics.setColor(0.13, 0.15, 0.2)
+                love.graphics.setColor(0.14, 0.13, 0.17)
             end
             love.graphics.rectangle("fill", win.x, win.y, win.width, titleH, 6, 6)
-            love.graphics.rectangle("fill", win.x, win.y + titleH - 6, win.width, 6) -- square off bottom corners of titlebar
+            love.graphics.rectangle("fill", win.x, win.y + titleH - 6, win.width, 6)
 
             -- Title Bar Separator Line
-            love.graphics.setColor(0.22, 0.26, 0.34, 0.8)
+            love.graphics.setColor(1.0, 0.82, 0.25, isFocused and 0.5 or 0.2)
             love.graphics.line(win.x, win.y + titleH, win.x + win.width, win.y + titleH)
 
-            -- Retro Window Controls (Left side: Traffic Lights style)
+            -- Kawaii Retro Window Controls (Left side: Pastel Strawberry, Lemon, Mint)
             local btnCloseX = win.x + 12
             local btnMinX = win.x + 28
             local btnMaxX = win.x + 44
             local btnY = win.y + 15
 
-            -- Close Button (Retro Coral / Crimson)
-            love.graphics.setColor(1.0, 0.36, 0.42, isFocused and 1.0 or 0.6)
+            -- Close Button (Kawaii Strawberry Pink)
+            love.graphics.setColor(1.0, 0.44, 0.65, isFocused and 1.0 or 0.6)
             love.graphics.circle("fill", btnCloseX, btnY, 5)
 
-            -- Minimize Button (Retro Amber / Sunburst)
-            love.graphics.setColor(1.0, 0.72, 0.22, isFocused and 1.0 or 0.6)
+            -- Minimize Button (Sunny Lemon Yellow)
+            love.graphics.setColor(1.0, 0.85, 0.3, isFocused and 1.0 or 0.6)
             love.graphics.circle("fill", btnMinX, btnY, 5)
 
-            -- Maximize / Active Dot (Neon Mint)
+            -- Maximize / Active Dot (Pastel Soda Mint)
             love.graphics.setColor(0.2, 0.88, 0.55, isFocused and 1.0 or 0.4)
             love.graphics.circle("fill", btnMaxX, btnY, 5)
 
-            -- App Icon & Title (Centered or neatly placed)
+            -- App Icon & Title
             if win.app and win.app.icon then
                 love.graphics.setColor(1, 1, 1, isFocused and 0.95 or 0.6)
                 love.graphics.draw(win.app.icon, win.x + 64, win.y + 7, 0, 16 / win.app.icon:getWidth(), 16 / win.app.icon:getHeight())
             end
 
             love.graphics.setFont(WindowManager.font)
-            love.graphics.setColor(isFocused and {0.92, 0.94, 0.98} or {0.6, 0.65, 0.72})
+            love.graphics.setColor(isFocused and {1.0, 0.96, 0.88} or {0.65, 0.62, 0.7})
             local titleText = (win.app and win.app.name) or "Application"
             love.graphics.print(titleText, win.x + 86, win.y + 6)
 
@@ -185,18 +185,18 @@ function WindowManager.draw()
 
             love.graphics.setScissor()
 
-            -- Clean Outer Window Border
+            -- Clean Retro Border (Sunny Yellow Highlight when focused!)
             if isFocused then
-                love.graphics.setColor(0.2, 0.65, 0.95, 0.85) -- Electric Azure highlight
+                love.graphics.setColor(1.0, 0.82, 0.25, 0.95) -- Sunny Yellow
                 love.graphics.setLineWidth(1.5)
             else
-                love.graphics.setColor(0.22, 0.26, 0.35, 0.6)
+                love.graphics.setColor(0.25, 0.22, 0.3, 0.6)
                 love.graphics.setLineWidth(1)
             end
             love.graphics.rectangle("line", win.x, win.y, win.width, win.height, 6, 6)
 
-            -- Subtle Resize corner grip
-            love.graphics.setColor(0.4, 0.5, 0.65, isFocused and 0.7 or 0.3)
+            -- Resize corner grip
+            love.graphics.setColor(1.0, 0.82, 0.25, isFocused and 0.6 or 0.2)
             local rx = win.x + win.width
             local ry = win.y + win.height
             love.graphics.line(rx - 10, ry - 2, rx - 2, ry - 10)
@@ -210,38 +210,31 @@ end
 function WindowManager.mousepressed(x, y, button)
     local titleH = WindowManager.titleBarHeight
 
-    -- Iterate backwards (topmost window first)
     for i = #WindowManager.openApps, 1, -1 do
         local win = WindowManager.openApps[i]
         if not win.minimized then
-            -- Check inside window bounds
             if x >= win.x and x <= win.x + win.width and y >= win.y and y <= win.y + win.height then
                 WindowManager.setFocus(win)
 
-                -- Check title bar clicks
                 if y <= win.y + titleH then
                     local btnCloseX = win.x + 12
                     local btnMinX = win.x + 28
                     
-                    -- Close button (radius 8 hit area)
                     if math.abs(x - btnCloseX) <= 8 and math.abs(y - (win.y + 15)) <= 8 then
                         WindowManager.closeWindow(win)
                         return true
                     end
-                    -- Minimize button (radius 8 hit area)
                     if math.abs(x - btnMinX) <= 8 and math.abs(y - (win.y + 15)) <= 8 then
                         win.minimized = true
                         return true
                     end
 
-                    -- Start window drag
                     WindowManager.draggingWindow = win
                     WindowManager.dragOffsetX = x - win.x
                     WindowManager.dragOffsetY = y - win.y
                     return true
                 end
 
-                -- Check resize handle (bottom-right 16x16)
                 if x >= win.x + win.width - 16 and y >= win.y + win.height - 16 then
                     WindowManager.resizingWindow = win
                     WindowManager.resizeOffsetX = win.width - x
@@ -249,7 +242,7 @@ function WindowManager.mousepressed(x, y, button)
                     return true
                 end
 
-                -- Pass RELATIVE coordinates to window app content!
+                -- Relative coordinate pass-through
                 local contentY = win.y + titleH
                 local relX = x - win.x
                 local relY = y - contentY

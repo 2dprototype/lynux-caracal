@@ -181,30 +181,30 @@ function TaskManager.drawCelebrationBanner()
     love.graphics.setColor(0, 0, 0, 0.35 * alpha)
     love.graphics.rectangle("fill", bannerX + 3, bannerY + 3, bannerW, bannerH, 6, 6)
 
-    -- Background (Minimalist Dark Slate)
-    love.graphics.setColor(0.09, 0.12, 0.17, 0.96 * alpha)
+    -- Background (Warm Retro Dark Charcoal)
+    love.graphics.setColor(0.12, 0.11, 0.15, 0.96 * alpha)
     love.graphics.rectangle("fill", bannerX, bannerY, bannerW, bannerH, 6, 6)
 
-    -- Neon Mint Accent Border
-    love.graphics.setColor(0.2, 0.88, 0.55, 0.9 * alpha)
-    love.graphics.setLineWidth(1.2)
+    -- Retro Sunny Yellow Accent Border
+    love.graphics.setColor(1.0, 0.82, 0.25, 0.95 * alpha)
+    love.graphics.setLineWidth(1.4)
     love.graphics.rectangle("line", bannerX, bannerY, bannerW, bannerH, 6, 6)
 
-    -- Icon Checkmark Circle
+    -- Icon Checkmark Circle (Sunny Lemon Gold)
     local iconX = bannerX + 22
     local iconY = bannerY + bannerH / 2
-    love.graphics.setColor(0.2, 0.88, 0.55, 0.9 * alpha)
+    love.graphics.setColor(1.0, 0.85, 0.3, 0.95 * alpha)
     love.graphics.circle("fill", iconX, iconY, 12)
-    love.graphics.setColor(0.09, 0.12, 0.17, alpha)
+    love.graphics.setColor(0.12, 0.11, 0.15, alpha)
     local font = love.graphics.getFont()
-    love.graphics.print("✓", iconX - 4, iconY - 8)
+    love.graphics.print("★", iconX - 4, iconY - 9)
 
     -- Text Content
-    love.graphics.setColor(0.96, 0.98, 1.0, alpha)
+    love.graphics.setColor(1.0, 0.96, 0.9, alpha)
     love.graphics.print(b.title, bannerX + 44, bannerY + 8)
 
-    love.graphics.setColor(0.2, 0.88, 0.55, alpha)
-    love.graphics.print(b.subtext .. "  •  Level " .. PlayerStats.level .. " (" .. PlayerStats.title .. ")", bannerX + 44, bannerY + 28)
+    love.graphics.setColor(1.0, 0.85, 0.3, alpha)
+    love.graphics.print(b.subtext .. "  •  ♥ Level " .. PlayerStats.level .. " (" .. PlayerStats.title .. ")", bannerX + 44, bannerY + 28)
 
     love.graphics.pop()
 end

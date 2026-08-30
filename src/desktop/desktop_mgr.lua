@@ -25,15 +25,18 @@ local DesktopManager = {
     desktopHomeIcons = {},
     desktopHome = nil,
     currentWallpaper = {
-        type = "color",
-        color = {0.12, 0.16, 0.24}
+        type = "retro_yellow",
+        color = {0.14, 0.12, 0.16}
     },
     startMenuOpen = false,
     startIcon = nil,
     folderIcon = nil,
     fileIcon = nil,
     shortcutIcon = nil,
-    font = nil
+    font = nil,
+    boldFont = nil,
+    lastClickTime = 0,
+    lastClickIcon = nil
 }
 
 function DesktopManager.init()
@@ -43,6 +46,7 @@ function DesktopManager.init()
     Notifications.init()
 
     DesktopManager.font = love.graphics.newFont("font/Nunito-Regular.ttf", 13) or love.graphics.newFont(13)
+    DesktopManager.boldFont = love.graphics.newFont("font/Nunito-Regular.ttf", 14) or love.graphics.newFont(14)
 
     -- Load icons
     pcall(function()
@@ -83,6 +87,20 @@ function DesktopManager.init()
         { name = "Settings", module = SettingsApp, instance = nil, icon = loadImg("assets/settings.png") },
     }
 
+    -- Global file opener hook for FilesApp and Desktop icons!
+    _G.openFileDirectly = function(node)
+        if not node then return end
+        local ext = node.name:match("^.+(%..+)$") or ""
+        ext = ext:lower()
+        if ext == ".png" or ext == ".jpg" or ext == ".jpeg" then
+            DesktopManager.openImageFile(node)
+        elseif ext == ".obj" then
+            DesktopManager.openObjFile(node)
+        else
+            DesktopManager.openTextFile(node)
+        end
+    end
+
     -- Position taskbar launcher icons
     DesktopManager.updateDockLayout()
 end
@@ -112,36 +130,103 @@ function DesktopManager.openAppByName(appName)
     end
 end
 
-function DesktopManager.drawWallpaper()
-    local screenW, screenH = love.graphics.getWidth(), love.graphics.getHeight()
-    
-    if DesktopManager.currentWallpaper.type == "color" then
-        love.graphics.setColor(DesktopManager.currentWallpaper.color)
-        love.graphics.rectangle("fill", 0, 0, screenW, screenH)
-    else
-        -- Clean Minimalist Dark Slate / Charcoal Gradient
-        for y = 0, screenH do
-            local ratio = y / screenH
-            love.graphics.setColor(0.07 + ratio * 0.04, 0.09 + ratio * 0.04, 0.13 + ratio * 0.05)
-            love.graphics.line(0, y, screenW, y)
+function DesktopManager.openTextFile(node)
+    local editorApp = nil
+    for _, app in ipairs(DesktopManager.apps) do
+        if app.name == "TextEditor" then
+            editorApp = app
+            break
+        end
+    end
+    if not editorApp then return end
+
+    -- Check if an existing TextEditor window is open
+    local existingWin = nil
+    for _, win in ipairs(WindowManager.openApps) do
+        if win.app == editorApp then
+            existingWin = win
+            break
         end
     end
 
-    -- Minimalist subtle retro grid
-    love.graphics.setColor(0.2, 0.35, 0.5, 0.05)
+    if existingWin then
+        existingWin.minimized = false
+        WindowManager.setFocus(existingWin)
+        if node then
+            existingWin.instance.filename = node.name
+            existingWin.instance.fileNode = node
+            if node.content then
+                existingWin.instance:loadContent(node.content)
+            end
+        end
+    else
+        editorApp.instance = editorApp.module.new(node and node.name or "untitled.txt", node)
+        WindowManager.openWindow(editorApp)
+    end
+    AudioManager.playSFX("click")
+end
+
+function DesktopManager.openImageFile(node)
+    local imgApp = nil
+    for _, app in ipairs(DesktopManager.apps) do
+        if app.name == "ImageViewer" then
+            imgApp = app
+            break
+        end
+    end
+    if imgApp then
+        if not imgApp.instance then
+            imgApp.instance = imgApp.module.new()
+        end
+        WindowManager.openWindow(imgApp)
+        if imgApp.instance.loadImage then
+            imgApp.instance:loadImage(node)
+        end
+    end
+end
+
+function DesktopManager.openObjFile(node)
+    local objApp = nil
+    for _, app in ipairs(DesktopManager.apps) do
+        if app.name == "ObjViewer" then
+            objApp = app
+            break
+        end
+    end
+    if objApp then
+        if not objApp.instance then
+            objApp.instance = objApp.module.new()
+        end
+        WindowManager.openWindow(objApp)
+    end
+end
+
+function DesktopManager.drawWallpaper()
+    local screenW, screenH = love.graphics.getWidth(), love.graphics.getHeight()
+    
+    -- Retro Yellow Gaming / Warm Cozy Wallpaper (Fast, lag-free rendering)
+    love.graphics.setColor(0.13, 0.12, 0.15) -- Warm dark espresso base
+    love.graphics.rectangle("fill", 0, 0, screenW, screenH)
+
+    -- Soft Retro Grid in Honey Gold
+    love.graphics.setColor(1.0, 0.82, 0.25, 0.05)
     for x = 0, screenW, 36 do
         love.graphics.line(x, 0, x, screenH)
     end
     for y = 0, screenH, 36 do
         love.graphics.line(0, y, screenW, y)
     end
+
+    -- Cute Retro Pixel Art Watermark in Center (Lynux Caracal)
+    love.graphics.setColor(1.0, 0.82, 0.25, 0.06)
+    love.graphics.circle("fill", screenW * 0.58, screenH * 0.46, 90)
 end
 
 function DesktopManager.drawDesktopIcons()
     DesktopManager.desktopHomeIcons = {}
     local iconSize = 36
-    local spacingX, spacingY = 72, 70
-    local startX, startY = 275, 46 -- Offset so TaskHUD sticky note on left doesn't overlap
+    local spacingX, spacingY = 74, 72
+    local startX, startY = 275, 45 -- Offset so TaskHUD sticky note on left doesn't overlap
     local cols = 5
     local index = 0
 
@@ -152,18 +237,19 @@ function DesktopManager.drawDesktopIcons()
             local x = startX + col * spacingX
             local y = startY + row * spacingY
 
+            -- Cute Retro Icon Frame
             local icon = (node.type == "directory") and DesktopManager.folderIcon or DesktopManager.fileIcon
             if icon then
                 love.graphics.setColor(1, 1, 1, 0.95)
                 love.graphics.draw(icon, x, y, 0, iconSize / icon:getWidth(), iconSize / icon:getHeight())
             else
-                love.graphics.setColor(0.2, 0.65, 0.95)
+                love.graphics.setColor(1.0, 0.82, 0.25, 0.9)
                 love.graphics.rectangle("fill", x, y, iconSize, iconSize, 4, 4)
             end
 
-            -- Label
+            -- Label (Crisp Warm Cream)
             love.graphics.setFont(DesktopManager.font)
-            love.graphics.setColor(0.9, 0.93, 0.97)
+            love.graphics.setColor(0.98, 0.96, 0.92)
             love.graphics.printf(name, x - 14, y + iconSize + 2, iconSize + 28, "center")
 
             table.insert(DesktopManager.desktopHomeIcons, {
@@ -181,23 +267,24 @@ function DesktopManager.drawBottomDock()
 
     love.graphics.push()
 
-    -- Dock background (Minimalist Dark Slate)
-    love.graphics.setColor(0.08, 0.1, 0.15, 0.96)
+    -- Dock background (Warm Retro Dark Charcoal)
+    love.graphics.setColor(0.11, 0.1, 0.13, 0.96)
     love.graphics.rectangle("fill", 0, dockY, screenW, dockH)
-    love.graphics.setColor(0.18, 0.22, 0.3, 0.8)
+    love.graphics.setColor(1.0, 0.82, 0.25, 0.4) -- Sunny Yellow Accent Line
     love.graphics.line(0, dockY, screenW, dockY)
 
-    -- Start Menu Button
-    love.graphics.setColor(DesktopManager.startMenuOpen and 0.22 or 0.13, DesktopManager.startMenuOpen and 0.35 or 0.17, 0.24, 0.95)
-    love.graphics.rectangle("fill", 8, dockY + 5, 34, 32, 4, 4)
-    love.graphics.setColor(0.2, 0.88, 0.55, 0.7) -- Neon Mint outline
-    love.graphics.rectangle("line", 8, dockY + 5, 34, 32, 4, 4)
+    -- Start Menu Button (Cute Retro Yellow / Pink)
+    love.graphics.setColor(DesktopManager.startMenuOpen and 0.25 or 0.16, DesktopManager.startMenuOpen and 0.22 or 0.14, 0.18, 0.95)
+    love.graphics.rectangle("fill", 8, dockY + 5, 34, 32, 5, 5)
+    love.graphics.setColor(1.0, 0.82, 0.25, 0.8) -- Sunny Yellow border
+    love.graphics.setLineWidth(1.2)
+    love.graphics.rectangle("line", 8, dockY + 5, 34, 32, 5, 5)
     
     if DesktopManager.startIcon then
-        love.graphics.setColor(1, 1, 1)
+        love.graphics.setColor(1.0, 0.88, 0.4)
         love.graphics.draw(DesktopManager.startIcon, 16, dockY + 12, 0, 18 / DesktopManager.startIcon:getWidth(), 18 / DesktopManager.startIcon:getHeight())
     else
-        love.graphics.setColor(0.2, 0.88, 0.55)
+        love.graphics.setColor(1.0, 0.82, 0.25)
         love.graphics.circle("fill", 25, dockY + 21, 6)
     end
 
@@ -217,27 +304,27 @@ function DesktopManager.drawBottomDock()
 
         -- Background highlight if focused
         if isFocused then
-            love.graphics.setColor(0.18, 0.3, 0.45, 0.85)
-            love.graphics.rectangle("fill", app.x - 2, app.y - 2, app.width + 4, app.height + 4, 4, 4)
-            love.graphics.setColor(0.2, 0.75, 1.0, 0.7)
-            love.graphics.rectangle("line", app.x - 2, app.y - 2, app.width + 4, app.height + 4, 4, 4)
+            love.graphics.setColor(0.24, 0.2, 0.18, 0.9)
+            love.graphics.rectangle("fill", app.x - 2, app.y - 2, app.width + 4, app.height + 4, 5, 5)
+            love.graphics.setColor(1.0, 0.82, 0.25, 0.9)
+            love.graphics.rectangle("line", app.x - 2, app.y - 2, app.width + 4, app.height + 4, 5, 5)
         elseif isRunning then
-            love.graphics.setColor(0.14, 0.18, 0.25, 0.7)
-            love.graphics.rectangle("fill", app.x - 2, app.y - 2, app.width + 4, app.height + 4, 4, 4)
+            love.graphics.setColor(0.18, 0.16, 0.2, 0.7)
+            love.graphics.rectangle("fill", app.x - 2, app.y - 2, app.width + 4, app.height + 4, 5, 5)
         end
 
-        -- Icon
+        -- App Icon
         if app.icon then
-            love.graphics.setColor(1, 1, 1, isRunning and 1.0 or 0.8)
+            love.graphics.setColor(1, 1, 1, isRunning and 1.0 or 0.85)
             love.graphics.draw(app.icon, app.x, app.y, 0, app.width / app.icon:getWidth(), app.height / app.icon:getHeight())
         else
-            love.graphics.setColor(0.2, 0.65, 0.95)
+            love.graphics.setColor(1.0, 0.82, 0.25)
             love.graphics.rectangle("fill", app.x, app.y, app.width, app.height, 4, 4)
         end
 
-        -- Neon Dot Indicator underneath running apps
+        -- Cute Retro Dot Indicator underneath running apps (Sunny Yellow or Mint)
         if isRunning then
-            love.graphics.setColor(0.2, 0.88, 0.55) -- Neon Mint
+            love.graphics.setColor(1.0, 0.82, 0.25) -- Sunny Yellow Dot
             love.graphics.circle("fill", app.x + app.width / 2, dockY + dockH - 4, 2.5)
         end
     end
@@ -255,20 +342,21 @@ function DesktopManager.drawStartMenu()
     love.graphics.push()
 
     -- Drop shadow
-    love.graphics.setColor(0, 0, 0, 0.4)
+    love.graphics.setColor(0, 0, 0, 0.35)
     love.graphics.rectangle("fill", menuX + 3, menuY + 3, menuW, menuH, 6, 6)
 
-    -- Background (Minimalist Slate)
-    love.graphics.setColor(0.1, 0.12, 0.17, 0.96)
+    -- Background (Warm Retro Charcoal)
+    love.graphics.setColor(0.13, 0.12, 0.16, 0.96)
     love.graphics.rectangle("fill", menuX, menuY, menuW, menuH, 6, 6)
-    love.graphics.setColor(0.22, 0.28, 0.38, 0.8)
+    love.graphics.setColor(1.0, 0.82, 0.25, 0.7) -- Sunny Yellow Border
+    love.graphics.setLineWidth(1.2)
     love.graphics.rectangle("line", menuX, menuY, menuW, menuH, 6, 6)
 
-    -- Header
-    love.graphics.setColor(0.2, 0.88, 0.55) -- Neon Mint
-    love.graphics.setFont(DesktopManager.font)
-    love.graphics.print("Applications", menuX + 12, menuY + 9)
-    love.graphics.setColor(0.2, 0.26, 0.36, 0.5)
+    -- Header (Cute Gaming Menu)
+    love.graphics.setColor(1.0, 0.85, 0.3) -- Sunny Yellow
+    love.graphics.setFont(DesktopManager.boldFont or DesktopManager.font)
+    love.graphics.print("★ Applications", menuX + 12, menuY + 8)
+    love.graphics.setColor(1.0, 0.82, 0.25, 0.3)
     love.graphics.line(menuX + 10, menuY + 26, menuX + menuW - 10, menuY + 26)
 
     -- List apps
@@ -278,7 +366,8 @@ function DesktopManager.drawStartMenu()
             love.graphics.setColor(1, 1, 1, 0.9)
             love.graphics.draw(app.icon, menuX + 12, itemY, 0, 16 / app.icon:getWidth(), 16 / app.icon:getHeight())
         end
-        love.graphics.setColor(0.9, 0.93, 0.97)
+        love.graphics.setFont(DesktopManager.font)
+        love.graphics.setColor(0.95, 0.95, 0.95)
         love.graphics.print(app.name, menuX + 34, itemY)
         itemY = itemY + 23
     end
@@ -313,18 +402,17 @@ function DesktopManager.mousepressed(x, y, button)
     -- 3. Start Menu handling
     if DesktopManager.startMenuOpen then
         local screenH = love.graphics.getHeight()
-        local menuW, menuH = 220, 280
+        local menuW, menuH = 210, 270
         local menuX, menuY = 8, screenH - Taskbar.bottomBarHeight - menuH - 4
         if x >= menuX and x <= menuX + menuW and y >= menuY and y <= menuY + menuH then
-            -- Clicked an app in the start menu
-            local itemY = menuY + 34
+            local itemY = menuY + 32
             for _, app in ipairs(DesktopManager.apps) do
                 if y >= itemY and y <= itemY + 22 then
                     WindowManager.toggleApp(app)
                     DesktopManager.startMenuOpen = false
                     return
                 end
-                itemY = itemY + 24
+                itemY = itemY + 23
             end
             return
         else
@@ -361,11 +449,10 @@ function DesktopManager.mousepressed(x, y, button)
     -- 6. Task HUD
     if TaskHUD.mousepressed(x, y, button) then return end
 
-    -- 7. Desktop File/Folder Icons (Double click / single click)
+    -- 7. Desktop File/Folder Icons (Single click / Double click to open)
     for _, iconInfo in ipairs(DesktopManager.desktopHomeIcons) do
-        if x >= iconInfo.x and x <= iconInfo.x + iconInfo.width and y >= iconInfo.y and y <= iconInfo.y + iconInfo.height + 15 then
+        if x >= iconInfo.x and x <= iconInfo.x + iconInfo.width and y >= iconInfo.y and y <= iconInfo.y + iconInfo.height + 18 then
             if button == 1 then
-                -- Open file in TextEditor or folder in Files
                 if iconInfo.node.type == "directory" then
                     local filesApp = DesktopManager.openAppByName("Files")
                     if filesApp and filesApp.instance then
@@ -373,14 +460,8 @@ function DesktopManager.mousepressed(x, y, button)
                         filesApp.instance:updateFileList()
                     end
                 else
-                    local editorApp = DesktopManager.openAppByName("TextEditor")
-                    if editorApp and editorApp.instance then
-                        editorApp.instance.filename = iconInfo.name
-                        editorApp.instance.fileNode = iconInfo.node
-                        if iconInfo.node.content then
-                            editorApp.instance:loadContent(iconInfo.node.content)
-                        end
-                    end
+                    -- Open file in TextEditor or appropriate viewer!
+                    _G.openFileDirectly(iconInfo.node)
                 end
                 AudioManager.playSFX("click")
                 return
@@ -409,7 +490,6 @@ end
 
 function DesktopManager.keypressed(key)
     if key == "tab" then
-        -- Quick mode switch request back to Story
         EventBus.emit("game:request_switch_mode", { mode = "story", transition = "fade" })
         return
     end

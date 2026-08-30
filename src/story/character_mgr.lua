@@ -3,30 +3,30 @@ local CharacterManager = {
     characters = {
         ["Protagonist"] = {
             name = "Protagonist",
-            color = {0.3, 0.75, 0.95},
+            color = {1.0, 0.82, 0.25}, -- Sunny Yellow
             portrait = nil,
             title = "Me"
         },
         ["Ghost"] = {
             name = "Ghost",
-            color = {0.9, 0.3, 0.35},
+            color = {1.0, 0.44, 0.65}, -- Strawberry Pink
             portrait = nil,
             title = "Unknown Entity"
         },
         ["Alice"] = {
             name = "Alice",
-            color = {0.95, 0.45, 0.6},
+            color = {1.0, 0.55, 0.75}, -- Sakura Pink
             portrait = nil,
             title = "Colleague"
         },
         ["System"] = {
             name = "System",
-            color = {0.2, 0.85, 0.5},
+            color = {0.2, 0.88, 0.55}, -- Pastel Mint
             portrait = nil,
             title = "Lynux Kernel"
         }
     },
-    activeCharacters = {} -- { [position] = { characterId = "...", expression = "...", alpha = 1.0 } }
+    activeCharacters = {}
 }
 
 function CharacterManager.init()
@@ -36,13 +36,13 @@ end
 function CharacterManager.get(id)
     return CharacterManager.characters[id] or {
         name = id or "Unknown",
-        color = {0.8, 0.8, 0.8},
+        color = {1.0, 0.82, 0.25},
         title = ""
     }
 end
 
 function CharacterManager.show(characterId, position, expression)
-    position = position or "center" -- "left", "center", "right"
+    position = position or "center"
     CharacterManager.activeCharacters[position] = {
         characterId = characterId,
         expression = expression or "normal",
@@ -70,14 +70,13 @@ function CharacterManager.draw()
         local coords = posCoords[posKey] or posCoords.center
         local charInfo = CharacterManager.get(charData.characterId)
         
-        -- Silhouette / avatar placeholder rendering
         love.graphics.push()
-        love.graphics.setColor(0, 0, 0, 0.4 * charData.alpha)
+        love.graphics.setColor(0, 0, 0, 0.3 * charData.alpha)
         love.graphics.circle("fill", coords.x, coords.y - 40, 36)
         love.graphics.rectangle("fill", coords.x - 30, coords.y, 60, 80, 8, 8)
 
-        -- Character Accent Aura
-        love.graphics.setColor(charInfo.color[1], charInfo.color[2], charInfo.color[3], 0.8 * charData.alpha)
+        -- Kawaii Accent Aura (Sunny Yellow / Pastel Pink)
+        love.graphics.setColor(charInfo.color[1], charInfo.color[2], charInfo.color[3], 0.85 * charData.alpha)
         love.graphics.setLineWidth(2)
         love.graphics.circle("line", coords.x, coords.y - 40, 36)
         love.graphics.rectangle("line", coords.x - 30, coords.y, 60, 80, 8, 8)
