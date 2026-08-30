@@ -81,6 +81,10 @@ function filesystem.save(fs)
     local fsSanitized = filesystem.sanitize(fs)
     local data = json.encode(fsSanitized, { indent = true })
     love.filesystem.write("filesystem.json", data)
+    pcall(function()
+        local EventBus = require("src.core.event_bus")
+        EventBus.emit("filesystem:saved", fs)
+    end)
 end
 
 -- Load the file system from disk (or load default from "data/filesystem.json" if it does not exist).

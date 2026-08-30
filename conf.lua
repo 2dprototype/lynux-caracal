@@ -1,6 +1,10 @@
 function love.conf(t)
-    t.window.width = 700
-    t.window.height = 450
-    t.window.title = "Terminal"
-	t.console = true
+    t.window.width = 760
+    t.window.height = 480
+    t.window.minwidth = 640
+    t.window.minheight = 400
+    t.window.resizable = true
+    t.window.title = "Lynux Caracal"
+    t.identity = "lynux_caracal"
+    t.console = true
 end

@@ -744,12 +744,31 @@ end
 
 -- Save the current text back to the file system.
 function TextEditor:saveFile()
-    if self.fileNode then
+    local EventBus = require("src.core.event_bus")
+    local fs = filesystem.getFS()
+    if not self.fileNode then
+        local homeDir = fs.children["home"]
+        if not homeDir then
+            homeDir = { name = "home", type = "directory", parent = fs, children = {} }
+            fs.children["home"] = homeDir
+        end
+        local fname = self.filename or "untitled.txt"
+        self.fileNode = {
+            name = fname,
+            type = "file",
+            parent = homeDir,
+            content = table.concat(self.lines, "\n"),
+            created = os.time(),
+            modified = os.time()
+        }
+        homeDir.children[fname] = self.fileNode
+    else
         self.fileNode.content = table.concat(self.lines, "\n")
-        self.fileNode.modified = os.time()  -- Add this line
-        filesystem.save(filesystem.getFS())
-        self.dirty = false
+        self.fileNode.modified = os.time()
     end
+    filesystem.save(fs)
+    self.dirty = false
+    EventBus.emit("file:saved", { node = self.fileNode, path = filesystem.getPath(self.fileNode), content = self.fileNode.content })
 end
 
 return TextEditor
