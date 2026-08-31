@@ -540,6 +540,7 @@ end
 
 function DesktopManager.resize(w, h)
     DesktopManager.updateDockLayout()
+    TaskHUD.resize() 
 end
 
 return DesktopManager
