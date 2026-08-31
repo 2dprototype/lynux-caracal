@@ -51,7 +51,7 @@
                                             "name": "dual_issue_draft.txt",
                                             "created": 1577836800,
                                             "modified": 1608912000
-                                        }
+                                        },
                                         "final_dual_issue_master.txt": {
                                             "content": "========================================================\n       KAMIYAMA HIGH PRESS - SPECIAL DUAL EDITION\n                      ISSUE #42 (MASTER PROOF)\n========================================================\n[FRONT COVER FEATURE: THE FELINE OASIS]\nTITLE: Warm Paws and Sweet Whispers at 'Meow Latte'\nAUTHORS: Suzumia (Vice President) & Aki (Lead Editor)\n\nLocated just three minutes from Kamiyama Station South Exit, 'Meow Latte' has quickly become the favorite hideaway for students seeking tranquility among purring companions. Resident stars Mochi, Chobi, and Luna welcome all guests with playful affection. \n\n*SPECIAL OFFER*: Show your Kamiyama High Student ID for 10% off all parfaits and hot drinks!\n\n--------------------------------------------------------\n[BACK COVER FEATURE: THE INVESTIGATIVE SCOOP]\nTITLE: The Ghost Repeater: Echoes in the 3rd Floor Conduits\nAUTHORS: Nagahashi (President), Aki & Hoshida (Special Contributor)\n\nRecent network anomalies across campus have been traced to the decommissioned 3rd-floor server array. Further traceroute analysis confirms signals routing directly through node 192.168.1.254 in the basement substation.\n\nVERIFIED SECURITY TOKEN: [SHADOW-CAT-09]\nSTATUS: APPROVED FOR PRINT BY STUDENT COUNCIL AUDIT",
                                             "type": "file",
@@ -327,17 +327,17 @@
                     "children": {
                         "x69_theme.conf": {
                             "content": "[Theme]\nname = x69_radical\ncolor_scheme = cyberpunk_dream\nicons = leet_hacker\nwallpaper = matrix_rain.gif\nanimations = max_particles\n\n[Sound]\nstartup = windows_xp_error.wav\nerror = dialup_internet.mp3\nclick = meow.wav\n\n[Meme]\nenabled = true\nintensity = over_9000",
-                                    "type": "file",
-                                    "name": "x69_theme.conf",
-                                    "created": 1609459200,
-                                    "modified": 1609459200
+                            "type": "file",
+                            "name": "x69_theme.conf",
+                            "created": 1609459200,
+                            "modified": 1609459200
                         },
                         "secrets.json": {
                             "content": "{\n    \"truth\": \"The cake is a lie\",\n    \"philosophy\": \"I think, therefore I am... confused\",\n    \"life_hack\": \"Turn it off and on again\",\n    \"hidden_level\": \"There is no secret level, stop looking\",\n    \"easter_egg\": \"You're already in it\"\n}",
-                                    "type": "file",
-                                    "name": "secrets.json",
-                                    "created": 1612137600,
-                                    "modified": 1612137600
+                            "type": "file",
+                            "name": "secrets.json",
+                            "created": 1612137600,
+                            "modified": 1612137600
                         }
                     },
                     "type": "directory",

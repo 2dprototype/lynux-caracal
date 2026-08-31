@@ -1,5 +1,5 @@
 -- src/desktop/task_hud.lua
--- Windows 10 Style Sticky Note / Objective Tracker Widget
+-- Windows 10 Style Sticky Note / Objective Tracker Widget - Light theme
 
 local TaskManager = require("src.tasks.task_manager")
 local AudioManager = require("src.core.audio_manager")
@@ -55,70 +55,70 @@ function TaskHUD.draw()
     love.graphics.push()
 
     -- Subtle Drop shadow
-    love.graphics.setColor(0, 0, 0, 0.3)
+    love.graphics.setColor(0, 0, 0, 0.08)
     love.graphics.rectangle("fill", TaskHUD.x + 2, TaskHUD.y + 2, TaskHUD.width, fullH)
 
-    -- Windows 10 Sticky Note / Card Surface
-    love.graphics.setColor(0.13, 0.14, 0.17, 0.98)
+    -- White card
+    love.graphics.setColor(1, 1, 1, 0.98)
     love.graphics.rectangle("fill", TaskHUD.x, TaskHUD.y, TaskHUD.width, fullH)
 
-    -- Flat 1px Border (Accent Blue when active, Clean Green when complete)
+    -- Flat 1px Border (light accent)
     if task.completed then
-        love.graphics.setColor(0.18, 0.65, 0.35, 0.9)
+        love.graphics.setColor(0.18, 0.65, 0.35, 0.8)
     else
-        love.graphics.setColor(0.0, 0.47, 0.83, 0.85) -- Windows Accent Blue
+        love.graphics.setColor(0.0, 0.47, 0.83, 0.6)
     end
     love.graphics.setLineWidth(1)
     love.graphics.rectangle("line", TaskHUD.x, TaskHUD.y, TaskHUD.width, fullH)
 
     -- Header Bar
-    love.graphics.setColor(0.18, 0.19, 0.23, 0.98)
+    love.graphics.setColor(0.96, 0.97, 0.98)
     love.graphics.rectangle("fill", TaskHUD.x, TaskHUD.y, TaskHUD.width, headerH)
-    love.graphics.setColor(0.25, 0.26, 0.3)
+    love.graphics.setColor(0.85, 0.88, 0.92)
     love.graphics.line(TaskHUD.x, TaskHUD.y + headerH, TaskHUD.x + TaskHUD.width, TaskHUD.y + headerH)
 
-    -- Header Title (No emojis)
+    -- Header Title
     love.graphics.setFont(TaskHUD.headerFont)
     if task.completed then
-        love.graphics.setColor(0.3, 0.85, 0.45)
+        love.graphics.setColor(0.18, 0.65, 0.35)
         love.graphics.print("Task Complete", TaskHUD.x + 10, TaskHUD.y + 4)
     else
-        love.graphics.setColor(0.92, 0.94, 0.98)
+        love.graphics.setColor(0.1, 0.12, 0.16)
         love.graphics.print("Objectives", TaskHUD.x + 10, TaskHUD.y + 4)
     end
 
-    -- XP Pill Badge (Header Right)
+    -- XP Pill Badge
     love.graphics.setFont(TaskHUD.smallFont)
     love.graphics.setColor(0.0, 0.55, 0.95)
     love.graphics.print("+" .. tostring(task.xp) .. " XP", TaskHUD.x + TaskHUD.width - 65, TaskHUD.y + 6)
 
     -- Collapse toggle button
-    love.graphics.setColor(0.7, 0.75, 0.8)
+    love.graphics.setColor(0.3, 0.32, 0.36)
     love.graphics.print(TaskHUD.collapsed and "[+]" or "[-]", TaskHUD.x + TaskHUD.width - 18, TaskHUD.y + 6)
 
     if not TaskHUD.collapsed then
         -- Title
         love.graphics.setFont(TaskHUD.font)
-        love.graphics.setColor(0.95, 0.96, 0.98)
+        love.graphics.setColor(0.1, 0.12, 0.16)
         love.graphics.printf(task.title, TaskHUD.x + 12, TaskHUD.y + 34, TaskHUD.width - 24, "left")
 
         -- Description
         love.graphics.setFont(TaskHUD.smallFont)
-        love.graphics.setColor(0.75, 0.78, 0.82)
+        love.graphics.setColor(0.3, 0.32, 0.36)
         love.graphics.printf(task.desc, TaskHUD.x + 12, TaskHUD.y + 54, TaskHUD.width - 24, "left")
 
         -- Checklist Items
         local objY = TaskHUD.y + 92
         for _, obj in ipairs(task.objectives) do
-            love.graphics.setColor(0.35, 0.38, 0.45)
+            love.graphics.setColor(0.7, 0.72, 0.76)
             love.graphics.rectangle("line", TaskHUD.x + 12, objY + 2, 12, 12)
 
             if obj.done then
-                love.graphics.setColor(0.2, 0.8, 0.4)
+                love.graphics.setColor(0.18, 0.8, 0.4)
                 love.graphics.rectangle("fill", TaskHUD.x + 14, objY + 4, 8, 8)
-                love.graphics.setColor(0.4, 0.85, 0.5)
+                love.graphics.setColor(0.18, 0.8, 0.4)
             else
-                love.graphics.setColor(0.85, 0.88, 0.92)
+                love.graphics.setColor(0.1, 0.12, 0.16)
             end
 
             love.graphics.setFont(TaskHUD.smallFont)
@@ -129,14 +129,14 @@ function TaskHUD.draw()
         -- Hint Button / Drawer
         if task.hint and task.hint ~= "" and not task.completed then
             local hintBtnY = objY + 4
-            love.graphics.setColor(0.18, 0.2, 0.25)
+            love.graphics.setColor(0.95, 0.96, 0.97)
             love.graphics.rectangle("fill", TaskHUD.x + 12, hintBtnY, TaskHUD.width - 24, 20, 2, 2)
-            love.graphics.setColor(0.75, 0.8, 0.9)
+            love.graphics.setColor(0.0, 0.47, 0.83)
             love.graphics.setFont(TaskHUD.smallFont)
             love.graphics.printf(TaskHUD.showHint and "Hide Hint" or "Need a Hint?", TaskHUD.x + 12, hintBtnY + 3, TaskHUD.width - 24, "center")
 
             if TaskHUD.showHint then
-                love.graphics.setColor(0.85, 0.88, 0.95)
+                love.graphics.setColor(0.1, 0.12, 0.16)
                 love.graphics.printf(task.hint, TaskHUD.x + 14, hintBtnY + 24, TaskHUD.width - 28, "left")
             end
         end
@@ -144,7 +144,7 @@ function TaskHUD.draw()
         -- Continue Story Button when Completed
         if task.completed then
             local returnY = TaskHUD.y + fullH - 28
-            love.graphics.setColor(0.0, 0.47, 0.83, 0.95) -- Windows Accent Blue
+            love.graphics.setColor(0.0, 0.47, 0.83, 0.9)
             love.graphics.rectangle("fill", TaskHUD.x + 12, returnY, TaskHUD.width - 24, 22, 2, 2)
             love.graphics.setColor(1, 1, 1)
             love.graphics.setFont(TaskHUD.font)

@@ -1,5 +1,6 @@
 -- src/desktop/window_mgr.lua
 -- Windows 10 Style Window Manager with Multi-Process / Multi-Instance App Management
+-- Light theme, no window borders, focus highlighted in title bar
 
 local AudioManager = require("src.core.audio_manager")
 local EventBus = require("src.core.event_bus")
@@ -15,7 +16,7 @@ local WindowManager = {
     resizeOffsetY = 0,
     minWidth = 380,
     minHeight = 240,
-    titleBarHeight = 30,
+    titleBarHeight = 32,
     font = nil,
     nextPid = 100
 }
@@ -31,7 +32,7 @@ function WindowManager.init()
     WindowManager.focusedWindow = nil
     WindowManager.draggingWindow = nil
     WindowManager.resizingWindow = nil
-    WindowManager.font = loadCustomFont("font/IBMPlexSans-Bold.ttf", 14) or loadCustomFont("font/Nunito-Regular.ttf", 14)
+    WindowManager.font = loadCustomFont("font/Nunito-Regular.ttf", 14)
     WindowManager.nextPid = 100
 end
 
@@ -111,7 +112,6 @@ function WindowManager.toggleApp(app, forceNew)
     end
 
     if forceNew or #instances == 0 then
-        -- Open new process instance
         return WindowManager.openWindow(app)
     elseif #instances == 1 then
         local win = instances[1]
@@ -121,7 +121,6 @@ function WindowManager.toggleApp(app, forceNew)
         end
         return win
     else
-        -- Multiple instances: cycle to next or restore
         local nextWin = instances[1]
         for idx, win in ipairs(instances) do
             if win == WindowManager.focusedWindow and not win.minimized then
@@ -162,65 +161,69 @@ function WindowManager.draw()
 
             love.graphics.push()
 
-            -- Subtle Windows Drop Shadow
-            love.graphics.setColor(0, 0, 0, isFocused and 0.35 or 0.18)
-            love.graphics.rectangle("fill", win.x + 2, win.y + 2, win.width, win.height)
+            -- Subtle shadow (light theme: softer)
+            love.graphics.setColor(0, 0, 0, isFocused and 0.12 or 0.06)
+            love.graphics.rectangle("fill", win.x + 3, win.y + 3, win.width, win.height)
 
-            -- Window Body (Clean Neutral Dark surface)
-            love.graphics.setColor(0.12, 0.12, 0.14)
+            -- Window body: white with subtle border on bottom/right? We'll use a very light gray for content area.
+            love.graphics.setColor(0.98, 0.98, 0.99)
             love.graphics.rectangle("fill", win.x, win.y, win.width, win.height)
 
-            -- Windows 10 Title Bar
+            -- Title bar
             if isFocused then
-                love.graphics.setColor(0.18, 0.18, 0.2)
+                -- Highlighted title bar: light blue accent
+                love.graphics.setColor(0.92, 0.96, 1.0)  -- very light blue
             else
-                love.graphics.setColor(0.14, 0.14, 0.16)
+                love.graphics.setColor(0.96, 0.97, 0.98)
             end
             love.graphics.rectangle("fill", win.x, win.y, win.width, titleH)
 
-            -- Titlebar Separator
-            love.graphics.setColor(0.24, 0.24, 0.28)
+            -- Separator line below title bar
+            love.graphics.setColor(0.88, 0.9, 0.92)
             love.graphics.line(win.x, win.y + titleH, win.x + win.width, win.y + titleH)
 
-            -- App Icon & Title on the Left
+            -- App Icon & Title on the left
             if win.app and win.app.icon then
-                love.graphics.setColor(1, 1, 1, isFocused and 0.95 or 0.6)
-                love.graphics.draw(win.app.icon, win.x + 8, win.y + 7, 0, 16 / win.app.icon:getWidth(), 16 / win.app.icon:getHeight())
+                love.graphics.setColor(0.2, 0.22, 0.26)
+                local iconSize = 16
+                local scale = iconSize / win.app.icon:getWidth()
+                love.graphics.draw(win.app.icon, win.x + 8, win.y + (titleH - iconSize) / 2, 0, scale, scale)
             end
 
             love.graphics.setFont(WindowManager.font)
-            love.graphics.setColor(isFocused and {0.96, 0.96, 0.96} or {0.65, 0.65, 0.65})
+            love.graphics.setColor(isFocused and {0.0, 0.0, 0.0} or {0.3, 0.32, 0.36})
             local titleText = win.instance and win.instance.filename and (win.instance.filename .. " - " .. win.app.name) 
                            or (win.title or (win.app and win.app.name) or "Application")
-            love.graphics.print(titleText, win.x + 30, win.y + 6)
+            love.graphics.print(titleText, win.x + 30, win.y + (titleH - 14) / 2 + 1)
 
-            -- Windows 10 Top-Right Controls: [ _ ] [ □ ] [ ✕ ]
-            local btnCloseW = 42
-            local btnOtherW = 36
+            -- Windows 10 Top-Right Controls: [ _ ] [ □ ] [ ✕ ] (light theme, subtle)
+            local btnCloseW = 44
+            local btnOtherW = 38
             local closeX = win.x + win.width - btnCloseW
             local maxX = closeX - btnOtherW
             local minX = maxX - btnOtherW
 
             -- Minimize Button
-            love.graphics.setColor(0.8, 0.8, 0.8, isFocused and 0.9 or 0.5)
-            love.graphics.line(minX + 13, win.y + 16, minX + 23, win.y + 16)
+            love.graphics.setColor(0.3, 0.32, 0.36, isFocused and 0.7 or 0.4)
+            love.graphics.line(minX + 14, win.y + 16, minX + 24, win.y + 16)
 
             -- Maximize / Restore Button
             if win.isMaximized then
-                love.graphics.setColor(0.8, 0.8, 0.8, isFocused and 0.9 or 0.5)
-                love.graphics.rectangle("line", maxX + 15, win.y + 8, 8, 8)
-                love.graphics.setColor(isFocused and 0.18 or 0.14, isFocused and 0.18 or 0.14, isFocused and 0.2 or 0.16)
-                love.graphics.rectangle("fill", maxX + 12, win.y + 11, 8, 8)
-                love.graphics.setColor(0.8, 0.8, 0.8, isFocused and 0.9 or 0.5)
-                love.graphics.rectangle("line", maxX + 12, win.y + 11, 8, 8)
+                love.graphics.setColor(0.3, 0.32, 0.36, isFocused and 0.7 or 0.4)
+                love.graphics.rectangle("line", maxX + 16, win.y + 9, 8, 8)
+                love.graphics.setColor(0.98, 0.98, 0.99)
+                love.graphics.rectangle("fill", maxX + 13, win.y + 12, 8, 8)
+                love.graphics.setColor(0.3, 0.32, 0.36, isFocused and 0.7 or 0.4)
+                love.graphics.rectangle("line", maxX + 13, win.y + 12, 8, 8)
             else
-                love.graphics.setColor(0.8, 0.8, 0.8, isFocused and 0.9 or 0.5)
-                love.graphics.rectangle("line", maxX + 13, win.y + 10, 10, 10)
+                love.graphics.setColor(0.3, 0.32, 0.36, isFocused and 0.7 or 0.4)
+                love.graphics.rectangle("line", maxX + 14, win.y + 11, 10, 10)
             end
 
-            -- Close Button
-            love.graphics.line(closeX + 16, win.y + 10, closeX + 26, win.y + 20)
-            love.graphics.line(closeX + 26, win.y + 10, closeX + 16, win.y + 20)
+            -- Close Button (X)
+            love.graphics.setColor(0.3, 0.32, 0.36, isFocused and 0.7 or 0.4)
+            love.graphics.line(closeX + 17, win.y + 11, closeX + 27, win.y + 21)
+            love.graphics.line(closeX + 27, win.y + 11, closeX + 17, win.y + 21)
 
             -- Content Area (with scissor clipping)
             local contentY = win.y + titleH
@@ -235,14 +238,7 @@ function WindowManager.draw()
 
             love.graphics.setScissor()
 
-            -- 1px Flat Windows Border
-            if isFocused then
-                love.graphics.setColor(0.0, 0.47, 0.83, 0.95) -- Windows Accent Blue
-            else
-                love.graphics.setColor(0.24, 0.24, 0.26, 0.7)
-            end
-            love.graphics.setLineWidth(1)
-            love.graphics.rectangle("line", win.x, win.y, win.width, win.height)
+            -- No window border drawn at all (as requested)
 
             love.graphics.pop()
         end
@@ -292,8 +288,8 @@ function WindowManager.mousepressed(x, y, button)
                 WindowManager.setFocus(win)
 
                 if y <= win.y + titleH then
-                    local btnCloseW = 42
-                    local btnOtherW = 36
+                    local btnCloseW = 44
+                    local btnOtherW = 38
                     local closeX = win.x + win.width - btnCloseW
                     local maxX = closeX - btnOtherW
                     local minX = maxX - btnOtherW

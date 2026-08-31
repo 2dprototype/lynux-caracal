@@ -5,14 +5,14 @@ local PlayerStats = {
     level = 1,
     xp = 0,
     xpForNextLevel = 100,
-    title = "Novice Hacker",
+    title = "Protagonist",
     flags = {},
     levelTitles = {
-        [1] = "Script Novice",
-        [2] = "Code Initiator",
-        [3] = "Cyber Analyst",
-        [4] = "System Infiltrator",
-        [5] = "Netrunner Elite"
+        [1] = "Alpha",
+        [2] = "Beta",
+        [3] = "Gamma",
+        [4] = "Delta",
+        [5] = "Epsilon"
     }
 }
 

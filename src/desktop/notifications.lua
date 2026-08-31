@@ -1,5 +1,5 @@
 -- src/desktop/notifications.lua
--- Windows 10 Style Toast Notifications (Action Center Popup)
+-- Windows 10 Style Toast Notifications (Action Center Popup) - Light theme
 
 local AudioManager = require("src.core.audio_manager")
 
@@ -97,25 +97,25 @@ function Notifications.draw()
         local notifX = screenW - n.width - marginX
         local notifY = currentY - n.height
 
-        -- Windows 10 Action Center Card (Dark slate, solid flat, no emojis)
-        love.graphics.setColor(0, 0, 0, 0.35 * n.alpha)
+        -- Light theme toast
+        love.graphics.setColor(0, 0, 0, 0.08 * n.alpha)
         love.graphics.rectangle("fill", notifX + 2, notifY + 2, n.width, n.height)
 
-        love.graphics.setColor(0.12, 0.12, 0.15, 0.98 * n.alpha)
+        love.graphics.setColor(1, 1, 1, 0.98 * n.alpha)
         love.graphics.rectangle("fill", notifX, notifY, n.width, n.height)
 
-        -- Windows Left Accent Bar
-        love.graphics.setColor(0.0, 0.47, 0.83, 0.95 * n.alpha)
+        -- Windows Left Accent Bar (blue)
+        love.graphics.setColor(0.0, 0.47, 0.83, 0.9 * n.alpha)
         love.graphics.rectangle("fill", notifX, notifY, 3, n.height)
 
         -- Title
         love.graphics.setFont(Notifications.font or love.graphics.getFont())
-        love.graphics.setColor(0.95, 0.96, 0.98, n.alpha)
+        love.graphics.setColor(0.1, 0.12, 0.16, n.alpha)
         love.graphics.print(n.title, notifX + 12, notifY + 8)
 
         -- Message
         love.graphics.setFont(Notifications.smallFont or love.graphics.getFont())
-        love.graphics.setColor(0.75, 0.78, 0.82, 0.9 * n.alpha)
+        love.graphics.setColor(0.3, 0.32, 0.36, 0.9 * n.alpha)
         love.graphics.printf(n.message, notifX + 12, notifY + 30, n.width - 24, "left")
 
         currentY = currentY - n.height - 8

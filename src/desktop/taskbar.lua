@@ -1,5 +1,6 @@
 -- src/desktop/taskbar.lua
--- Windows 10 Style Bottom Taskbar & System Tray (Strictly narrative mode switching - No manual button)
+-- Windows 10 Style Bottom Taskbar & System Tray - Light theme
+-- No search bar, level bar on the right
 
 local PlayerStats = require("src.core.player_stats")
 local TaskManager = require("src.tasks.task_manager")
@@ -32,21 +33,21 @@ function Taskbar.drawBottomBar()
 
     love.graphics.push()
 
-    -- Windows 10 Dark Taskbar Surface
-    love.graphics.setColor(0.1, 0.1, 0.12, 0.98)
+    -- Light taskbar background
+    love.graphics.setColor(0.98, 0.98, 0.99, 0.98)
     love.graphics.rectangle("fill", 0, y, screenW, h)
-    love.graphics.setColor(0.18, 0.18, 0.22)
+    love.graphics.setColor(0.85, 0.88, 0.92)
     love.graphics.line(0, y, screenW, y)
 
     -- Windows Start Button (Bottom-Left)
     local startW = 44
     if Taskbar.startHover then
-        love.graphics.setColor(0.2, 0.22, 0.26)
+        love.graphics.setColor(0.9, 0.92, 0.95)
         love.graphics.rectangle("fill", 0, y, startW, h)
     end
 
-    -- Windows 4-Square Flat Logo
-    love.graphics.setColor(Taskbar.startHover and {0.0, 0.47, 0.83} or {0.85, 0.88, 0.92})
+    -- Windows 4-Square Flat Logo (blue)
+    love.graphics.setColor(Taskbar.startHover and {0.0, 0.47, 0.83} or {0.3, 0.32, 0.36})
     local winLogoX = 14
     local winLogoY = y + 11
     love.graphics.rectangle("fill", winLogoX, winLogoY, 6, 6)
@@ -54,47 +55,55 @@ function Taskbar.drawBottomBar()
     love.graphics.rectangle("fill", winLogoX, winLogoY + 8, 6, 6)
     love.graphics.rectangle("fill", winLogoX + 8, winLogoY + 8, 6, 6)
 
-    -- Search Box Mockup (Windows 10 style)
-    local searchX = 48
-    local searchW = 140
-    local searchH = 28
-    local searchY = y + 5
-    love.graphics.setColor(0.16, 0.16, 0.18)
-    love.graphics.rectangle("fill", searchX, searchY, searchW, searchH)
-    love.graphics.setFont(Taskbar.smallFont)
-    love.graphics.setColor(0.55, 0.55, 0.6)
-    love.graphics.print("Type here to search", searchX + 10, searchY + 6)
-
-    -- Right-Side System Tray
-    -- Clock and Date (Far Right)
+    -- Right-Side System Tray - Clock and Date
     local timeStr = os.date("%H:%M")
     local dateStr = os.date("%m/%d/%Y")
-    love.graphics.setFont(Taskbar.smallFont)
-    love.graphics.setColor(0.9, 0.92, 0.96)
-    love.graphics.print(timeStr, screenW - 65, y + 4)
-    love.graphics.setColor(0.65, 0.68, 0.72)
-    love.graphics.print(dateStr, screenW - 65, y + 19)
-
-    -- Player Level & XP Indicator (Tray badge)
+    
+    -- Calculate level bar width and position
     local xpProgress = PlayerStats.getLevelProgress()
     local levelText = "Lv." .. tostring(PlayerStats.level) .. " " .. PlayerStats.title
-    local lvlW = 145
-    local lvlX = screenW - 65 - lvlW - 14
+    
+    -- Determine if we need to shrink based on available space
+    local clockWidth = 80
+    local minLevelWidth = 80
+    local maxLevelWidth = 150
+    local margin = 12
+    
+    local availableForLevel = screenW - clockWidth - margin * 2
+    local levelWidth = math.min(maxLevelWidth, math.max(minLevelWidth, availableForLevel - 40))
+    local levelX = screenW - clockWidth - levelWidth - margin
+    
+    -- Clock
+    love.graphics.setFont(Taskbar.smallFont)
+    love.graphics.setColor(0.1, 0.12, 0.16)
+    love.graphics.print(timeStr, screenW - clockWidth + 10, y + 4)
+    love.graphics.setColor(0.4, 0.42, 0.46)
+    love.graphics.print(dateStr, screenW - clockWidth + 10, y + 19)
+
+    -- Player Level & XP Indicator
     local lvlY = y + 8
     local lvlH = 22
 
-    love.graphics.setColor(0.15, 0.16, 0.2)
-    love.graphics.rectangle("fill", lvlX, lvlY, lvlW, lvlH, 2, 2)
-    if xpProgress > 0 then
-        love.graphics.setColor(0.0, 0.47, 0.83, 0.6)
-        love.graphics.rectangle("fill", lvlX, lvlY, lvlW * xpProgress, lvlH, 2, 2)
-    end
-    love.graphics.setColor(0.25, 0.28, 0.34)
-    love.graphics.rectangle("line", lvlX, lvlY, lvlW, lvlH, 2, 2)
+    -- Only draw level bar if there's enough space
+    if levelWidth > minLevelWidth then
+        love.graphics.setColor(0.94, 0.95, 0.96)
+        love.graphics.rectangle("fill", levelX, lvlY, levelWidth, lvlH, 2, 2)
+        if xpProgress > 0 then
+            love.graphics.setColor(0.0, 0.47, 0.83, 0.3)
+            love.graphics.rectangle("fill", levelX, lvlY, levelWidth * xpProgress, lvlH, 2, 2)
+        end
+        love.graphics.setColor(0.7, 0.72, 0.76)
+        love.graphics.rectangle("line", levelX, lvlY, levelWidth, lvlH, 2, 2)
 
-    love.graphics.setFont(Taskbar.smallFont)
-    love.graphics.setColor(0.92, 0.94, 0.98)
-    love.graphics.printf(levelText, lvlX, lvlY + 3, lvlW, "center")
+        love.graphics.setFont(Taskbar.smallFont)
+        love.graphics.setColor(0.1, 0.12, 0.16)
+        love.graphics.printf(levelText, levelX, lvlY + 3, levelWidth, "center")
+    else
+        -- Fallback: just show level number
+        love.graphics.setFont(Taskbar.smallFont)
+        love.graphics.setColor(0.1, 0.12, 0.16)
+        love.graphics.print("Lv." .. tostring(PlayerStats.level), levelX, lvlY + 3)
+    end
 
     love.graphics.pop()
 end

@@ -39,11 +39,11 @@ end
 
 function AudioManager.init()
     -- Load pre-existing sound files if available
-    if love.filesystem.getInfo("audio/tick.wav") then
-        AudioManager.sounds["tick"] = love.audio.newSource("audio/tick.wav", "static")
+    if love.filesystem.getInfo("audio/sfx/tick.wav") then
+        AudioManager.sounds["tick"] = love.audio.newSource("audio/sfx/tick.wav", "static")
     end
-    if love.filesystem.getInfo("audio/wooh.wav") then
-        AudioManager.sounds["wooh"] = love.audio.newSource("audio/wooh.wav", "static")
+    if love.filesystem.getInfo("audio/sfx/wooh.wav") then
+        AudioManager.sounds["wooh"] = love.audio.newSource("audio/sfx/wooh.wav", "static")
     end
 
     -- Procedural SFX generators

@@ -1,5 +1,4 @@
 -- main.lua
--- Lynux Caracal: Hybrid Visual Novel & Simulated Desktop Engine
 pcall(function() io.stdout:setvbuf("no") end)
 
 local GameManager = require("src.core.game_manager")

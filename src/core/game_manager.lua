@@ -36,7 +36,7 @@ function GameManager.init()
     end, "gm_task_completed")
 
     -- Load the default story script
-    local ok, script = pcall(require, "data.stories.prologue")
+    local ok, script = pcall(require, "src.chapters.prologue")
     if ok and script then
         StoryEngine.loadScript(script)
     end
