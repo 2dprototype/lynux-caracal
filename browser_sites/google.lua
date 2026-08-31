@@ -286,8 +286,12 @@ function Google:drawResults(x, y, w, h)
     love.graphics.setScissor()
 end
 
-function Google:mousepressed(mx, my, button)
+function Google:mousepressed(mx, my, button, relX, relY)
     if button ~= 1 and button ~= "l" then return end
+    
+    local mouseScreenX, mouseScreenY = love.mouse.getPosition()
+    mx = mx or mouseScreenX
+    my = my or mouseScreenY
     
     if self.state == "home" then
         local inputW = math.min(500, self.w - 80)

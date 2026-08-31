@@ -205,8 +205,18 @@ function WindowManager.draw()
             love.graphics.setColor(0.8, 0.8, 0.8, isFocused and 0.9 or 0.5)
             love.graphics.line(minX + 13, win.y + 16, minX + 23, win.y + 16)
 
-            -- Maximize Button
-            love.graphics.rectangle("line", maxX + 13, win.y + 10, 10, 10)
+            -- Maximize / Restore Button
+            if win.isMaximized then
+                love.graphics.setColor(0.8, 0.8, 0.8, isFocused and 0.9 or 0.5)
+                love.graphics.rectangle("line", maxX + 15, win.y + 8, 8, 8)
+                love.graphics.setColor(isFocused and 0.18 or 0.14, isFocused and 0.18 or 0.14, isFocused and 0.2 or 0.16)
+                love.graphics.rectangle("fill", maxX + 12, win.y + 11, 8, 8)
+                love.graphics.setColor(0.8, 0.8, 0.8, isFocused and 0.9 or 0.5)
+                love.graphics.rectangle("line", maxX + 12, win.y + 11, 8, 8)
+            else
+                love.graphics.setColor(0.8, 0.8, 0.8, isFocused and 0.9 or 0.5)
+                love.graphics.rectangle("line", maxX + 13, win.y + 10, 10, 10)
+            end
 
             -- Close Button
             love.graphics.line(closeX + 16, win.y + 10, closeX + 26, win.y + 20)
@@ -239,6 +249,39 @@ function WindowManager.draw()
     end
 end
 
+function WindowManager.toggleMaximize(win)
+    if not win then return end
+    local screenW, screenH = love.graphics.getWidth(), love.graphics.getHeight()
+    local taskbarH = 38
+    local titleH = WindowManager.titleBarHeight
+    
+    if win.isMaximized then
+        win.x = win.preMaxX or 50
+        win.y = win.preMaxY or 35
+        win.width = win.preMaxW or 560
+        win.height = win.preMaxH or 350
+        win.isMaximized = false
+    else
+        win.preMaxX = win.x
+        win.preMaxY = win.y
+        win.preMaxW = win.width
+        win.preMaxH = win.height
+        
+        win.x = 0
+        win.y = 0
+        win.width = screenW
+        win.height = screenH - taskbarH
+        win.isMaximized = true
+    end
+    
+    AudioManager.playSFX("click")
+    if win.instance and win.instance.resize then
+        pcall(function()
+            win.instance:resize(win.width, win.height - titleH)
+        end)
+    end
+end
+
 function WindowManager.mousepressed(x, y, button)
     local titleH = WindowManager.titleBarHeight
 
@@ -260,38 +303,74 @@ function WindowManager.mousepressed(x, y, button)
                         WindowManager.closeWindow(win)
                         return true
                     end
-                    -- Maximize
+                    -- Maximize button click
                     if x >= maxX and x < closeX then
+                        WindowManager.toggleMaximize(win)
                         return true
                     end
-                    -- Minimize
+                    -- Minimize button click
                     if x >= minX and x < maxX then
                         win.minimized = true
+                        if WindowManager.focusedWindow == win then
+                            WindowManager.focusedWindow = nil
+                            for j = #WindowManager.openApps, 1, -1 do
+                                if not WindowManager.openApps[j].minimized then
+                                    WindowManager.setFocus(WindowManager.openApps[j])
+                                    break
+                                end
+                            end
+                        end
+                        AudioManager.playSFX("click")
                         return true
+                    end
+
+                    -- Double click titlebar to toggle maximize
+                    local now = love.timer.getTime()
+                    if WindowManager.lastTitleClickWin == win and (now - (WindowManager.lastTitleClickTime or 0)) < 0.35 then
+                        WindowManager.toggleMaximize(win)
+                        WindowManager.lastTitleClickTime = 0
+                        WindowManager.lastTitleClickWin = nil
+                        return true
+                    else
+                        WindowManager.lastTitleClickTime = now
+                        WindowManager.lastTitleClickWin = win
                     end
 
                     -- Start Dragging
                     WindowManager.draggingWindow = win
+                    if win.isMaximized then
+                        win.isMaximized = false
+                        local prevW = win.preMaxW or 560
+                        local prevH = win.preMaxH or 350
+                        local ratioX = math.max(0.1, math.min(0.9, x / win.width))
+                        win.width = prevW
+                        win.height = prevH
+                        win.x = math.max(0, math.floor(x - (win.width * ratioX)))
+                        win.y = math.max(0, y - 15)
+                        if win.instance and win.instance.resize then
+                            pcall(function() win.instance:resize(win.width, win.height - titleH) end)
+                        end
+                    end
                     WindowManager.dragOffsetX = x - win.x
                     WindowManager.dragOffsetY = y - win.y
                     return true
                 end
 
-                -- Resize handle
-                if x >= win.x + win.width - 16 and y >= win.y + win.height - 16 then
+                -- Resize handle (Bottom-Right)
+                if x >= win.x + win.width - 18 and y >= win.y + win.height - 18 then
                     WindowManager.resizingWindow = win
                     WindowManager.resizeOffsetX = win.width - x
                     WindowManager.resizeOffsetY = win.height - y
                     return true
                 end
 
-                -- Relative coordinate pass-through
+                -- Relative and absolute coordinate pass-through
                 local contentY = win.y + titleH
                 local relX = x - win.x
                 local relY = y - contentY
                 if win.instance and win.instance.mousepressed then
                     pcall(function()
-                        win.instance:mousepressed(relX, relY, button)
+                        win.instance:mousepressed(relX, relY, button, x, y)
                     end)
                 end
                 return true
@@ -311,10 +390,17 @@ function WindowManager.mousemoved(x, y, dx, dy)
     end
 
     if WindowManager.resizingWindow then
+        local win = WindowManager.resizingWindow
         local newW = math.max(WindowManager.minWidth, x + WindowManager.resizeOffsetX)
         local newH = math.max(WindowManager.minHeight, y + WindowManager.resizeOffsetY)
-        WindowManager.resizingWindow.width = newW
-        WindowManager.resizingWindow.height = newH
+        win.width = newW
+        win.height = newH
+        win.isMaximized = false
+        if win.instance and win.instance.resize then
+            pcall(function()
+                win.instance:resize(win.width, win.height - titleH)
+            end)
+        end
         return true
     end
 
@@ -325,7 +411,7 @@ function WindowManager.mousemoved(x, y, dx, dy)
         local relY = y - contentY
         if win.instance and win.instance.mousemoved then
             pcall(function()
-                win.instance:mousemoved(relX, relY, dx, dy)
+                win.instance:mousemoved(relX, relY, dx, dy, x, y)
             end)
         end
     end
@@ -350,7 +436,7 @@ function WindowManager.mousereleased(x, y, button)
         local relY = y - contentY
         if win.instance and win.instance.mousereleased then
             pcall(function()
-                win.instance:mousereleased(relX, relY, button)
+                win.instance:mousereleased(relX, relY, button, x, y)
             end)
         end
     end

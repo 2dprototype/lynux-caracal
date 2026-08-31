@@ -72,11 +72,15 @@ function Bing:draw(x, y, w, h)
     end
 end
 
-function Bing:mousepressed(mx, my, button)
+function Bing:mousepressed(mx, my, button, relX, relY)
     if button ~= 1 and button ~= "l" then return end
     
-    if self.ui_input and mx >= self.ui_input.x and mx <= self.ui_input.x + self.ui_input.w 
-       and my >= self.ui_input.y and my <= self.ui_input.y + self.ui_input.h then
+    local mouseScreenX, mouseScreenY = love.mouse.getPosition()
+    local x = mx or mouseScreenX
+    local y = my or mouseScreenY
+    
+    if self.ui_input and x >= self.ui_input.x and x <= self.ui_input.x + self.ui_input.w 
+       and y >= self.ui_input.y and y <= self.ui_input.y + self.ui_input.h then
         self.inputActive = true
     else
         self.inputActive = false

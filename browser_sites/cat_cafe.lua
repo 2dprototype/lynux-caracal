@@ -211,6 +211,14 @@ function CatCafe:draw(x, y, w, h)
     love.graphics.setScissor()
 end
 
+function CatCafe:mousepressed(mx, my, button, relX, relY)
+    if button ~= 1 and button ~= "l" then return end
+    pcall(function()
+        local AudioManager = require("src.core.audio_manager")
+        AudioManager.playSFX("click")
+    end)
+end
+
 function CatCafe:wheelmoved(wx, wy)
     if self.maxScroll > 0 then
         self.scroll = math.max(0, math.min(self.maxScroll, self.scroll - wy * 35))

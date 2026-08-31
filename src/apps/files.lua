@@ -338,6 +338,11 @@ function FilesApp:wheelmoved(x, y)
    end
 end
 
+function FilesApp:resize(w, h)
+   self.lastWidth = w
+   self.lastHeight = h
+end
+
 function FilesApp:update(dt)
    -- For now, no dynamic updates are required.
 end

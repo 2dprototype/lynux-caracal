@@ -104,11 +104,15 @@ function Reddit:draw(x, y, w, h)
     love.graphics.setScissor()
 end
 
-function Reddit:mousepressed(mx, my, button)
+function Reddit:mousepressed(mx, my, button, relX, relY)
     if button ~= 1 and button ~= "l" then return end
     
-    for _, el in ipairs(self.ui_elements) do
-        if mx >= el.x and mx <= el.x + el.w and my >= el.y and my <= el.y + el.h then
+    local mouseScreenX, mouseScreenY = love.mouse.getPosition()
+    local x = mx or mouseScreenX
+    local y = my or mouseScreenY
+    
+    for _, el in ipairs(self.ui_elements or {}) do
+        if x >= el.x and x <= el.x + el.w and y >= el.y and y <= el.y + el.h then
             -- Find post
             for _, p in ipairs(self.posts) do
                 if p.id == el.id then

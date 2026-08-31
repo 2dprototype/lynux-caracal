@@ -152,10 +152,13 @@ function HTMLRenderer:draw(x, y, w, h)
     love.graphics.pop()
 end
 
-function HTMLRenderer:mousepressed(mx, my, button)
+function HTMLRenderer:mousepressed(mx, my, button, relX, relY)
     if button == 1 or button == "l" then
+        local mouseScreenX, mouseScreenY = love.mouse.getPosition()
+        local x = mx or mouseScreenX
+        local y = my or mouseScreenY
         for _, link in ipairs(self.links) do
-            if mx >= link.x and mx <= link.x + link.w and my >= link.y and my <= link.y + link.h then
+            if x >= link.x and x <= link.x + link.w and y >= link.y and y <= link.y + link.h then
                 if link.url then
                     self.browser:loadURL(link.url)
                 end

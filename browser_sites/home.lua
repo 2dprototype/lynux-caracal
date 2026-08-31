@@ -153,17 +153,20 @@ function Home:draw(x, y, w, h)
     love.graphics.pop()
 end
 
-function Home:mousepressed(mx, my, button)
+function Home:mousepressed(mx, my, button, relX, relY)
     if button ~= 1 and button ~= "l" then return end
     
-    -- Inaccurate clicks fix: We use the UI bounds calculated in draw which are already absolute screen space
-    if self.ui.input and mx >= self.ui.input.x and mx <= self.ui.input.x + self.ui.input.w 
-       and my >= self.ui.input.y and my <= self.ui.input.y + self.ui.input.h then
+    local mouseScreenX, mouseScreenY = love.mouse.getPosition()
+    local x = mx or mouseScreenX
+    local y = my or mouseScreenY
+    
+    if self.ui.input and x >= self.ui.input.x and x <= self.ui.input.x + self.ui.input.w 
+       and y >= self.ui.input.y and y <= self.ui.input.y + self.ui.input.h then
         self.inputActive = true
     else
         self.inputActive = false
-        for _, site in ipairs(self.ui.sites) do
-            if mx >= site.x and mx <= site.x + site.w and my >= site.y and my <= site.y + site.h then
+        for _, site in ipairs(self.ui.sites or {}) do
+            if x >= site.x and x <= site.x + site.w and y >= site.y and y <= site.y + site.h then
                 self.browser:loadURL(site.url)
                 return
             end

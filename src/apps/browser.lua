@@ -350,12 +350,19 @@ end
 function BrowserApp:mousepressed(mx, my, button, absX, absY)
     if button ~= 1 and button ~= "l" then return end
     
+    local mouseScreenX, mouseScreenY = love.mouse.getPosition()
+    absX = absX or mouseScreenX
+    absY = absY or mouseScreenY
+    
+    local relX = (self.ax and (absX - self.ax)) or mx or 0
+    local relY = (self.ay and (absY - self.ay)) or my or 0
+    
     local function inBounds(b)
-        return b and mx >= b.x and mx <= b.x + b.w and my >= b.y and my <= b.y + b.h
+        return b and relX >= b.x and relX <= b.x + b.w and relY >= b.y and relY <= b.y + b.h
     end
 
-    -- Header Controls (mx, my are already relative to browser origin)
-    if my < self.headerHeight then
+    -- Header Controls (mx, my relative to browser origin)
+    if relY < self.headerHeight then
         if inBounds(self.ui.back) and self.ui.back.enabled then self:back(); return end
         if inBounds(self.ui.forward) and self.ui.forward.enabled then self:forward(); return end
         if inBounds(self.ui.refresh) then self:refresh(); return end
@@ -375,30 +382,36 @@ function BrowserApp:mousepressed(mx, my, button, absX, absY)
     
     -- Scrollbar
     local sb = self.ui.scrollbar
-    if sb and mx >= sb.trackX - 5 and mx <= sb.trackX + sb.trackW then
-        if my >= sb.thumbY and my <= sb.thumbY + sb.thumbH then
+    if sb and relX >= sb.trackX - 5 and relX <= sb.trackX + sb.trackW then
+        if relY >= sb.thumbY and relY <= sb.thumbY + sb.thumbH then
             self.isDraggingScrollbar = true
-            self.dragStartY = my
-            self.dragStartScroll = self.siteInstance.scroll
-        elseif self.siteInstance.maxScroll and self.siteInstance.maxScroll > 0 then
-            local clickRatio = (my - sb.trackY - sb.thumbH/2) / (sb.trackH - sb.thumbH)
+            self.dragStartY = relY
+            self.dragStartScroll = self.siteInstance and self.siteInstance.scroll or 0
+        elseif self.siteInstance and self.siteInstance.maxScroll and self.siteInstance.maxScroll > 0 then
+            local clickRatio = (relY - sb.trackY - sb.thumbH/2) / (sb.trackH - sb.thumbH)
             self.siteInstance.scroll = math.max(0, math.min(clickRatio * self.siteInstance.maxScroll, self.siteInstance.maxScroll))
         end
         return
     end
     
-    -- Content Area (Use absolute coordinates for sites)
+    -- Content Area (Pass absolute and relative coordinates to site)
     if not self.loading and self.siteInstance and self.siteInstance.mousepressed then
-        self.siteInstance:mousepressed(absX, absY, button)
+        self.siteInstance:mousepressed(absX, absY, button, relX, relY)
     end
 end
 
 function BrowserApp:mousemoved(mx, my, dx, dy, absX, absY)
+    local mouseScreenX, mouseScreenY = love.mouse.getPosition()
+    absX = absX or mouseScreenX
+    absY = absY or mouseScreenY
+    local relX = (self.ax and (absX - self.ax)) or mx or 0
+    local relY = (self.ay and (absY - self.ay)) or my or 0
+    
     if self.isDraggingScrollbar and self.siteInstance and self.ui.scrollbar then
         local sb = self.ui.scrollbar
-        local deltaY = my - self.dragStartY
+        local deltaY = relY - self.dragStartY
         local maxThumbTravel = sb.trackH - sb.thumbH
-        if maxThumbTravel > 0 then
+        if maxThumbTravel > 0 and self.siteInstance.maxScroll and self.siteInstance.maxScroll > 0 then
             local scrollRatio = deltaY / maxThumbTravel
             self.siteInstance.scroll = math.max(0, math.min(
                 self.dragStartScroll + (scrollRatio * self.siteInstance.maxScroll),
@@ -409,14 +422,20 @@ function BrowserApp:mousemoved(mx, my, dx, dy, absX, absY)
     end
     
     if not self.loading and self.siteInstance and self.siteInstance.mousemoved then
-        self.siteInstance:mousemoved(absX, absY, dx, dy)
+        self.siteInstance:mousemoved(absX, absY, dx, dy, relX, relY)
     end
 end
 
 function BrowserApp:mousereleased(mx, my, button, absX, absY)
     self.isDraggingScrollbar = false
+    local mouseScreenX, mouseScreenY = love.mouse.getPosition()
+    absX = absX or mouseScreenX
+    absY = absY or mouseScreenY
+    local relX = (self.ax and (absX - self.ax)) or mx or 0
+    local relY = (self.ay and (absY - self.ay)) or my or 0
+    
     if not self.loading and self.siteInstance and self.siteInstance.mousereleased then
-        self.siteInstance:mousereleased(absX, absY, button)
+        self.siteInstance:mousereleased(absX, absY, button, relX, relY)
     end
 end
 

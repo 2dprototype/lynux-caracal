@@ -771,4 +771,9 @@ function TextEditor:saveFile()
     EventBus.emit("file:saved", { node = self.fileNode, path = filesystem.getPath(self.fileNode), content = self.fileNode.content })
 end
 
+function TextEditor:resize(width, height)
+    self.editorWidth = width
+    self.editorHeight = height
+end
+
 return TextEditor
