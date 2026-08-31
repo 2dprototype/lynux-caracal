@@ -1,29 +1,31 @@
 -- src/story/character_mgr.lua
+-- Character Profiles and Colors (Clean standard material colors, zero emojis)
+
 local CharacterManager = {
     characters = {
         ["Protagonist"] = {
             name = "Protagonist",
-            color = {1.0, 0.82, 0.25}, -- Sunny Yellow
+            color = {0.29, 0.56, 0.89}, -- Standard Blue
             portrait = nil,
             title = "Me"
         },
         ["Ghost"] = {
             name = "Ghost",
-            color = {1.0, 0.44, 0.65}, -- Strawberry Pink
+            color = {0.89, 0.35, 0.35}, -- Crimson Red
             portrait = nil,
-            title = "Unknown Entity"
+            title = "Unknown"
         },
         ["Alice"] = {
             name = "Alice",
-            color = {1.0, 0.55, 0.75}, -- Sakura Pink
+            color = {0.65, 0.45, 0.8}, -- Lavender
             portrait = nil,
             title = "Colleague"
         },
         ["System"] = {
             name = "System",
-            color = {0.2, 0.88, 0.55}, -- Pastel Mint
+            color = {0.18, 0.75, 0.45}, -- Clean Green
             portrait = nil,
-            title = "Lynux Kernel"
+            title = "OS Kernel"
         }
     },
     activeCharacters = {}
@@ -36,7 +38,7 @@ end
 function CharacterManager.get(id)
     return CharacterManager.characters[id] or {
         name = id or "Unknown",
-        color = {1.0, 0.82, 0.25},
+        color = {0.29, 0.56, 0.89},
         title = ""
     }
 end
@@ -71,15 +73,14 @@ function CharacterManager.draw()
         local charInfo = CharacterManager.get(charData.characterId)
         
         love.graphics.push()
-        love.graphics.setColor(0, 0, 0, 0.3 * charData.alpha)
+        love.graphics.setColor(0, 0, 0, 0.35 * charData.alpha)
         love.graphics.circle("fill", coords.x, coords.y - 40, 36)
-        love.graphics.rectangle("fill", coords.x - 30, coords.y, 60, 80, 8, 8)
+        love.graphics.rectangle("fill", coords.x - 30, coords.y, 60, 80, 4, 4)
 
-        -- Kawaii Accent Aura (Sunny Yellow / Pastel Pink)
-        love.graphics.setColor(charInfo.color[1], charInfo.color[2], charInfo.color[3], 0.85 * charData.alpha)
-        love.graphics.setLineWidth(2)
+        love.graphics.setColor(charInfo.color[1], charInfo.color[2], charInfo.color[3], 0.9 * charData.alpha)
+        love.graphics.setLineWidth(1.5)
         love.graphics.circle("line", coords.x, coords.y - 40, 36)
-        love.graphics.rectangle("line", coords.x - 30, coords.y, 60, 80, 8, 8)
+        love.graphics.rectangle("line", coords.x - 30, coords.y, 60, 80, 4, 4)
         love.graphics.pop()
     end
 end

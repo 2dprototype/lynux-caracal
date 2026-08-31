@@ -161,8 +161,8 @@ function TaskManager.drawCelebrationBanner()
 
     local b = TaskManager.celebrationBanner
     local w, h = love.graphics.getWidth(), love.graphics.getHeight()
-    local bannerW = 360
-    local bannerH = 52
+    local bannerW = 380
+    local bannerH = 54
     local bannerX = (w - bannerW) / 2
     local bannerY = 40
 
@@ -179,32 +179,27 @@ function TaskManager.drawCelebrationBanner()
     
     -- Drop Shadow
     love.graphics.setColor(0, 0, 0, 0.35 * alpha)
-    love.graphics.rectangle("fill", bannerX + 3, bannerY + 3, bannerW, bannerH, 6, 6)
+    love.graphics.rectangle("fill", bannerX + 2, bannerY + 2, bannerW, bannerH)
 
-    -- Background (Warm Retro Dark Charcoal)
-    love.graphics.setColor(0.12, 0.11, 0.15, 0.96 * alpha)
-    love.graphics.rectangle("fill", bannerX, bannerY, bannerW, bannerH, 6, 6)
+    -- Background (Windows 10 Clean Dark Surface)
+    love.graphics.setColor(0.12, 0.13, 0.16, 0.98 * alpha)
+    love.graphics.rectangle("fill", bannerX, bannerY, bannerW, bannerH)
 
-    -- Retro Sunny Yellow Accent Border
-    love.graphics.setColor(1.0, 0.82, 0.25, 0.95 * alpha)
-    love.graphics.setLineWidth(1.4)
-    love.graphics.rectangle("line", bannerX, bannerY, bannerW, bannerH, 6, 6)
-
-    -- Icon Checkmark Circle (Sunny Lemon Gold)
-    local iconX = bannerX + 22
-    local iconY = bannerY + bannerH / 2
-    love.graphics.setColor(1.0, 0.85, 0.3, 0.95 * alpha)
-    love.graphics.circle("fill", iconX, iconY, 12)
-    love.graphics.setColor(0.12, 0.11, 0.15, alpha)
-    local font = love.graphics.getFont()
-    love.graphics.print("★", iconX - 4, iconY - 9)
+    -- Windows Accent Blue Indicator Strip (No emojis)
+    love.graphics.setColor(0.0, 0.47, 0.83, 0.95 * alpha)
+    love.graphics.rectangle("fill", bannerX, bannerY, 4, bannerH)
 
     -- Text Content
-    love.graphics.setColor(1.0, 0.96, 0.9, alpha)
-    love.graphics.print(b.title, bannerX + 44, bannerY + 8)
+    local bannerFont = love.graphics.newFont("font/x14y24pxHeadUpDaisy.ttf", 20) or love.graphics.getFont()
+    local bannerSmallFont = love.graphics.newFont("font/x14y24pxHeadUpDaisy.ttf", 16) or love.graphics.getFont()
+    
+    love.graphics.setFont(bannerFont)
+    love.graphics.setColor(0.96, 0.98, 1.0, alpha)
+    love.graphics.print(b.title, bannerX + 16, bannerY + 8)
 
-    love.graphics.setColor(1.0, 0.85, 0.3, alpha)
-    love.graphics.print(b.subtext .. "  •  ♥ Level " .. PlayerStats.level .. " (" .. PlayerStats.title .. ")", bannerX + 44, bannerY + 28)
+    love.graphics.setFont(bannerSmallFont)
+    love.graphics.setColor(0.0, 0.55, 0.95, alpha)
+    love.graphics.print(b.subtext .. "  |  Level " .. tostring(PlayerStats.level) .. " (" .. PlayerStats.title .. ")", bannerX + 16, bannerY + 30)
 
     love.graphics.pop()
 end

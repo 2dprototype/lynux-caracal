@@ -70,9 +70,9 @@ function Transitions.draw()
         local rx = (w - rectW) / 2
         local ry = (h - rectH) / 2
 
-        love.graphics.setColor(1.0, 0.85, 0.3, (1 - alpha) * 0.5)
+        love.graphics.setColor(0.65, 0.75, 0.85, (1 - alpha) * 0.5)
         love.graphics.rectangle("line", rx, ry, rectW, rectH)
-        love.graphics.setColor(1.0, 0.95, 0.85, 1 - alpha)
+        love.graphics.setColor(0.92, 0.94, 0.98, 1 - alpha)
         love.graphics.line(0, h / 2, w, h / 2)
 
     elseif Transitions.type == "glitch" then

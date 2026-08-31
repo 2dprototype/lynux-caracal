@@ -1,5 +1,5 @@
 -- src/ui/pause_menu.lua
--- Professional, high-polish ESC Pause & Settings Menu with Retro Yellow Gaming / Kawaii aesthetic
+-- Professional Material Design Pause & Settings Menu
 
 local AudioManager = require("src.core.audio_manager")
 local EventBus = require("src.core.event_bus")
@@ -16,17 +16,17 @@ local PauseMenu = {
     -- Settings states
     sfxVolume = 1.0,
     bgmVolume = 0.8,
-    textSpeed = "Normal", -- "Fast", "Normal", "Slow"
+    textSpeed = "Normal",
     textSpeeds = { "Fast", "Normal", "Slow" },
     textSpeedIndex = 2,
     
-    -- Main Menu Items
+    -- Main Menu Items (Zero emojis)
     mainItems = {
-        { id = "resume", label = "Resume Game", icon = "▶", desc = "Return to current gameplay" },
-        { id = "switch_mode", label = "Switch Story / PC Mode", icon = "🔄", desc = "Toggle between Visual Novel & Desktop" },
-        { id = "settings", label = "Settings & Audio", icon = "⚙", desc = "Volume sliders and text options" },
-        { id = "reset", label = "Reset Chapter", icon = "↺", desc = "Restart narrative from beginning" },
-        { id = "exit", label = "Exit to Desktop", icon = "✕", desc = "Safely quit the application" }
+        { id = "resume", label = "Resume Game", desc = "Return to current gameplay" },
+        { id = "switch_mode", label = "Switch Story / PC Mode", desc = "Toggle between Visual Novel & Desktop" },
+        { id = "settings", label = "Settings & Audio", desc = "Volume sliders and text options" },
+        { id = "reset", label = "Restart Chapter", desc = "Restart narrative from beginning" },
+        { id = "exit", label = "Exit to Desktop", desc = "Safely quit the application" }
     },
     
     -- Settings Menu Items
@@ -38,10 +38,16 @@ local PauseMenu = {
     }
 }
 
+local function loadCustomFont(path, size)
+    local ok, f = pcall(love.graphics.newFont, path, size)
+    if ok and f then return f end
+    return love.graphics.newFont(size)
+end
+
 function PauseMenu.init()
-    PauseMenu.font = love.graphics.newFont("font/Nunito-Regular.ttf", 14) or love.graphics.newFont(14)
-    PauseMenu.titleFont = love.graphics.newFont("font/Nunito-Regular.ttf", 16) or love.graphics.newFont(16)
-    PauseMenu.smallFont = love.graphics.newFont("font/Nunito-Regular.ttf", 11) or love.graphics.newFont(11)
+    PauseMenu.font = loadCustomFont("font/x14y24pxHeadUpDaisy.ttf", 20)
+    PauseMenu.titleFont = loadCustomFont("font/x14y24pxHeadUpDaisy.ttf", 22)
+    PauseMenu.smallFont = loadCustomFont("font/x14y24pxHeadUpDaisy.ttf", 15)
     PauseMenu.isOpen = false
     PauseMenu.currentTab = "main"
     PauseMenu.selectedIndex = 1
@@ -98,13 +104,12 @@ function PauseMenu.activateCurrent()
 
         if item.id == "back" then
             PauseMenu.currentTab = "main"
-            PauseMenu.selectedIndex = 3 -- Return to Settings button
+            PauseMenu.selectedIndex = 3
             AudioManager.playSFX("click")
         elseif item.id == "text_speed" then
             PauseMenu.textSpeedIndex = (PauseMenu.textSpeedIndex % #PauseMenu.textSpeeds) + 1
             PauseMenu.textSpeed = PauseMenu.textSpeeds[PauseMenu.textSpeedIndex]
             
-            -- Apply to DialogueBox
             local DialogueBox = require("src.story.dialogue_box")
             if PauseMenu.textSpeed == "Fast" then
                 DialogueBox.typeSpeed = 0.01
@@ -118,14 +123,12 @@ function PauseMenu.activateCurrent()
 
     elseif PauseMenu.currentTab == "confirm_reset" then
         if PauseMenu.selectedIndex == 1 then
-            -- Confirm Reset
             PauseMenu.close()
             local StoryEngine = require("src.story.story_engine")
             StoryEngine.restart()
             EventBus.emit("game:request_switch_mode", { mode = "story", transition = "fade" })
             AudioManager.playSFX("switch")
         else
-            -- Cancel Reset
             PauseMenu.currentTab = "main"
             PauseMenu.selectedIndex = 1
             AudioManager.playSFX("click")
@@ -142,7 +145,6 @@ function PauseMenu.keypressed(key)
         return false
     end
 
-    -- Close on ESC if in main tab, or go back if in sub-tab
     if key == "escape" then
         if PauseMenu.currentTab == "main" then
             PauseMenu.close()
@@ -168,12 +170,10 @@ function PauseMenu.keypressed(key)
     elseif key == "left" or key == "a" then
         if PauseMenu.currentTab == "settings" then
             if PauseMenu.selectedIndex == 1 then
-                -- SFX Slider
                 PauseMenu.sfxVolume = math.max(0, math.min(1, PauseMenu.sfxVolume - 0.1))
                 AudioManager.setSFXVolume(PauseMenu.sfxVolume)
                 AudioManager.playSFX("tick", 1.2)
             elseif PauseMenu.selectedIndex == 2 then
-                -- BGM Slider
                 PauseMenu.bgmVolume = math.max(0, math.min(1, PauseMenu.bgmVolume - 0.1))
                 AudioManager.setBGMVolume(PauseMenu.bgmVolume)
                 AudioManager.playSFX("tick", 1.2)
@@ -217,19 +217,18 @@ function PauseMenu.mousepressed(x, y, button)
     if not PauseMenu.isOpen or button ~= 1 then return false end
 
     local screenW, screenH = love.graphics.getWidth(), love.graphics.getHeight()
-    local cardW = 380
-    local cardH = 320
+    local cardW = 420
+    local cardH = 330
     local cardX = (screenW - cardW) / 2
     local cardY = (screenH - cardH) / 2
 
-    -- Close if clicking outside the card
     if x < cardX or x > cardX + cardW or y < cardY or y > cardY + cardH then
         PauseMenu.close()
         return true
     end
 
-    local itemYStart = cardY + 56
-    local itemH = 40
+    local itemYStart = cardY + 54
+    local itemH = 42
     local itemSpacing = 8
 
     if PauseMenu.currentTab == "main" then
@@ -271,11 +270,10 @@ function PauseMenu.mousepressed(x, y, button)
         end
 
     elseif PauseMenu.currentTab == "confirm_reset" then
-        local btnY = cardY + 180
+        local btnY = cardY + 210
         local btnW = 150
-        local btnH = 36
+        local btnH = 38
 
-        -- Yes button
         local yesX = cardX + 30
         if x >= yesX and x <= yesX + btnW and y >= btnY and y <= btnY + btnH then
             PauseMenu.selectedIndex = 1
@@ -283,7 +281,6 @@ function PauseMenu.mousepressed(x, y, button)
             return true
         end
 
-        -- No button
         local noX = cardX + cardW - btnW - 30
         if x >= noX and x <= noX + btnW and y >= btnY and y <= btnY + btnH then
             PauseMenu.selectedIndex = 2
@@ -299,13 +296,13 @@ function PauseMenu.mousemoved(x, y)
     if not PauseMenu.isOpen then return end
 
     local screenW, screenH = love.graphics.getWidth(), love.graphics.getHeight()
-    local cardW = 380
-    local cardH = 320
+    local cardW = 420
+    local cardH = 330
     local cardX = (screenW - cardW) / 2
     local cardY = (screenH - cardH) / 2
 
-    local itemYStart = cardY + 56
-    local itemH = 40
+    local itemYStart = cardY + 54
+    local itemH = 42
     local itemSpacing = 8
 
     if PauseMenu.currentTab == "main" then
@@ -337,50 +334,44 @@ function PauseMenu.draw()
     if not PauseMenu.isOpen then return end
 
     local screenW, screenH = love.graphics.getWidth(), love.graphics.getHeight()
-    local cardW = 380
-    local cardH = 325
+    local cardW = 420
+    local cardH = 335
     local cardX = (screenW - cardW) / 2
     local cardY = (screenH - cardH) / 2
 
     love.graphics.push()
 
-    -- Dark Translucent Vignette Backdrop
-    love.graphics.setColor(0.08, 0.07, 0.1, 0.78)
+    -- Dim Backdrop
+    love.graphics.setColor(0, 0, 0, 0.75)
     love.graphics.rectangle("fill", 0, 0, screenW, screenH)
 
     -- Drop Shadow
     love.graphics.setColor(0, 0, 0, 0.45)
-    love.graphics.rectangle("fill", cardX + 4, cardY + 4, cardW, cardH, 8, 8)
+    love.graphics.rectangle("fill", cardX + 3, cardY + 3, cardW, cardH)
 
-    -- Card Background (Warm Retro Dark Slate)
-    love.graphics.setColor(0.12, 0.11, 0.15, 0.98)
-    love.graphics.rectangle("fill", cardX, cardY, cardW, cardH, 8, 8)
+    -- Card Background (Material Dark Surface)
+    love.graphics.setColor(0.1, 0.11, 0.14, 0.98)
+    love.graphics.rectangle("fill", cardX, cardY, cardW, cardH)
 
-    -- Retro Sunny Yellow Accent Border
-    love.graphics.setColor(1.0, 0.82, 0.25, 0.95)
-    love.graphics.setLineWidth(1.6)
-    love.graphics.rectangle("line", cardX, cardY, cardW, cardH, 8, 8)
+    -- Header Bar
+    love.graphics.setColor(0.14, 0.15, 0.19)
+    love.graphics.rectangle("fill", cardX, cardY, cardW, 44)
+    love.graphics.setColor(0.2, 0.22, 0.28)
+    love.graphics.line(cardX, cardY + 44, cardX + cardW, cardY + 44)
 
-    -- Card Header Bar
-    love.graphics.setColor(0.18, 0.16, 0.22, 0.95)
-    love.graphics.rectangle("fill", cardX, cardY, cardW, 42, 8, 8)
-    love.graphics.rectangle("fill", cardX, cardY + 34, cardW, 8)
-    love.graphics.setColor(1.0, 0.82, 0.25, 0.35)
-    love.graphics.line(cardX, cardY + 42, cardX + cardW, cardY + 42)
-
-    -- Header Title
+    -- Header Title (No emojis)
     love.graphics.setFont(PauseMenu.titleFont or PauseMenu.font)
-    love.graphics.setColor(1.0, 0.85, 0.3)
+    love.graphics.setColor(0.95, 0.96, 0.98)
     if PauseMenu.currentTab == "main" then
-        love.graphics.printf("★ GAME PAUSED ★", cardX, cardY + 11, cardW, "center")
+        love.graphics.printf("PAUSE MENU", cardX, cardY + 12, cardW, "center")
     elseif PauseMenu.currentTab == "settings" then
-        love.graphics.printf("⚙ SETTINGS & AUDIO ⚙", cardX, cardY + 11, cardW, "center")
+        love.graphics.printf("SETTINGS & AUDIO", cardX, cardY + 12, cardW, "center")
     elseif PauseMenu.currentTab == "confirm_reset" then
-        love.graphics.printf("⚠ RESTART CHAPTER? ⚠", cardX, cardY + 11, cardW, "center")
+        love.graphics.printf("RESTART CHAPTER", cardX, cardY + 12, cardW, "center")
     end
 
     local itemYStart = cardY + 54
-    local itemH = 40
+    local itemH = 42
     local itemSpacing = 8
 
     -- MAIN TAB
@@ -389,35 +380,29 @@ function PauseMenu.draw()
             local iy = itemYStart + (i - 1) * (itemH + itemSpacing)
             local isSelected = (i == PauseMenu.selectedIndex)
 
-            -- Item Card
             if isSelected then
-                love.graphics.setColor(0.24, 0.2, 0.16, 0.96)
-                love.graphics.rectangle("fill", cardX + 16, iy, cardW - 32, itemH, 4, 4)
-                love.graphics.setColor(1.0, 0.82, 0.25, 1.0)
-                love.graphics.setLineWidth(1.4)
-                love.graphics.rectangle("line", cardX + 16, iy, cardW - 32, itemH, 4, 4)
+                love.graphics.setColor(0.18, 0.22, 0.3, 0.96)
+                love.graphics.rectangle("fill", cardX + 16, iy, cardW - 32, itemH)
+                love.graphics.setColor(0.0, 0.47, 0.83) -- Windows Accent Blue
+                love.graphics.rectangle("fill", cardX + 16, iy, 4, itemH)
             else
-                love.graphics.setColor(0.16, 0.14, 0.19, 0.7)
-                love.graphics.rectangle("fill", cardX + 16, iy, cardW - 32, itemH, 4, 4)
-                love.graphics.setColor(0.28, 0.25, 0.32, 0.5)
-                love.graphics.setLineWidth(1)
-                love.graphics.rectangle("line", cardX + 16, iy, cardW - 32, itemH, 4, 4)
+                love.graphics.setColor(0.14, 0.15, 0.18, 0.7)
+                love.graphics.rectangle("fill", cardX + 16, iy, cardW - 32, itemH)
             end
 
-            -- Number & Icon
             love.graphics.setFont(PauseMenu.font)
             if isSelected then
-                love.graphics.setColor(1.0, 0.85, 0.3)
-                love.graphics.print("▶ [" .. tostring(i) .. "] " .. item.label, cardX + 28, iy + 6)
+                love.graphics.setColor(0.35, 0.75, 1.0)
+                love.graphics.print(tostring(i) .. ". " .. item.label, cardX + 28, iy + 6)
                 love.graphics.setFont(PauseMenu.smallFont)
-                love.graphics.setColor(1.0, 0.92, 0.75, 0.85)
-                love.graphics.print(item.desc, cardX + 54, iy + 23)
+                love.graphics.setColor(0.8, 0.84, 0.9)
+                love.graphics.print(item.desc, cardX + 46, iy + 24)
             else
-                love.graphics.setColor(0.7, 0.65, 0.55)
-                love.graphics.print("  [" .. tostring(i) .. "] " .. item.label, cardX + 28, iy + 6)
+                love.graphics.setColor(0.85, 0.88, 0.92)
+                love.graphics.print(tostring(i) .. ". " .. item.label, cardX + 28, iy + 6)
                 love.graphics.setFont(PauseMenu.smallFont)
-                love.graphics.setColor(0.65, 0.62, 0.68, 0.7)
-                love.graphics.print(item.desc, cardX + 54, iy + 23)
+                love.graphics.setColor(0.55, 0.58, 0.64)
+                love.graphics.print(item.desc, cardX + 46, iy + 24)
             end
         end
 
@@ -428,104 +413,83 @@ function PauseMenu.draw()
             local isSelected = (i == PauseMenu.selectedIndex)
 
             if isSelected then
-                love.graphics.setColor(0.24, 0.2, 0.16, 0.96)
-                love.graphics.rectangle("fill", cardX + 16, iy, cardW - 32, itemH, 4, 4)
-                love.graphics.setColor(1.0, 0.82, 0.25, 1.0)
-                love.graphics.setLineWidth(1.4)
-                love.graphics.rectangle("line", cardX + 16, iy, cardW - 32, itemH, 4, 4)
+                love.graphics.setColor(0.18, 0.22, 0.3, 0.96)
+                love.graphics.rectangle("fill", cardX + 16, iy, cardW - 32, itemH)
+                love.graphics.setColor(0.0, 0.47, 0.83)
+                love.graphics.rectangle("fill", cardX + 16, iy, 4, itemH)
             else
-                love.graphics.setColor(0.16, 0.14, 0.19, 0.7)
-                love.graphics.rectangle("fill", cardX + 16, iy, cardW - 32, itemH, 4, 4)
-                love.graphics.setColor(0.28, 0.25, 0.32, 0.5)
-                love.graphics.setLineWidth(1)
-                love.graphics.rectangle("line", cardX + 16, iy, cardW - 32, itemH, 4, 4)
+                love.graphics.setColor(0.14, 0.15, 0.18, 0.7)
+                love.graphics.rectangle("fill", cardX + 16, iy, cardW - 32, itemH)
             end
 
             love.graphics.setFont(PauseMenu.font)
             if isSelected then
-                love.graphics.setColor(1.0, 0.85, 0.3)
-                love.graphics.print(item.label, cardX + 28, iy + 11)
+                love.graphics.setColor(0.35, 0.75, 1.0)
             else
-                love.graphics.setColor(0.9, 0.88, 0.84)
-                love.graphics.print(item.label, cardX + 28, iy + 11)
+                love.graphics.setColor(0.9, 0.92, 0.95)
             end
+            love.graphics.print(item.label, cardX + 28, iy + 11)
 
-            -- Controls on the right
             if item.type == "slider" then
                 local sliderVal = (item.id == "sfx_vol") and PauseMenu.sfxVolume or PauseMenu.bgmVolume
                 local sliderX = cardX + cardW - 150
-                local sliderY = iy + 14
+                local sliderY = iy + 15
                 local sliderW = 120
                 local sliderH = 12
 
-                -- Background bar
-                love.graphics.setColor(0.1, 0.09, 0.12)
-                love.graphics.rectangle("fill", sliderX, sliderY, sliderW, sliderH, 3, 3)
+                love.graphics.setColor(0.08, 0.09, 0.11)
+                love.graphics.rectangle("fill", sliderX, sliderY, sliderW, sliderH)
                 
-                -- Filled bar
-                love.graphics.setColor(1.0, 0.82, 0.25, 0.85)
-                love.graphics.rectangle("fill", sliderX, sliderY, sliderW * sliderVal, sliderH, 3, 3)
-                love.graphics.setColor(1.0, 0.85, 0.3, 0.6)
-                love.graphics.rectangle("line", sliderX, sliderY, sliderW, sliderH, 3, 3)
+                love.graphics.setColor(0.0, 0.47, 0.83)
+                love.graphics.rectangle("fill", sliderX, sliderY, sliderW * sliderVal, sliderH)
 
-                -- Percentage text
                 love.graphics.setFont(PauseMenu.smallFont)
                 love.graphics.setColor(1.0, 1.0, 1.0)
                 love.graphics.printf(tostring(math.floor(sliderVal * 100)) .. "%", sliderX, sliderY - 1, sliderW, "center")
 
             elseif item.type == "choice" then
                 love.graphics.setFont(PauseMenu.font)
-                love.graphics.setColor(0.2, 0.88, 0.55) -- Pastel Mint
+                love.graphics.setColor(0.35, 0.75, 1.0)
                 love.graphics.printf("< " .. PauseMenu.textSpeed .. " >", cardX + cardW - 140, iy + 11, 110, "center")
 
             elseif item.type == "button" then
                 love.graphics.setFont(PauseMenu.font)
-                love.graphics.setColor(1.0, 0.85, 0.3)
-                love.graphics.printf("◀ Back", cardX + cardW - 120, iy + 11, 90, "center")
+                love.graphics.setColor(0.85, 0.88, 0.92)
+                love.graphics.printf("Back", cardX + cardW - 110, iy + 11, 80, "center")
             end
         end
 
     -- CONFIRM RESET TAB
     elseif PauseMenu.currentTab == "confirm_reset" then
         love.graphics.setFont(PauseMenu.font)
-        love.graphics.setColor(1.0, 0.95, 0.9)
-        love.graphics.printf("Are you sure you want to restart the current chapter?\n\nAll current progress and unsaved files will be re-initialized.", cardX + 24, cardY + 70, cardW - 48, "center")
+        love.graphics.setColor(0.95, 0.96, 0.98)
+        love.graphics.printf("Restart the current chapter?\n\nAll current unsaved progress will be re-initialized.", cardX + 24, cardY + 70, cardW - 48, "center")
 
-        local btnY = cardY + 210
-        local btnW = 140
-        local btnH = 38
+        local btnY = cardY + 220
+        local btnW = 150
+        local btnH = 40
 
-        -- Option 1: Yes Reset (Selected = 1)
         local yesX = cardX + 36
         if PauseMenu.selectedIndex == 1 then
-            love.graphics.setColor(1.0, 0.35, 0.45, 0.95) -- Strawberry Red
-            love.graphics.rectangle("fill", yesX, btnY, btnW, btnH, 4, 4)
-            love.graphics.setColor(1.0, 0.85, 0.3)
-            love.graphics.rectangle("line", yesX, btnY, btnW, btnH, 4, 4)
+            love.graphics.setColor(0.8, 0.2, 0.25, 0.95)
+            love.graphics.rectangle("fill", yesX, btnY, btnW, btnH)
             love.graphics.setColor(1, 1, 1)
         else
-            love.graphics.setColor(0.22, 0.14, 0.16, 0.8)
-            love.graphics.rectangle("fill", yesX, btnY, btnW, btnH, 4, 4)
-            love.graphics.setColor(0.8, 0.4, 0.45, 0.6)
-            love.graphics.rectangle("line", yesX, btnY, btnW, btnH, 4, 4)
-            love.graphics.setColor(0.85, 0.75, 0.78)
+            love.graphics.setColor(0.2, 0.12, 0.14, 0.8)
+            love.graphics.rectangle("fill", yesX, btnY, btnW, btnH)
+            love.graphics.setColor(0.75, 0.7, 0.72)
         end
         love.graphics.printf("Yes, Restart", yesX, btnY + 10, btnW, "center")
 
-        -- Option 2: Cancel (Selected = 2)
         local noX = cardX + cardW - btnW - 36
         if PauseMenu.selectedIndex == 2 then
-            love.graphics.setColor(0.2, 0.88, 0.55, 0.95) -- Pastel Mint
-            love.graphics.rectangle("fill", noX, btnY, btnW, btnH, 4, 4)
-            love.graphics.setColor(1.0, 0.85, 0.3)
-            love.graphics.rectangle("line", noX, btnY, btnW, btnH, 4, 4)
-            love.graphics.setColor(0.1, 0.15, 0.12)
+            love.graphics.setColor(0.0, 0.47, 0.83, 0.95)
+            love.graphics.rectangle("fill", noX, btnY, btnW, btnH)
+            love.graphics.setColor(1, 1, 1)
         else
-            love.graphics.setColor(0.14, 0.18, 0.16, 0.8)
-            love.graphics.rectangle("fill", noX, btnY, btnW, btnH, 4, 4)
-            love.graphics.setColor(0.3, 0.6, 0.45, 0.6)
-            love.graphics.rectangle("line", noX, btnY, btnW, btnH, 4, 4)
-            love.graphics.setColor(0.75, 0.85, 0.8)
+            love.graphics.setColor(0.14, 0.16, 0.2, 0.8)
+            love.graphics.rectangle("fill", noX, btnY, btnW, btnH)
+            love.graphics.setColor(0.75, 0.8, 0.85)
         end
         love.graphics.printf("Cancel", noX, btnY + 10, btnW, "center")
     end

@@ -1,27 +1,39 @@
 -- src/desktop/notifications.lua
+-- Windows 10 Style Toast Notifications (Action Center Popup)
+
 local AudioManager = require("src.core.audio_manager")
 
 local Notifications = {
     list = {},
-    maxCount = 4
+    maxCount = 4,
+    font = nil,
+    smallFont = nil
 }
+
+local function loadCustomFont(path, size)
+    local ok, f = pcall(love.graphics.newFont, path, size)
+    if ok and f then return f end
+    return love.graphics.newFont(size)
+end
 
 function Notifications.init()
     Notifications.list = {}
+    Notifications.font = loadCustomFont("font/x14y24pxHeadUpDaisy.ttf", 18)
+    Notifications.smallFont = loadCustomFont("font/x14y24pxHeadUpDaisy.ttf", 15)
 end
 
 function Notifications.add(title, message, icon, duration, onClick)
     local notif = {
         id = love.timer.getTime() + math.random(),
-        title = title or "Notification",
+        title = title or "System Notification",
         message = message or "",
         icon = icon,
         timer = 0,
-        duration = duration or 4.0,
+        duration = duration or 4.5,
         onClick = onClick,
         alpha = 0,
-        height = 56,
-        width = 270
+        height = 60,
+        width = 280
     }
     table.insert(Notifications.list, 1, notif)
     if #Notifications.list > Notifications.maxCount then
@@ -52,13 +64,14 @@ end
 
 function Notifications.mousepressed(x, y, button)
     if button ~= 1 then return false end
-    local screenW = love.graphics.getWidth()
-    local marginX, startY = 20, 42
+    local screenW, screenH = love.graphics.getWidth(), love.graphics.getHeight()
+    local marginX = 16
+    local startY = screenH - 45 -- Above bottom taskbar
     local currentY = startY
 
     for i, n in ipairs(Notifications.list) do
         local notifX = screenW - n.width - marginX
-        local notifY = currentY
+        local notifY = currentY - n.height
         if x >= notifX and x <= notifX + n.width and y >= notifY and y <= notifY + n.height then
             if n.onClick then
                 n.onClick(n)
@@ -67,48 +80,45 @@ function Notifications.mousepressed(x, y, button)
             AudioManager.playSFX("click")
             return true
         end
-        currentY = currentY + n.height + 6
+        currentY = currentY - n.height - 8
     end
     return false
 end
 
 function Notifications.draw()
-    local screenW = love.graphics.getWidth()
-    local marginX, startY = 20, 42
+    local screenW, screenH = love.graphics.getWidth(), love.graphics.getHeight()
+    local marginX = 16
+    local startY = screenH - 45
     local currentY = startY
 
     love.graphics.push()
 
     for _, n in ipairs(Notifications.list) do
         local notifX = screenW - n.width - marginX
-        local notifY = currentY
+        local notifY = currentY - n.height
 
-        -- Drop shadow
-        love.graphics.setColor(0, 0, 0, 0.3 * n.alpha)
-        love.graphics.rectangle("fill", notifX + 2, notifY + 2, n.width, n.height, 5, 5)
+        -- Windows 10 Action Center Card (Dark slate, solid flat, no emojis)
+        love.graphics.setColor(0, 0, 0, 0.35 * n.alpha)
+        love.graphics.rectangle("fill", notifX + 2, notifY + 2, n.width, n.height)
 
-        -- Panel background (Warm Dark Charcoal)
-        love.graphics.setColor(0.13, 0.12, 0.16, 0.96 * n.alpha)
-        love.graphics.rectangle("fill", notifX, notifY, n.width, n.height, 5, 5)
+        love.graphics.setColor(0.12, 0.12, 0.15, 0.98 * n.alpha)
+        love.graphics.rectangle("fill", notifX, notifY, n.width, n.height)
 
-        -- Retro Sunny Yellow Border
-        love.graphics.setColor(1.0, 0.82, 0.25, 0.9 * n.alpha)
-        love.graphics.setLineWidth(1.3)
-        love.graphics.rectangle("line", notifX, notifY, n.width, n.height, 5, 5)
-
-        -- Kawaii Accent Star/Dot
-        love.graphics.setColor(1.0, 0.85, 0.3, n.alpha)
-        love.graphics.circle("fill", notifX + 16, notifY + 16, 4)
+        -- Windows Left Accent Bar
+        love.graphics.setColor(0.0, 0.47, 0.83, 0.95 * n.alpha)
+        love.graphics.rectangle("fill", notifX, notifY, 3, n.height)
 
         -- Title
-        love.graphics.setColor(1.0, 0.96, 0.9, n.alpha)
-        love.graphics.print(n.title, notifX + 26, notifY + 8)
+        love.graphics.setFont(Notifications.font or love.graphics.getFont())
+        love.graphics.setColor(0.95, 0.96, 0.98, n.alpha)
+        love.graphics.print(n.title, notifX + 12, notifY + 8)
 
         -- Message
-        love.graphics.setColor(0.85, 0.82, 0.78, 0.9 * n.alpha)
-        love.graphics.printf(n.message, notifX + 14, notifY + 28, n.width - 24, "left")
+        love.graphics.setFont(Notifications.smallFont or love.graphics.getFont())
+        love.graphics.setColor(0.75, 0.78, 0.82, 0.9 * n.alpha)
+        love.graphics.printf(n.message, notifX + 12, notifY + 30, n.width - 24, "left")
 
-        currentY = currentY + n.height + 6
+        currentY = currentY - n.height - 8
     end
 
     love.graphics.pop()

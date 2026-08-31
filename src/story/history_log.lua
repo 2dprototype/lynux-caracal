@@ -10,9 +10,15 @@ local HistoryLog = {
     nameFont = nil
 }
 
+local function loadCustomFont(path, size)
+    local ok, f = pcall(love.graphics.newFont, path, size)
+    if ok and f then return f end
+    return love.graphics.newFont(size)
+end
+
 function HistoryLog.init()
-    HistoryLog.font = love.graphics.newFont("font/Nunito-Regular.ttf", 14) or love.graphics.newFont(14)
-    HistoryLog.nameFont = love.graphics.newFont("font/Nunito-Regular.ttf", 14) or love.graphics.newFont(14)
+    HistoryLog.font = loadCustomFont("font/x14y24pxHeadUpDaisy.ttf", 18)
+    HistoryLog.nameFont = loadCustomFont("font/x14y24pxHeadUpDaisy.ttf", 20)
     HistoryLog.entries = {}
     HistoryLog.scrollOffset = 0
 end
@@ -67,51 +73,52 @@ function HistoryLog.draw()
     if not HistoryLog.visible then return end
 
     local screenW, screenH = love.graphics.getWidth(), love.graphics.getHeight()
-    local marginX, marginY = 40, 30
+    local marginX, marginY = 36, 24
     local logW, logH = screenW - marginX * 2, screenH - marginY * 2
 
     love.graphics.push()
 
-    -- Dim background (Warm Charcoal)
-    love.graphics.setColor(0.11, 0.1, 0.14, 0.96)
-    love.graphics.rectangle("fill", marginX, marginY, logW, logH, 6, 6)
-    love.graphics.setColor(1.0, 0.82, 0.25, 0.9) -- Sunny Yellow Border
-    love.graphics.setLineWidth(1.4)
-    love.graphics.rectangle("line", marginX, marginY, logW, logH, 6, 6)
+    -- Dim backdrop
+    love.graphics.setColor(0, 0, 0, 0.7)
+    love.graphics.rectangle("fill", 0, 0, screenW, screenH)
 
-    -- Header (Sunny Gold)
-    love.graphics.setColor(1.0, 0.85, 0.3)
+    -- Card Surface
+    love.graphics.setColor(0.08, 0.09, 0.12, 0.96)
+    love.graphics.rectangle("fill", marginX, marginY, logW, logH, 4, 4)
+
+    -- Header (Clean, no emojis)
+    love.graphics.setColor(0.9, 0.92, 0.96)
     love.graphics.setFont(HistoryLog.nameFont)
-    love.graphics.print("★ Dialogue Transcript (Press ESC or H to close)", marginX + 16, marginY + 14)
-    love.graphics.setColor(1.0, 0.82, 0.25, 0.3)
-    love.graphics.line(marginX + 16, marginY + 38, marginX + logW - 16, marginY + 38)
+    love.graphics.print("Dialogue Log (ESC or H to close)", marginX + 16, marginY + 12)
+    love.graphics.setColor(0.2, 0.22, 0.28, 0.8)
+    love.graphics.line(marginX + 16, marginY + 36, marginX + logW - 16, marginY + 36)
 
     -- Content list
-    local contentY = marginY + 55 - HistoryLog.scrollOffset
+    local contentY = marginY + 48 - HistoryLog.scrollOffset
     local totalHeight = 0
 
     for _, entry in ipairs(HistoryLog.entries) do
-        local nameStr = entry.isMonologue and "[Thought]" or (entry.speaker or "Protagonist")
+        local nameStr = entry.isMonologue and "Thought" or (entry.speaker or "Protagonist")
         local charInfo = CharacterManager.get(entry.speaker)
-        local color = entry.isMonologue and {1.0, 0.85, 0.3} or (charInfo.color or {1.0, 0.9, 0.8})
+        local color = entry.isMonologue and {0.4, 0.7, 0.95} or (charInfo.color or {0.85, 0.88, 0.92})
 
-        if contentY + 40 >= marginY + 50 and contentY <= marginY + logH - 20 then
+        if contentY + 40 >= marginY + 40 and contentY <= marginY + logH - 20 then
             love.graphics.setColor(color[1], color[2], color[3], 0.95)
             love.graphics.setFont(HistoryLog.nameFont)
             love.graphics.print(nameStr .. ":", marginX + 24, contentY)
 
-            love.graphics.setColor(0.96, 0.94, 0.9)
+            love.graphics.setColor(0.92, 0.94, 0.96)
             love.graphics.setFont(HistoryLog.font)
-            love.graphics.printf(entry.text, marginX + 150, contentY, logW - 175, "left")
+            love.graphics.printf(entry.text, marginX + 130, contentY, logW - 150, "left")
         end
 
-        local textH = HistoryLog.font:getHeight() * math.ceil(HistoryLog.font:getWidth(entry.text) / (logW - 175))
-        local itemH = math.max(28, textH + 10)
+        local textH = HistoryLog.font:getHeight() * math.ceil(HistoryLog.font:getWidth(entry.text) / (logW - 150))
+        local itemH = math.max(28, textH + 8)
         contentY = contentY + itemH
         totalHeight = totalHeight + itemH
     end
 
-    HistoryLog.maxScroll = math.max(0, totalHeight - (logH - 80))
+    HistoryLog.maxScroll = math.max(0, totalHeight - (logH - 70))
 
     love.graphics.pop()
 end

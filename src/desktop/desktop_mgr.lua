@@ -1,4 +1,6 @@
 -- src/desktop/desktop_mgr.lua
+-- Windows 10 Style Desktop Environment with Start Menu and Taskbar integration
+
 local json = require("lib/json")
 local filesystemModule = require("src.core.filesystem")
 local AudioManager = require("src.core.audio_manager")
@@ -24,10 +26,6 @@ local DesktopManager = {
     apps = {},
     desktopHomeIcons = {},
     desktopHome = nil,
-    currentWallpaper = {
-        type = "retro_yellow",
-        color = {0.14, 0.12, 0.16}
-    },
     startMenuOpen = false,
     startIcon = nil,
     folderIcon = nil,
@@ -35,9 +33,15 @@ local DesktopManager = {
     shortcutIcon = nil,
     font = nil,
     boldFont = nil,
-    lastClickTime = 0,
-    lastClickIcon = nil
+    smallFont = nil,
+    hoveredApp = nil
 }
+
+local function loadCustomFont(path, size)
+    local ok, f = pcall(love.graphics.newFont, path, size)
+    if ok and f then return f end
+    return love.graphics.newFont(size)
+end
 
 function DesktopManager.init()
     Taskbar.init()
@@ -45,10 +49,10 @@ function DesktopManager.init()
     TaskHUD.init()
     Notifications.init()
 
-    DesktopManager.font = love.graphics.newFont("font/Nunito-Regular.ttf", 13) or love.graphics.newFont(13)
-    DesktopManager.boldFont = love.graphics.newFont("font/Nunito-Regular.ttf", 14) or love.graphics.newFont(14)
+    DesktopManager.font = loadCustomFont("font/x14y24pxHeadUpDaisy.ttf", 18)
+    DesktopManager.boldFont = loadCustomFont("font/x14y24pxHeadUpDaisy.ttf", 20)
+    DesktopManager.smallFont = loadCustomFont("font/x14y24pxHeadUpDaisy.ttf", 15)
 
-    -- Load icons
     pcall(function()
         DesktopManager.folderIcon = love.graphics.newImage("assets/folder.png")
         DesktopManager.fileIcon = love.graphics.newImage("assets/file.png")
@@ -56,7 +60,6 @@ function DesktopManager.init()
         DesktopManager.startIcon = love.graphics.newImage("assets/layers.png")
     end)
 
-    -- Filesystem setup
     local sharedFS = filesystemModule.getFS()
     if not sharedFS.children["home"] then
         sharedFS.children["home"] = { 
@@ -68,7 +71,6 @@ function DesktopManager.init()
     end
     DesktopManager.desktopHome = sharedFS.children["home"]
 
-    -- Register Apps
     local function loadImg(path)
         local ok, img = pcall(love.graphics.newImage, path)
         return ok and img or nil
@@ -87,7 +89,6 @@ function DesktopManager.init()
         { name = "Settings", module = SettingsApp, instance = nil, icon = loadImg("assets/settings.png") },
     }
 
-    -- Global file opener hook for FilesApp and Desktop icons!
     _G.openFileDirectly = function(node)
         if not node then return end
         local ext = node.name:match("^.+(%..+)$") or ""
@@ -101,23 +102,22 @@ function DesktopManager.init()
         end
     end
 
-    -- Position taskbar launcher icons
     DesktopManager.updateDockLayout()
 end
 
 function DesktopManager.updateDockLayout()
     local screenH = love.graphics.getHeight()
-    local iconSize = 34
-    local iconSpacing = 8
-    local startX = 60
-    local dockY = screenH - Taskbar.bottomBarHeight + (Taskbar.bottomBarHeight - iconSize) / 2
+    local itemW = 42
+    local itemH = 34
+    local startX = 196 -- Offset past Search box
+    local dockY = screenH - Taskbar.bottomBarHeight + (Taskbar.bottomBarHeight - itemH) / 2
 
     for _, app in ipairs(DesktopManager.apps) do
         app.x = startX
         app.y = dockY
-        app.width = iconSize
-        app.height = iconSize
-        startX = startX + iconSize + iconSpacing
+        app.width = itemW
+        app.height = itemH
+        startX = startX + itemW + 4
     end
 end
 
@@ -140,7 +140,6 @@ function DesktopManager.openTextFile(node)
     end
     if not editorApp then return end
 
-    -- Check if an existing TextEditor window is open
     local existingWin = nil
     for _, win in ipairs(WindowManager.openApps) do
         if win.app == editorApp then
@@ -204,29 +203,20 @@ end
 function DesktopManager.drawWallpaper()
     local screenW, screenH = love.graphics.getWidth(), love.graphics.getHeight()
     
-    -- Retro Yellow Gaming / Warm Cozy Wallpaper (Fast, lag-free rendering)
-    love.graphics.setColor(0.13, 0.12, 0.15) -- Warm dark espresso base
+    -- Classic Serene Windows 10 Slate Blue Surface
+    love.graphics.setColor(0.09, 0.12, 0.16)
     love.graphics.rectangle("fill", 0, 0, screenW, screenH)
 
-    -- Soft Retro Grid in Honey Gold
-    love.graphics.setColor(1.0, 0.82, 0.25, 0.05)
-    for x = 0, screenW, 36 do
-        love.graphics.line(x, 0, x, screenH)
-    end
-    for y = 0, screenH, 36 do
-        love.graphics.line(0, y, screenW, y)
-    end
-
-    -- Cute Retro Pixel Art Watermark in Center (Lynux Caracal)
-    love.graphics.setColor(1.0, 0.82, 0.25, 0.06)
-    love.graphics.circle("fill", screenW * 0.58, screenH * 0.46, 90)
+    -- Subtle Windows 10 Light Angle Accent
+    love.graphics.setColor(0.0, 0.47, 0.83, 0.08)
+    love.graphics.polygon("fill", screenW * 0.4, 0, screenW, 0, screenW, screenH * 0.7, screenW * 0.7, screenH)
 end
 
 function DesktopManager.drawDesktopIcons()
     DesktopManager.desktopHomeIcons = {}
     local iconSize = 36
-    local spacingX, spacingY = 74, 72
-    local startX, startY = 275, 45 -- Offset so TaskHUD sticky note on left doesn't overlap
+    local spacingX, spacingY = 76, 74
+    local startX, startY = 275, 45 -- Offset past Task HUD sticky note
     local cols = 5
     local index = 0
 
@@ -237,20 +227,19 @@ function DesktopManager.drawDesktopIcons()
             local x = startX + col * spacingX
             local y = startY + row * spacingY
 
-            -- Cute Retro Icon Frame
             local icon = (node.type == "directory") and DesktopManager.folderIcon or DesktopManager.fileIcon
             if icon then
                 love.graphics.setColor(1, 1, 1, 0.95)
                 love.graphics.draw(icon, x, y, 0, iconSize / icon:getWidth(), iconSize / icon:getHeight())
             else
-                love.graphics.setColor(1.0, 0.82, 0.25, 0.9)
-                love.graphics.rectangle("fill", x, y, iconSize, iconSize, 4, 4)
+                love.graphics.setColor(0.0, 0.47, 0.83)
+                love.graphics.rectangle("fill", x, y, iconSize, iconSize, 2, 2)
             end
 
-            -- Label (Crisp Warm Cream)
-            love.graphics.setFont(DesktopManager.font)
-            love.graphics.setColor(0.98, 0.96, 0.92)
-            love.graphics.printf(name, x - 14, y + iconSize + 2, iconSize + 28, "center")
+            -- Label (Clean typography, no emojis)
+            love.graphics.setFont(DesktopManager.smallFont or DesktopManager.font)
+            love.graphics.setColor(0.96, 0.96, 0.98)
+            love.graphics.printf(name, x - 16, y + iconSize + 3, iconSize + 32, "center")
 
             table.insert(DesktopManager.desktopHomeIcons, {
                 x = x, y = y, width = iconSize, height = iconSize, node = node, name = name
@@ -260,35 +249,13 @@ function DesktopManager.drawDesktopIcons()
     end
 end
 
-function DesktopManager.drawBottomDock()
-    local screenW, screenH = love.graphics.getWidth(), love.graphics.getHeight()
+function DesktopManager.drawTaskbarApps()
+    local screenH = love.graphics.getHeight()
     local dockH = Taskbar.bottomBarHeight
     local dockY = screenH - dockH
 
     love.graphics.push()
 
-    -- Dock background (Warm Retro Dark Charcoal)
-    love.graphics.setColor(0.11, 0.1, 0.13, 0.96)
-    love.graphics.rectangle("fill", 0, dockY, screenW, dockH)
-    love.graphics.setColor(1.0, 0.82, 0.25, 0.4) -- Sunny Yellow Accent Line
-    love.graphics.line(0, dockY, screenW, dockY)
-
-    -- Start Menu Button (Cute Retro Yellow / Pink)
-    love.graphics.setColor(DesktopManager.startMenuOpen and 0.25 or 0.16, DesktopManager.startMenuOpen and 0.22 or 0.14, 0.18, 0.95)
-    love.graphics.rectangle("fill", 8, dockY + 5, 34, 32, 5, 5)
-    love.graphics.setColor(1.0, 0.82, 0.25, 0.8) -- Sunny Yellow border
-    love.graphics.setLineWidth(1.2)
-    love.graphics.rectangle("line", 8, dockY + 5, 34, 32, 5, 5)
-    
-    if DesktopManager.startIcon then
-        love.graphics.setColor(1.0, 0.88, 0.4)
-        love.graphics.draw(DesktopManager.startIcon, 16, dockY + 12, 0, 18 / DesktopManager.startIcon:getWidth(), 18 / DesktopManager.startIcon:getHeight())
-    else
-        love.graphics.setColor(1.0, 0.82, 0.25)
-        love.graphics.circle("fill", 25, dockY + 21, 6)
-    end
-
-    -- App Launcher Icons
     for _, app in ipairs(DesktopManager.apps) do
         local isRunning = false
         local isFocused = false
@@ -302,30 +269,33 @@ function DesktopManager.drawBottomDock()
             end
         end
 
-        -- Background highlight if focused
+        -- Windows 10 Taskbar Button Highlight
         if isFocused then
-            love.graphics.setColor(0.24, 0.2, 0.18, 0.9)
-            love.graphics.rectangle("fill", app.x - 2, app.y - 2, app.width + 4, app.height + 4, 5, 5)
-            love.graphics.setColor(1.0, 0.82, 0.25, 0.9)
-            love.graphics.rectangle("line", app.x - 2, app.y - 2, app.width + 4, app.height + 4, 5, 5)
+            love.graphics.setColor(0.24, 0.26, 0.32, 0.95)
+            love.graphics.rectangle("fill", app.x, dockY + 2, app.width, dockH - 4, 2, 2)
         elseif isRunning then
-            love.graphics.setColor(0.18, 0.16, 0.2, 0.7)
-            love.graphics.rectangle("fill", app.x - 2, app.y - 2, app.width + 4, app.height + 4, 5, 5)
+            love.graphics.setColor(0.18, 0.19, 0.24, 0.8)
+            love.graphics.rectangle("fill", app.x, dockY + 2, app.width, dockH - 4, 2, 2)
         end
 
         -- App Icon
         if app.icon then
-            love.graphics.setColor(1, 1, 1, isRunning and 1.0 or 0.85)
-            love.graphics.draw(app.icon, app.x, app.y, 0, app.width / app.icon:getWidth(), app.height / app.icon:getHeight())
+            love.graphics.setColor(1, 1, 1, isRunning and 1.0 or 0.75)
+            love.graphics.draw(app.icon, app.x + (app.width - 20) / 2, dockY + (dockH - 20) / 2, 0, 20 / app.icon:getWidth(), 20 / app.icon:getHeight())
         else
-            love.graphics.setColor(1.0, 0.82, 0.25)
-            love.graphics.rectangle("fill", app.x, app.y, app.width, app.height, 4, 4)
+            love.graphics.setColor(0.0, 0.47, 0.83)
+            love.graphics.rectangle("fill", app.x + (app.width - 18) / 2, dockY + (dockH - 18) / 2, 18, 18, 2, 2)
         end
 
-        -- Cute Retro Dot Indicator underneath running apps (Sunny Yellow or Mint)
+        -- Windows 10 Active Underline Indicator Bar
         if isRunning then
-            love.graphics.setColor(1.0, 0.82, 0.25) -- Sunny Yellow Dot
-            love.graphics.circle("fill", app.x + app.width / 2, dockY + dockH - 4, 2.5)
+            if isFocused then
+                love.graphics.setColor(0.0, 0.47, 0.83) -- Windows Accent Blue
+                love.graphics.rectangle("fill", app.x + 4, dockY + dockH - 3, app.width - 8, 2)
+            else
+                love.graphics.setColor(0.6, 0.65, 0.7)
+                love.graphics.rectangle("fill", app.x + 8, dockY + dockH - 3, app.width - 16, 2)
+            end
         end
     end
 
@@ -336,40 +306,40 @@ function DesktopManager.drawStartMenu()
     if not DesktopManager.startMenuOpen then return end
 
     local screenH = love.graphics.getHeight()
-    local menuW, menuH = 210, 270
-    local menuX, menuY = 8, screenH - Taskbar.bottomBarHeight - menuH - 4
+    local menuW, menuH = 220, 280
+    local menuX, menuY = 0, screenH - Taskbar.bottomBarHeight - menuH
 
     love.graphics.push()
 
     -- Drop shadow
-    love.graphics.setColor(0, 0, 0, 0.35)
-    love.graphics.rectangle("fill", menuX + 3, menuY + 3, menuW, menuH, 6, 6)
+    love.graphics.setColor(0, 0, 0, 0.4)
+    love.graphics.rectangle("fill", menuX + 2, menuY + 2, menuW, menuH)
 
-    -- Background (Warm Retro Charcoal)
-    love.graphics.setColor(0.13, 0.12, 0.16, 0.96)
-    love.graphics.rectangle("fill", menuX, menuY, menuW, menuH, 6, 6)
-    love.graphics.setColor(1.0, 0.82, 0.25, 0.7) -- Sunny Yellow Border
-    love.graphics.setLineWidth(1.2)
-    love.graphics.rectangle("line", menuX, menuY, menuW, menuH, 6, 6)
+    -- Windows 10 Start Menu Plate
+    love.graphics.setColor(0.12, 0.12, 0.15, 0.98)
+    love.graphics.rectangle("fill", menuX, menuY, menuW, menuH)
+    love.graphics.setColor(0.22, 0.22, 0.26)
+    love.graphics.line(menuX, menuY, menuX + menuW, menuY)
+    love.graphics.line(menuX + menuW, menuY, menuX + menuW, menuY + menuH)
 
-    -- Header (Cute Gaming Menu)
-    love.graphics.setColor(1.0, 0.85, 0.3) -- Sunny Yellow
+    -- Header
+    love.graphics.setColor(0.9, 0.92, 0.96)
     love.graphics.setFont(DesktopManager.boldFont or DesktopManager.font)
-    love.graphics.print("★ Applications", menuX + 12, menuY + 8)
-    love.graphics.setColor(1.0, 0.82, 0.25, 0.3)
-    love.graphics.line(menuX + 10, menuY + 26, menuX + menuW - 10, menuY + 26)
+    love.graphics.print("Applications", menuX + 16, menuY + 12)
+    love.graphics.setColor(0.2, 0.22, 0.28)
+    love.graphics.line(menuX + 14, menuY + 36, menuX + menuW - 14, menuY + 36)
 
     -- List apps
-    local itemY = menuY + 32
+    local itemY = menuY + 44
     for _, app in ipairs(DesktopManager.apps) do
         if app.icon then
             love.graphics.setColor(1, 1, 1, 0.9)
-            love.graphics.draw(app.icon, menuX + 12, itemY, 0, 16 / app.icon:getWidth(), 16 / app.icon:getHeight())
+            love.graphics.draw(app.icon, menuX + 16, itemY, 0, 16 / app.icon:getWidth(), 16 / app.icon:getHeight())
         end
         love.graphics.setFont(DesktopManager.font)
-        love.graphics.setColor(0.95, 0.95, 0.95)
-        love.graphics.print(app.name, menuX + 34, itemY)
-        itemY = itemY + 23
+        love.graphics.setColor(0.9, 0.92, 0.96)
+        love.graphics.print(app.name, menuX + 40, itemY)
+        itemY = itemY + 22
     end
 
     love.graphics.pop()
@@ -386,8 +356,8 @@ function DesktopManager.draw()
     DesktopManager.drawDesktopIcons()
     TaskHUD.draw()
     WindowManager.draw()
-    Taskbar.drawTopBar()
-    DesktopManager.drawBottomDock()
+    Taskbar.drawBottomBar()
+    DesktopManager.drawTaskbarApps()
     DesktopManager.drawStartMenu()
     Notifications.draw()
 end
@@ -396,23 +366,23 @@ function DesktopManager.mousepressed(x, y, button)
     -- 1. Toast Notifications
     if Notifications.mousepressed(x, y, button) then return end
 
-    -- 2. Taskbar Top controls
+    -- 2. Taskbar System Tray Controls
     if Taskbar.mousepressed(x, y, button) then return end
 
     -- 3. Start Menu handling
     if DesktopManager.startMenuOpen then
         local screenH = love.graphics.getHeight()
-        local menuW, menuH = 210, 270
-        local menuX, menuY = 8, screenH - Taskbar.bottomBarHeight - menuH - 4
+        local menuW, menuH = 220, 280
+        local menuX, menuY = 0, screenH - Taskbar.bottomBarHeight - menuH
         if x >= menuX and x <= menuX + menuW and y >= menuY and y <= menuY + menuH then
-            local itemY = menuY + 32
+            local itemY = menuY + 44
             for _, app in ipairs(DesktopManager.apps) do
                 if y >= itemY and y <= itemY + 22 then
                     WindowManager.toggleApp(app)
                     DesktopManager.startMenuOpen = false
                     return
                 end
-                itemY = itemY + 23
+                itemY = itemY + 22
             end
             return
         else
@@ -420,20 +390,20 @@ function DesktopManager.mousepressed(x, y, button)
         end
     end
 
-    -- 4. Bottom Dock Start Button & App Icons
+    -- 4. Bottom Taskbar Start Button & App Icons
     local screenH = love.graphics.getHeight()
     local dockH = Taskbar.bottomBarHeight
     local dockY = screenH - dockH
 
     if y >= dockY then
-        -- Start Button
-        if x >= 8 and x <= 44 then
+        -- Windows Start Button
+        if x >= 0 and x <= 44 then
             DesktopManager.startMenuOpen = not DesktopManager.startMenuOpen
             AudioManager.playSFX("click")
             return
         end
 
-        -- Dock App Icons
+        -- Taskbar App Launcher Icons
         for _, app in ipairs(DesktopManager.apps) do
             if x >= app.x and x <= app.x + app.width then
                 WindowManager.toggleApp(app)
@@ -449,7 +419,7 @@ function DesktopManager.mousepressed(x, y, button)
     -- 6. Task HUD
     if TaskHUD.mousepressed(x, y, button) then return end
 
-    -- 7. Desktop File/Folder Icons (Single click / Double click to open)
+    -- 7. Desktop File/Folder Icons
     for _, iconInfo in ipairs(DesktopManager.desktopHomeIcons) do
         if x >= iconInfo.x and x <= iconInfo.x + iconInfo.width and y >= iconInfo.y and y <= iconInfo.y + iconInfo.height + 18 then
             if button == 1 then
@@ -460,7 +430,6 @@ function DesktopManager.mousepressed(x, y, button)
                         filesApp.instance:updateFileList()
                     end
                 else
-                    -- Open file in TextEditor or appropriate viewer!
                     _G.openFileDirectly(iconInfo.node)
                 end
                 AudioManager.playSFX("click")
