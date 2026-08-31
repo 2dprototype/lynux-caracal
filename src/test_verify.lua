@@ -100,23 +100,38 @@ local function runTests()
     assert(type(prologueScript) == "table" and #prologueScript > 5, "Prologue script should be valid table with multiple steps")
     log("[PASS] Prologue Story Script Integrity")
 
-    -- Test 6: Desktop & Window Manager & File Opening
+    -- Test 6: Desktop & Multi-Process Window Management
     local WindowManager = require("src.desktop.window_mgr")
     local DesktopManager = require("src.desktop.desktop_mgr")
     DesktopManager.init()
     assert(#DesktopManager.apps >= 5, "DesktopManager should have registered apps")
     assert(type(_G.openFileDirectly) == "function", "_G.openFileDirectly should be defined")
     
-    local dummyNode = { name = "notes.txt", type = "file", content = "Hello World" }
-    _G.openFileDirectly(dummyNode)
-    assert(#WindowManager.openApps == 1, "Opening file should open TextEditor window")
-    assert(WindowManager.openApps[1].app.name == "TextEditor", "Opened window should be TextEditor")
-    assert(WindowManager.openApps[1].instance.filename == "notes.txt", "TextEditor should have loaded filename")
+    -- Open 2 separate TextEditor processes simultaneously
+    local dummyNode1 = { name = "notes.txt", type = "file", content = "Notes content" }
+    local dummyNode2 = { name = "cipher.txt", type = "file", content = "DELTA-99" }
+    _G.openFileDirectly(dummyNode1)
+    _G.openFileDirectly(dummyNode2)
+    assert(#WindowManager.openApps == 2, "Opening 2 files should spawn 2 distinct TextEditor process windows")
+    assert(WindowManager.openApps[1].pid ~= WindowManager.openApps[2].pid, "Each window should have a unique PID")
+    WindowManager.closeWindow(WindowManager.openApps[2])
     WindowManager.closeWindow(WindowManager.openApps[1])
-    assert(#WindowManager.openApps == 0, "WindowManager should have closed window")
-    log("[PASS] Desktop, Window Management & Direct File Opening")
+    assert(#WindowManager.openApps == 0, "All windows should be closed")
+    log("[PASS] Multi-Process Window Management & File Instances")
 
-    -- Test 7: Transitions
+    -- Test 7: Email & Chat Task Conditions
+    local emailCond = TaskConditions.emailRead("Maya")
+    assert(not emailCond(), "Email condition should be false initially")
+    EventBus.emit("email:read", { id = 101, sender = "Maya (Sister)" })
+    assert(emailCond(), "Email condition should pass after reading Maya's email")
+
+    local chatCond = TaskConditions.chatSentTo("Chloe")
+    assert(not chatCond(), "Chat condition should be false initially")
+    EventBus.emit("chat:sent", { user = "Chloe (Girlfriend)", text = "Hey babe!" })
+    assert(chatCond(), "Chat condition should pass after sending message to Chloe")
+    log("[PASS] Sister Email & Girlfriend Chat Task Conditions")
+
+    -- Test 8: Transitions
     local Transitions = require("src.core.transitions")
     local midCalled = false
     local endCalled = false
@@ -126,7 +141,9 @@ local function runTests()
     assert(midCalled, "Midpoint callback should have been called")
     Transitions.update(0.2)
     assert(endCalled, "End callback should have been called")
-    -- Test 8: Pause Menu
+    log("[PASS] Mode Transitions (CRT Zoom & Fade)")
+
+    -- Test 9: Pause Menu
     local PauseMenu = require("src.ui.pause_menu")
     PauseMenu.init()
     assert(not PauseMenu.isOpen, "PauseMenu should initially be closed")

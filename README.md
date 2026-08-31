@@ -1,15 +1,15 @@
 # 🐱 Lynux Caracal
 
-> **A Hybrid Cyberpunk Visual Novel & Simulated Desktop Operating System Game Engine**  
-> Built with [Love2D (Lua)](https://love2d.org/) • Featuring a Retro Yellow Gaming / Kawaii Aesthetic • Smooth 60 FPS Architecture
+> **A Hybrid Narrative Visual Novel & Simulated Desktop Operating System Game Engine**  
+> Built with [Love2D (Lua)](https://love2d.org/) • Windows 10 Style Desktop Interface • Material Dark Aesthetic • 60 FPS Architecture
 
 ---
 
 ## 🌟 Overview
 
-**Lynux Caracal** is a hybrid narrative game that seamlessly switches between **Storytelling Mode (Visual Novel)** and the **Protagonist's Personal Computer (Lynux OS Desktop Simulation)**.
+**Lynux Caracal** is a hybrid narrative game that seamlessly switches between **Storytelling Mode (Visual Novel)** and the **Protagonist's Personal Computer (Windows 10 Style Desktop Simulation)** set in a grounded 2009–2010 atmosphere.
 
-As the protagonist uncovers encrypted transmissions, decompiles payloads, and faces mysterious network intrusions, the game transitions from atmospheric narrative scenes directly into a fully interactive Linux-like desktop. Players inspect files, edit decrypted ciphers, execute terminal commands, and converse via encrypted chat apps to solve objectives, earn XP, level up their hacker rank, and branch the story.
+The gameplay and mode transitions are **strictly narrative-driven**: as the story progresses, the narrative naturally sends the player to their PC to complete real computing tasks (e.g. reading emails, chatting with contacts, editing cipher files, executing terminal commands), then transitions back to the visual novel when objectives are fulfilled.
 
 ---
 
@@ -17,11 +17,11 @@ As the protagonist uncovers encrypted transmissions, decompiles payloads, and fa
 
 ```mermaid
 graph TD
-    A["📖 Story Mode (Visual Novel)"] -->|"Plot Intrusion & Monologue"| B["★ Quest Issued in Story"]
-    B -->|"Smooth CRT Zoom Transition"| C["💻 Desktop Mode (Lynux OS)"]
-    C -->|"Open TextEditor / Terminal / Files"| D["⚙ Complete Technical Task"]
-    D -->|"Objective Met & Condition Evaluated"| E["🎉 Level-Up & Celebration Banner (+XP)"]
-    E -->|"Click Continue Story / Top Bar"| F["📖 Story Resumes with Branching Consequences"]
+    A["Story Mode (Visual Novel)"] -->|"Narrative Scene & Task Issued"| B["Task Issued by Story"]
+    B -->|"Smooth CRT Zoom Transition"| C["Windows 10 Desktop Mode"]
+    C -->|"Email Maya / Chat Chloe / Edit Files"| D["Complete Technical Objective"]
+    D -->|"Objective Met & Progress Recorded"| E["Level-Up (+XP) & Notification"]
+    E -->|"Click Continue Story on Task HUD"| F["Story Resumes with Narrative Consequences"]
 ```
 
 ---
@@ -29,57 +29,57 @@ graph TD
 ## ✨ Features
 
 ### 📖 1. Visual Novel & Narrative Engine
-- **Atmospheric Monologues & Dialogues**: Clean floating text box with typewriter effects, character-specific colored badges (`♥ Ghost`, `★ Thought`), and ambient typing blips.
-- **Branching Choice System**: Interactive option cards with number pills (`[ 1 ]`, `[ 2 ]`, `[ 3 ]`), keyboard navigation (`1-9` / `Up-Down-Enter`), and mouse hover feedback.
-- **Dialogue Transcript Backlog**: Scrollable history log overlay toggled with `H` key or scroll wheel.
-- **Character Manager**: Configurable character profiles, custom nameplates, colors, and positioning.
-- **Decoupled Lua Story Scripts**: Narrative chapters written in declarative Lua script tables.
+- **Atmospheric Monologues & Dialogues**: Clean Material dark glass plate with soft drop shadows and zero distracting borders.
+- **Branching Choice System**: Clean Material option cards with number prefixes (`1.`, `2.`, `3.`) and Windows Accent Blue selection highlights.
+- **Dialogue Transcript Backlog**: Scrollable history log overlay toggled with `H` or `L` keys.
+- **Rich 2009–2010 Storyline**:
+  - **Task 1 (Sister's Email)**: Open the Email app and read Maya's message about Mom's 50th birthday.
+  - **Task 2 (Girlfriend Chat)**: Open Chat and reply to Chloe's late-night message.
+  - **Task 3 (The Cipher Intrusion)**: A network packet arrives on port 8080. Decrypt the key and save `DELTA-99` in `cipher.txt` using TextEditor.
+  - **Scene 4 (Ghost Confrontation)**: Face off against the mysterious hacker entity `Ghost` with branching dialogue choices.
 
-### 💻 2. Simulated Desktop Operating System (Lynux OS)
-- **Retro Traffic-Light Window Chrome**: Draggable, minimizable, and resizable window system with pastel controls (`●` Strawberry Pink Close, `●` Sunny Lemon Minimize, `●` Soda Mint Focus).
-- **Direct File Opening**: Single/double-clicking files on the desktop or in the **Files App** automatically launches and loads them directly into **TextEditor** or the appropriate viewer.
-- **Top System Status Bar (28px)**:
-  - `★ Lynux` brand badge.
-  - Player Level progress pill (`♥ Lv. 1 [████░░░░] 0/100 XP`).
-  - Active quest tracker pill (`★ Secure Key`).
-  - `[ 📖 Story Mode ]` button to return to narrative mode.
-  - Real-time digital clock.
-- **Pinned Task HUD**: Draggable quest sticky note on the desktop displaying active objectives, live checkmarks `[✓]`, XP reward badge, hint drawer, and a `[ ▶ Continue Story ]` action button.
-- **Suite of Integrated Desktop Apps**:
-  - 📝 **TextEditor**: Full syntax editing, cursor navigation, unsaved dirty markers, and Ctrl+S saving.
-  - 📁 **Files App**: Directory navigation, file browsing, and direct file launching.
-  - 💻 **Terminal**: Interactive shell with command execution, pipes, filesystem operations, and inline function substitutions.
-  - 💬 **Chat**: Encrypted messaging application with contact threads.
-  - ✉️ **Email**: Mail client with unread badges and attachments.
-  - 🌐 **Browser**: Minimal browser rendering HTML pages and mock web engines.
-  - 🖼️ **ImageViewer** & 🧊 **ObjViewer**: Image previewer and 3D wireframe object inspector.
-  - ⚙️ **Settings**: Desktop wallpaper and visual customizer.
+### 🪟 2. Windows 10 Style Desktop Operating System
+- **Multi-Process App Management**:
+  - Supports running **multiple concurrent instances / windows of the same app** (e.g., editing `cipher.txt` and `notes.txt` in separate TextEditor windows).
+  - Each window has its own unique Process ID (`pid`), state, coordinate offsets, and active focus.
+  - Taskbar tabs display multi-instance counter badges.
+- **Windows 10 Chrome & Controls**:
+  - Flat dark titlebars with app icon and title.
+  - Standard top-right controls: Minimize (`—`), Maximize (`□`), and Close (`✕` which turns bright Windows Red `#e81123` on hover).
+  - 1px Windows Accent Blue (`#0078d4`) focus border.
+- **Bottom Taskbar (38px)**:
+  - Windows 4-square Start button and Start Menu with application drawer.
+  - Search box mockup (`"Type here to search"`).
+  - Active underline indicators on running app tabs.
+  - System tray with real-time digital clock (`12:43 AM`), date (`08/31/2010`), and Player Level/XP progress badge.
+- **Desktop Widgets & Apps**:
+  - 📋 **Task HUD**: Clean Windows 10 Sticky Note / Objectives card with live checkmarks and `"Continue Story"` button.
+  - 🔔 **Action Center Notifications**: Windows 10 toast popups in the bottom-right corner.
+  - 📝 **TextEditor**: Multi-instance file editing, dirty flags, saving, and line numbering.
+  - 📁 **Files App**: Directory navigation and direct file launching.
+  - 💻 **Terminal**: Interactive shell with command execution and filesystem commands.
+  - 💬 **Chat**: Messaging app with multiple contacts (Chloe, Alice, Bob, etc.).
+  - ✉️ **Email**: Mail client with inbox filtering and unread indicators.
+  - 🌐 **Browser**, 🖼️ **ImageViewer**, 🧊 **ObjViewer**, ⚙️ **Settings**.
 
-### 🏆 3. Task & Level Progression System
-- **Event-Driven Task Evaluator**: Condition listeners evaluate actions (e.g. file content matching, terminal commands, story flags).
-- **Player Stats & Hacker Ranks**: Earn XP to level up from *Script Novice* $\rightarrow$ *Code Initiator* $\rightarrow$ *Sandbox Breaker*.
-- **Celebration Banner**: Animated level-up banner with star insignia, XP rewards, and audio fanfare.
+### 🔤 3. Standard Fonts & Crisp Typography
+- **UI & Dialogue Body**: `font/Nunito-Regular.ttf` (size 14–15px) for clear readability.
+- **Headers & Window Titles**: `font/IBMPlexSans-Bold.ttf` (size 15–16px) for bold titles.
+- **Monospace Code / Terminal**: `font/consola.ttf` for terminal and code editors.
+- **Zero Emojis**: Replaced all emoji symbols across the entire game with clean, professional vector geometry and labels.
 
 ### ⚙️ 4. Professional ESC Pause & Settings Menu
 - Accessible anytime in both Story and Desktop modes by pressing `ESC`.
-- **Resume Game**: Seamlessly return to gameplay.
-- **Switch Story / PC Mode**: Instantly toggle between narrative and desktop modes.
-- **Settings & Audio**: Interactive sliders for Master SFX and BGM volume, plus typewriter text speed choices.
-- **Reset Chapter**: Safely restart the current story script from step 1.
-- **Exit Game**: Clean exit to desktop.
-
-### 🎨 5. Retro Yellow Gaming / Kawaii Aesthetic & 60 FPS Performance
-- **Color Palette**:
-  - **Base Canvas**: Warm espresso dark slate (`#1e1b18` / `#28231d`)
-  - **Sunny Yellow & Honey Gold**: `#ffd166` / `#ffb703`
-  - **Kawaii Pastels**: Strawberry Pink (`#ff70a6`), Soda Mint (`#06d6a0`), Warm Cream (`#fffdfa`)
-- **Zero Lag**: Optimized geometry rendering and clean scissor clipping running at silky-smooth 60 FPS.
+- **Resume Game**: Seamlessly return to current gameplay.
+- **Settings & Audio**: Interactive sliders for SFX and Music volume, plus typewriter text speed options.
+- **Restart Chapter**: Re-initialize the current story chapter.
+- **Exit to Desktop**: Cleanly quit the application.
 
 ---
 
 ## 📁 Clean Codebase Architecture
 
-All source code is strictly structured within `./src/`, leaving only `main.lua` and `conf.lua` in the root:
+All source code is strictly organized in `./src/`, keeping only `main.lua` and `conf.lua` in the root:
 
 ```
 lynux-caracal/
@@ -92,171 +92,59 @@ lynux-caracal/
 │   ├── filesystem.json       -- Virtual OS filesystem template
 │   └── stories/
 │       └── prologue.lua      -- Chapter 1 narrative and quest script
-├── font/                     -- TrueType fonts
+├── font/                     -- Standard TrueType fonts (Nunito, IBMPlexSans, consola)
 ├── lib/                      -- JSON, XML, and helper libraries
 ├── src/
 │   ├── core/
 │   │   ├── game_manager.lua  -- Master state machine & lifecycle coordinator
 │   │   ├── event_bus.lua     -- Global pub/sub messaging bus
-│   │   ├── player_stats.lua  -- Player XP, level, title, and persistent flags
-│   │   ├── audio_manager.lua -- Procedural sound synth fallbacks & audio playback
-│   │   ├── transitions.lua   -- CRT zoom, glitch, and fade mode transitions
-│   │   └── filesystem.lua    -- Virtual in-memory hierarchical filesystem
+│   │   ├── player_stats.lua  -- XP, levels, hacker ranks, and narrative flags
+│   │   ├── audio_manager.lua -- SFX and background music controller
+│   │   ├── filesystem.lua    -- Virtual in-memory filesystem engine
+│   │   └── transitions.lua   -- CRT zoom and fade screen transitions
 │   ├── story/
-│   │   ├── story_engine.lua  -- Narrative script interpreter
-│   │   ├── dialogue_box.lua  -- Minimalist dialogue and thought textplate
-│   │   ├── choice_box.lua    -- Interactive choice overlay cards
-│   │   ├── scene_view.lua    -- Background scenery renderer
-│   │   ├── character_mgr.lua -- Character portraits, tags, and colors
-│   │   └── history_log.lua   -- Dialogue transcript backlog
+│   │   ├── story_engine.lua  -- Visual novel script interpreter
+│   │   ├── dialogue_box.lua  -- Material dialogue renderer (no borders)
+│   │   ├── choice_box.lua    -- Branching choice renderer
+│   │   ├── history_log.lua   -- Backlog transcript overlay
+│   │   ├── character_mgr.lua -- Character profiles and nametags
+│   │   └── scene_view.lua    -- 2009-2010 bedroom and environment scenes
 │   ├── desktop/
-│   │   ├── desktop_mgr.lua   -- Desktop background, icons, dock, and start menu
-│   │   ├── window_mgr.lua    -- Window chrome, input routing, and focus handling
-│   │   ├── taskbar.lua       -- 28px top status bar
-│   │   ├── task_hud.lua      -- Draggable quest tracker sticky note
-│   │   └── notifications.lua -- Toast notification cards
+│   │   ├── desktop_mgr.lua   -- Desktop wallpaper, icons, and Start Menu
+│   │   ├── window_mgr.lua    -- Multi-process window chrome and event routing
+│   │   ├── taskbar.lua       -- Windows 10 bottom taskbar and system tray
+│   │   ├── task_hud.lua      -- Sticky Note objective tracker
+│   │   └── notifications.lua -- Windows Action Center toast notifications
 │   ├── tasks/
-│   │   ├── task_manager.lua  -- Quest lifecycle and celebration banner
-│   │   └── task_conditions.lua-- Condition evaluators (e.g. fileContentContains)
+│   │   ├── task_manager.lua  -- Quest lifecycle and level-up banners
+│   │   └── task_conditions.lua -- Evaluators for files, emails, and chats
+│   ├── apps/                 -- Desktop applications (TextEditor, Email, Chat, Files, etc.)
 │   ├── ui/
-│   │   └── pause_menu.lua    -- Professional ESC pause & settings menu
-│   └── apps/                 -- Standalone desktop applications
-│       ├── browser.lua
-│       ├── chat.lua
-│       ├── email.lua
-│       ├── files.lua
-│       ├── imageviewer.lua
-│       ├── objviewer.lua
-│       ├── settings.lua
-│       ├── terminal.lua
-│       ├── terminal_commands.lua
-│       ├── tessarect.lua
-│       ├── texteditor.lua
-│       └── websites.lua
+│   │   └── pause_menu.lua    -- ESC Pause and Settings menu
+│   └── test_verify.lua       -- Automated verification test suite
 ```
 
 ---
 
-## 🛠️ Story Scripting Guide
+## 🕹️ Controls
 
-Stories are written as declarative Lua arrays in `data/stories/*.lua`.
-
-### Example Script (`data/stories/chapter1.lua`):
-
-```lua
-local TaskConditions = require("src.tasks.task_conditions")
-
-return {
-    -- 1. Set Background Scene
-    { type = "bg", name = "bedroom_night" },
-
-    -- 2. Internal Monologue
-    { type = "monologue", text = "02:43 AM. A strange packet hit my firewall on port 8080." },
-    { type = "monologue", text = "The decrypted key is 'DELTA-99'. I must secure it on my desktop." },
-
-    -- 3. Issue Quest Objective
-    {
-        type = "task",
-        task = {
-            id = "save_key",
-            title = "Secure the Key",
-            desc = "Create a file named 'cipher.txt' in your home directory containing 'DELTA-99'.",
-            hint = "Launch TextEditor from the dock, type 'DELTA-99', and save as 'cipher.txt'.",
-            xp = 100,
-            condition = TaskConditions.fileContentContains("home/cipher.txt", "DELTA-99"),
-            onComplete = function(task)
-                local Notifications = require("src.desktop.notifications")
-                Notifications.add("Ghost (Encrypted)", "I see you secured the cipher. Not bad.")
-            end
-        }
-    },
-
-    -- 4. Transition to Desktop Mode
-    { type = "switch_mode", mode = "desktop", transition = "crt_zoom" },
-
-    -- 5. Narrative Resumption after Quest
-    { type = "label", name = "post_task" },
-    { type = "say", speaker = "Ghost", text = "You're fast with that keyboard. Who taught you to code?" },
-
-    -- 6. Branching Choices
-    {
-        type = "choice",
-        prompt = "How do you respond to Ghost?",
-        options = {
-            { text = "Demand to know who they work for", target = "branch_demand" },
-            { text = "Ask what they want with DELTA-99", target = "branch_ask" }
-        }
-    },
-
-    -- Branch Targets
-    { type = "label", name = "branch_demand" },
-    { type = "say", speaker = "Ghost", text = "I don't have a master, and neither should you." },
-    { type = "jump", target = "conclusion" },
-
-    { type = "label", name = "branch_ask" },
-    { type = "say", speaker = "Ghost", text = "DELTA-99 is the override key to Caracal Corp." },
-    { type = "jump", target = "conclusion" },
-
-    { type = "label", name = "conclusion" },
-    { type = "monologue", text = "The connection abruptly severed..." }
-}
-```
-
-### Available Story Step Types:
-| Step Type | Arguments | Description |
+| Context | Key / Action | Description |
 |---|---|---|
-| `monologue` / `thought` | `text` | Displays internal thought plate with `★ Thought` badge |
-| `say` | `speaker`, `text` | Character dialogue with custom colored nameplate |
-| `bg` | `name` | Changes the scene backdrop (`bedroom_night`, `server_room`) |
-| `task` | `task` | Registers a quest with conditions and XP rewards |
-| `switch_mode` | `mode`, `transition` | Switches mode (`story` $\leftrightarrow$ `desktop`) with transition (`crt_zoom`, `fade`) |
-| `choice` | `prompt`, `options` | Presents interactive choice cards with branch targets |
-| `label` | `name` | Defines a jump destination |
-| `jump` | `target` | Jumps execution to a label |
-| `flag` | `name`, `value` | Sets a persistent narrative flag |
-| `sfx` | `name`, `pitch`, `vol` | Plays a sound effect |
+| **Anywhere** | `ESC` | Open / Close Pause & Settings Menu |
+| **Story Mode** | `Space` / `Enter` / `Left Click` | Advance dialogue / Complete typing |
+| **Story Mode** | `1`, `2`, `3` / `Click` | Select dialogue choice |
+| **Story Mode** | `H` / `L` | Toggle dialogue history backlog |
+| **Desktop** | `Left Click` | Focus / Launch / Interact with app windows & icons |
+| **Desktop** | `Right Click` on Dock | Launch new process instance of application |
+| **Desktop** | `Window Titlebar Drag` | Move window |
+| **Desktop** | `Window Bottom-Right Drag` | Resize window |
+| **Task HUD** | `Click Continue Story` | Return to visual novel after completing task |
 
 ---
 
-## ⌨️ Controls & Keybindings
+## 🚀 Running the Game
 
-### 📖 Storytelling Mode
-| Action | Keybinding | Mouse |
-|---|---|---|
-| Advance Dialogue | `Space` / `Enter` / `Z` | Left Click |
-| Auto-Play Toggle | `A` | — |
-| Dialogue Backlog | `H` / `L` | Right Click / Scroll Up |
-| Quick PC Mode Check | `Tab` | — |
-| **Pause & Settings Menu** | **`ESC`** | — |
-
-### 💻 Desktop OS Mode
-| Action | Keybinding | Mouse |
-|---|---|---|
-| Launch App | — | Click Dock Icon |
-| Open Desktop File | — | Click Desktop Icon |
-| Move / Drag Window | — | Drag Window Titlebar |
-| Resize Window | — | Drag Bottom-Right Grip |
-| Minimize / Close Window | — | Click Window Controls (`● ● ●`) |
-| Save File in Editor | `Ctrl + S` | Click Save Icon / Header |
-| Stand Up / Return to Story | `Tab` | Click `[ 📖 Story Mode ]` or Task HUD |
-| **Pause & Settings Menu** | **`ESC`** | — |
-
----
-
-## 🚀 Installation & Running
-
-### Requirements
-- [Love2D](https://love2d.org/) version 11.0 or higher.
-
-### Run Directly:
+Launch with Love2D:
 ```bash
-# From the root directory of the project:
 love .
 ```
-
----
-
-## 📜 License & Credits
-- **Engine**: Lynux Caracal
-- **Framework**: Love2D (Lua)
-- **Built for**: Interactive storytelling, hacking simulation games, and visual novel hybrids.
