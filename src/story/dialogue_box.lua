@@ -31,9 +31,9 @@ local function loadCustomFont(path, size)
 end
 
 function DialogueBox.init()
-    DialogueBox.font = loadCustomFont("font/x14y24pxHeadUpDaisy.ttf", 20)
-    DialogueBox.nameFont = loadCustomFont("font/x14y24pxHeadUpDaisy.ttf", 22)
-    DialogueBox.italicFont = loadCustomFont("font/x14y24pxHeadUpDaisy.ttf", 20)
+    DialogueBox.font = loadCustomFont("font/Nunito-Regular.ttf", 15)
+    DialogueBox.nameFont = loadCustomFont("font/IBMPlexSans-Bold.ttf", 16) or loadCustomFont("font/Nunito-Regular.ttf", 16)
+    DialogueBox.italicFont = loadCustomFont("font/Nunito-Regular.ttf", 15)
 end
 
 function DialogueBox.showDialogue(speaker, text, isMonologue, onFinish)

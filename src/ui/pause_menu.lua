@@ -20,10 +20,9 @@ local PauseMenu = {
     textSpeeds = { "Fast", "Normal", "Slow" },
     textSpeedIndex = 2,
     
-    -- Main Menu Items (Zero emojis)
+    -- Main Menu Items (Zero emojis, strictly narrative mode progression)
     mainItems = {
         { id = "resume", label = "Resume Game", desc = "Return to current gameplay" },
-        { id = "switch_mode", label = "Switch Story / PC Mode", desc = "Toggle between Visual Novel & Desktop" },
         { id = "settings", label = "Settings & Audio", desc = "Volume sliders and text options" },
         { id = "reset", label = "Restart Chapter", desc = "Restart narrative from beginning" },
         { id = "exit", label = "Exit to Desktop", desc = "Safely quit the application" }
@@ -45,9 +44,9 @@ local function loadCustomFont(path, size)
 end
 
 function PauseMenu.init()
-    PauseMenu.font = loadCustomFont("font/x14y24pxHeadUpDaisy.ttf", 20)
-    PauseMenu.titleFont = loadCustomFont("font/x14y24pxHeadUpDaisy.ttf", 22)
-    PauseMenu.smallFont = loadCustomFont("font/x14y24pxHeadUpDaisy.ttf", 15)
+    PauseMenu.font = loadCustomFont("font/Nunito-Regular.ttf", 15)
+    PauseMenu.titleFont = loadCustomFont("font/IBMPlexSans-Bold.ttf", 16) or loadCustomFont("font/Nunito-Regular.ttf", 16)
+    PauseMenu.smallFont = loadCustomFont("font/Nunito-Regular.ttf", 12)
     PauseMenu.isOpen = false
     PauseMenu.currentTab = "main"
     PauseMenu.selectedIndex = 1
@@ -82,9 +81,6 @@ function PauseMenu.activateCurrent()
 
         if item.id == "resume" then
             PauseMenu.close()
-        elseif item.id == "switch_mode" then
-            PauseMenu.close()
-            EventBus.emit("game:request_switch_mode", { transition = "fade" })
         elseif item.id == "settings" then
             PauseMenu.currentTab = "settings"
             PauseMenu.selectedIndex = 1

@@ -17,8 +17,8 @@ local function loadCustomFont(path, size)
 end
 
 function HistoryLog.init()
-    HistoryLog.font = loadCustomFont("font/x14y24pxHeadUpDaisy.ttf", 18)
-    HistoryLog.nameFont = loadCustomFont("font/x14y24pxHeadUpDaisy.ttf", 20)
+    HistoryLog.font = loadCustomFont("font/Nunito-Regular.ttf", 14)
+    HistoryLog.nameFont = loadCustomFont("font/IBMPlexSans-Bold.ttf", 15) or loadCustomFont("font/Nunito-Regular.ttf", 15)
     HistoryLog.entries = {}
     HistoryLog.scrollOffset = 0
 end

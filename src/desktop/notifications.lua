@@ -18,8 +18,8 @@ end
 
 function Notifications.init()
     Notifications.list = {}
-    Notifications.font = loadCustomFont("font/x14y24pxHeadUpDaisy.ttf", 18)
-    Notifications.smallFont = loadCustomFont("font/x14y24pxHeadUpDaisy.ttf", 15)
+    Notifications.font = loadCustomFont("font/IBMPlexSans-Bold.ttf", 14) or loadCustomFont("font/Nunito-Regular.ttf", 14)
+    Notifications.smallFont = loadCustomFont("font/Nunito-Regular.ttf", 12)
 end
 
 function Notifications.add(title, message, icon, duration, onClick)

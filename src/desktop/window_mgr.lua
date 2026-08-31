@@ -1,5 +1,5 @@
 -- src/desktop/window_mgr.lua
--- Windows 10 Style Window Manager with standard titlebar and controls
+-- Windows 10 Style Window Manager with Multi-Process / Multi-Instance App Management
 
 local AudioManager = require("src.core.audio_manager")
 local EventBus = require("src.core.event_bus")
@@ -17,7 +17,7 @@ local WindowManager = {
     minHeight = 240,
     titleBarHeight = 30,
     font = nil,
-    hoveredBtn = nil -- "close", "min", "max"
+    nextPid = 100
 }
 
 local function loadCustomFont(path, size)
@@ -31,7 +31,8 @@ function WindowManager.init()
     WindowManager.focusedWindow = nil
     WindowManager.draggingWindow = nil
     WindowManager.resizingWindow = nil
-    WindowManager.font = loadCustomFont("font/x14y24pxHeadUpDaisy.ttf", 18)
+    WindowManager.font = loadCustomFont("font/IBMPlexSans-Bold.ttf", 14) or loadCustomFont("font/Nunito-Regular.ttf", 14)
+    WindowManager.nextPid = 100
 end
 
 function WindowManager.setFocus(window)
@@ -52,26 +53,36 @@ function WindowManager.setFocus(window)
     _G.focusedWindow = window
 end
 
-function WindowManager.openWindow(app, defaultW, defaultH)
+-- Open a new window / process instance of an app
+function WindowManager.openWindow(app, defaultW, defaultH, customInstance, customTitle)
     defaultW = defaultW or 560
     defaultH = defaultH or 350
     local screenW, screenH = love.graphics.getWidth(), love.graphics.getHeight()
-    local x = (screenW - defaultW) / 2 + (#WindowManager.openApps * 20) % 80
-    local y = 35 + ((screenH - 75 - defaultH) / 2) + (#WindowManager.openApps * 20) % 60
+    local x = (screenW - defaultW) / 2 + (#WindowManager.openApps * 24) % 100
+    local y = 35 + ((screenH - 75 - defaultH) / 2) + (#WindowManager.openApps * 20) % 80
+
+    WindowManager.nextPid = WindowManager.nextPid + 1
+    local instance = customInstance
+    if not instance and app.module and app.module.new then
+        instance = app.module.new()
+    end
 
     local newWindow = {
+        pid = WindowManager.nextPid,
         app = app,
-        instance = app.instance,
+        instance = instance,
+        title = customTitle or (app and app.name) or "Application",
         x = math.floor(x),
         y = math.floor(y),
         width = defaultW,
         height = defaultH,
         minimized = false
     }
+
     table.insert(WindowManager.openApps, newWindow)
     WindowManager.setFocus(newWindow)
     AudioManager.playSFX("click")
-    EventBus.emit("window:opened", { app = app, window = newWindow })
+    EventBus.emit("window:opened", { app = app, window = newWindow, pid = newWindow.pid })
     return newWindow
 end
 
@@ -84,34 +95,54 @@ function WindowManager.closeWindow(window)
                 _G.focusedWindow = WindowManager.focusedWindow
             end
             AudioManager.playSFX("click")
-            EventBus.emit("window:closed", { app = window.app, window = window })
+            EventBus.emit("window:closed", { app = window.app, window = window, pid = window.pid })
             break
         end
     end
 end
 
-function WindowManager.toggleApp(app)
-    local found = nil
+-- Toggles focus or launches new process instance
+function WindowManager.toggleApp(app, forceNew)
+    local instances = {}
     for _, win in ipairs(WindowManager.openApps) do
         if win.app == app then
-            found = win
-            break
+            table.insert(instances, win)
         end
     end
 
-    if found then
-        found.minimized = not found.minimized
-        if not found.minimized then
-            WindowManager.setFocus(found)
+    if forceNew or #instances == 0 then
+        -- Open new process instance
+        return WindowManager.openWindow(app)
+    elseif #instances == 1 then
+        local win = instances[1]
+        win.minimized = not win.minimized
+        if not win.minimized then
+            WindowManager.setFocus(win)
         end
+        return win
     else
-        if not app.instance then
-            if app.module and app.module.new then
-                app.instance = app.module.new()
+        -- Multiple instances: cycle to next or restore
+        local nextWin = instances[1]
+        for idx, win in ipairs(instances) do
+            if win == WindowManager.focusedWindow and not win.minimized then
+                nextWin = instances[(idx % #instances) + 1]
+                break
             end
         end
-        WindowManager.openWindow(app)
+        nextWin.minimized = false
+        WindowManager.setFocus(nextWin)
+        return nextWin
     end
+end
+
+function WindowManager.getAppInstances(app)
+    local list = {}
+    for _, win in ipairs(WindowManager.openApps) do
+        if win.app == app then
+            table.insert(list, win)
+        end
+    end
+    return list
 end
 
 function WindowManager.update(dt)
@@ -135,7 +166,7 @@ function WindowManager.draw()
             love.graphics.setColor(0, 0, 0, isFocused and 0.35 or 0.18)
             love.graphics.rectangle("fill", win.x + 2, win.y + 2, win.width, win.height)
 
-            -- Window Body (Clean Dark / Neutral surface)
+            -- Window Body (Clean Neutral Dark surface)
             love.graphics.setColor(0.12, 0.12, 0.14)
             love.graphics.rectangle("fill", win.x, win.y, win.width, win.height)
 
@@ -148,7 +179,7 @@ function WindowManager.draw()
             love.graphics.rectangle("fill", win.x, win.y, win.width, titleH)
 
             -- Titlebar Separator
-            love.graphics.setColor(0.25, 0.25, 0.28)
+            love.graphics.setColor(0.24, 0.24, 0.28)
             love.graphics.line(win.x, win.y + titleH, win.x + win.width, win.y + titleH)
 
             -- App Icon & Title on the Left
@@ -159,7 +190,8 @@ function WindowManager.draw()
 
             love.graphics.setFont(WindowManager.font)
             love.graphics.setColor(isFocused and {0.96, 0.96, 0.96} or {0.65, 0.65, 0.65})
-            local titleText = (win.app and win.app.name) or "Application"
+            local titleText = win.instance and win.instance.filename and (win.instance.filename .. " - " .. win.app.name) 
+                           or (win.title or (win.app and win.app.name) or "Application")
             love.graphics.print(titleText, win.x + 30, win.y + 6)
 
             -- Windows 10 Top-Right Controls: [ _ ] [ □ ] [ ✕ ]
@@ -176,7 +208,7 @@ function WindowManager.draw()
             -- Maximize Button
             love.graphics.rectangle("line", maxX + 13, win.y + 10, 10, 10)
 
-            -- Close Button (Standard Windows 10 Red Hover when active/closed)
+            -- Close Button
             love.graphics.line(closeX + 16, win.y + 10, closeX + 26, win.y + 20)
             love.graphics.line(closeX + 26, win.y + 10, closeX + 16, win.y + 20)
 
@@ -193,9 +225,9 @@ function WindowManager.draw()
 
             love.graphics.setScissor()
 
-            -- 1px Flat Windows Border (Accent Blue when focused, subtle grey when inactive)
+            -- 1px Flat Windows Border
             if isFocused then
-                love.graphics.setColor(0.0, 0.47, 0.83, 0.9) -- Windows 10 Accent Blue
+                love.graphics.setColor(0.0, 0.47, 0.83, 0.95) -- Windows Accent Blue
             else
                 love.graphics.setColor(0.24, 0.24, 0.26, 0.7)
             end
@@ -228,12 +260,11 @@ function WindowManager.mousepressed(x, y, button)
                         WindowManager.closeWindow(win)
                         return true
                     end
-                    -- Maximize toggle
+                    -- Maximize
                     if x >= maxX and x < closeX then
-                        -- Optional toggle or ignore
                         return true
                     end
-                    -- Minimize button click
+                    -- Minimize
                     if x >= minX and x < maxX then
                         win.minimized = true
                         return true
@@ -246,7 +277,7 @@ function WindowManager.mousepressed(x, y, button)
                     return true
                 end
 
-                -- Resize handle (Bottom right corner)
+                -- Resize handle
                 if x >= win.x + win.width - 16 and y >= win.y + win.height - 16 then
                     WindowManager.resizingWindow = win
                     WindowManager.resizeOffsetX = win.width - x
@@ -254,7 +285,7 @@ function WindowManager.mousepressed(x, y, button)
                     return true
                 end
 
-                -- Relative coordinate pass-through to app instance
+                -- Relative coordinate pass-through
                 local contentY = win.y + titleH
                 local relX = x - win.x
                 local relY = y - contentY

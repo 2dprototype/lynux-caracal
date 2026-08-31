@@ -1,9 +1,8 @@
 -- src/desktop/taskbar.lua
--- Windows 10 Style Bottom Taskbar & System Tray
+-- Windows 10 Style Bottom Taskbar & System Tray (Strictly narrative mode switching - No manual button)
 
 local PlayerStats = require("src.core.player_stats")
 local TaskManager = require("src.tasks.task_manager")
-local EventBus = require("src.core.event_bus")
 local AudioManager = require("src.core.audio_manager")
 
 local Taskbar = {
@@ -11,7 +10,6 @@ local Taskbar = {
     font = nil,
     smallFont = nil,
     boldFont = nil,
-    storyBtnHover = false,
     startHover = false
 }
 
@@ -22,9 +20,9 @@ local function loadCustomFont(path, size)
 end
 
 function Taskbar.init()
-    Taskbar.font = loadCustomFont("font/x14y24pxHeadUpDaisy.ttf", 18)
-    Taskbar.smallFont = loadCustomFont("font/x14y24pxHeadUpDaisy.ttf", 15)
-    Taskbar.boldFont = loadCustomFont("font/x14y24pxHeadUpDaisy.ttf", 18)
+    Taskbar.font = loadCustomFont("font/Nunito-Regular.ttf", 14)
+    Taskbar.smallFont = loadCustomFont("font/Nunito-Regular.ttf", 12)
+    Taskbar.boldFont = loadCustomFont("font/IBMPlexSans-Bold.ttf", 13) or loadCustomFont("font/Nunito-Regular.ttf", 13)
 end
 
 function Taskbar.drawBottomBar()
@@ -65,11 +63,9 @@ function Taskbar.drawBottomBar()
     love.graphics.rectangle("fill", searchX, searchY, searchW, searchH)
     love.graphics.setFont(Taskbar.smallFont)
     love.graphics.setColor(0.55, 0.55, 0.6)
-    love.graphics.print("Type here to search", searchX + 10, searchY + 4)
+    love.graphics.print("Type here to search", searchX + 10, searchY + 6)
 
     -- Right-Side System Tray
-    local rightX = screenW - 10
-
     -- Clock and Date (Far Right)
     local timeStr = os.date("%H:%M")
     local dateStr = os.date("%m/%d/%Y")
@@ -79,31 +75,11 @@ function Taskbar.drawBottomBar()
     love.graphics.setColor(0.65, 0.68, 0.72)
     love.graphics.print(dateStr, screenW - 65, y + 19)
 
-    -- "Story Mode" Switch Button (Windows Tray Tool Button)
-    local btnW = 105
-    local btnH = 26
-    local btnX = screenW - 180
-    local btnY = y + 6
-
-    if Taskbar.storyBtnHover then
-        love.graphics.setColor(0.0, 0.47, 0.83, 0.9) -- Windows Accent Blue
-        love.graphics.rectangle("fill", btnX, btnY, btnW, btnH, 2, 2)
-        love.graphics.setColor(1, 1, 1)
-    else
-        love.graphics.setColor(0.16, 0.18, 0.22, 0.9)
-        love.graphics.rectangle("fill", btnX, btnY, btnW, btnH, 2, 2)
-        love.graphics.setColor(0.28, 0.3, 0.36)
-        love.graphics.rectangle("line", btnX, btnY, btnW, btnH, 2, 2)
-        love.graphics.setColor(0.85, 0.88, 0.92)
-    end
-    love.graphics.setFont(Taskbar.smallFont)
-    love.graphics.printf("Story Mode", btnX, btnY + 4, btnW, "center")
-
     -- Player Level & XP Indicator (Tray badge)
     local xpProgress = PlayerStats.getLevelProgress()
     local levelText = "Lv." .. tostring(PlayerStats.level) .. " " .. PlayerStats.title
-    local lvlW = 125
-    local lvlX = btnX - lvlW - 10
+    local lvlW = 145
+    local lvlX = screenW - 65 - lvlW - 14
     local lvlY = y + 8
     local lvlH = 22
 
@@ -118,40 +94,18 @@ function Taskbar.drawBottomBar()
 
     love.graphics.setFont(Taskbar.smallFont)
     love.graphics.setColor(0.92, 0.94, 0.98)
-    love.graphics.printf(levelText, lvlX, lvlY + 2, lvlW, "center")
+    love.graphics.printf(levelText, lvlX, lvlY + 3, lvlW, "center")
 
     love.graphics.pop()
 end
 
 function Taskbar.mousepressed(x, y, button)
-    if button ~= 1 then return false end
-    local screenW, screenH = love.graphics.getWidth(), love.graphics.getHeight()
-    local taskbarY = screenH - Taskbar.bottomBarHeight
-
-    if y >= taskbarY then
-        local btnW = 105
-        local btnX = screenW - 180
-        if x >= btnX and x <= btnX + btnW then
-            AudioManager.playSFX("switch")
-            EventBus.emit("game:request_switch_mode", { mode = "story", transition = "fade" })
-            return true
-        end
-        return false
-    end
     return false
 end
 
 function Taskbar.mousemoved(x, y)
     local screenW, screenH = love.graphics.getWidth(), love.graphics.getHeight()
     local taskbarY = screenH - Taskbar.bottomBarHeight
-    local btnW = 105
-    local btnX = screenW - 180
-
-    if y >= taskbarY and x >= btnX and x <= btnX + btnW then
-        Taskbar.storyBtnHover = true
-    else
-        Taskbar.storyBtnHover = false
-    end
 
     if y >= taskbarY and x >= 0 and x <= 44 then
         Taskbar.startHover = true

@@ -27,9 +27,9 @@ local function loadCustomFont(path, size)
 end
 
 function TaskHUD.init()
-    TaskHUD.font = loadCustomFont("font/x14y24pxHeadUpDaisy.ttf", 18)
-    TaskHUD.headerFont = loadCustomFont("font/x14y24pxHeadUpDaisy.ttf", 20)
-    TaskHUD.smallFont = loadCustomFont("font/x14y24pxHeadUpDaisy.ttf", 15)
+    TaskHUD.font = loadCustomFont("font/Nunito-Regular.ttf", 14)
+    TaskHUD.headerFont = loadCustomFont("font/IBMPlexSans-Bold.ttf", 14) or loadCustomFont("font/Nunito-Regular.ttf", 14)
+    TaskHUD.smallFont = loadCustomFont("font/Nunito-Regular.ttf", 12)
     TaskHUD.x = 18
     TaskHUD.y = 35
 end

@@ -22,6 +22,21 @@ function PlayerStats.init()
     PlayerStats.xpForNextLevel = 100
     PlayerStats.title = PlayerStats.levelTitles[1]
     PlayerStats.flags = {}
+
+    EventBus.on("email:read", function(email)
+        if email then
+            PlayerStats.setFlag("email_read:" .. tostring(email.id), true)
+            if email.sender then
+                PlayerStats.setFlag("email_read_sender:" .. email.sender:lower(), true)
+            end
+        end
+    end, "stats_email_read")
+
+    EventBus.on("chat:sent", function(data)
+        if data and data.user then
+            PlayerStats.setFlag("chat_sent:" .. data.user:lower(), true)
+        end
+    end, "stats_chat_sent")
 end
 
 function PlayerStats.addXP(amount)

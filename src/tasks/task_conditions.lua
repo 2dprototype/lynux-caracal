@@ -9,7 +9,6 @@ function TaskConditions.fileExists(targetPath)
         local fs = filesystemModule.getFS()
         if not fs then return false end
 
-        -- Normalize path
         targetPath = targetPath:gsub("^/", "")
         local parts = {}
         for part in targetPath:gmatch("[^/]+") do
@@ -55,6 +54,32 @@ function TaskConditions.fileContentContains(targetPath, searchStr, caseSensitive
                 searchStr = searchStr:lower()
             end
             return content:find(searchStr, 1, true) ~= nil
+        end
+        return false
+    end
+end
+
+-- Checks if an email from a specific sender has been opened/read
+function TaskConditions.emailRead(senderSubstr)
+    local PlayerStats = require("src.core.player_stats")
+    return function()
+        for k, v in pairs(PlayerStats.flags) do
+            if k:find("email_read_sender:") and k:find(senderSubstr:lower(), 1, true) and v == true then
+                return true
+            end
+        end
+        return false
+    end
+end
+
+-- Checks if a chat message was sent to a specific contact
+function TaskConditions.chatSentTo(userSubstr)
+    local PlayerStats = require("src.core.player_stats")
+    return function()
+        for k, v in pairs(PlayerStats.flags) do
+            if k:find("chat_sent:") and k:find(userSubstr:lower(), 1, true) and v == true then
+                return true
+            end
         end
         return false
     end

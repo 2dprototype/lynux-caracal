@@ -237,9 +237,6 @@ function StoryEngine.keypressed(key)
     elseif key == "h" or key == "l" then
         HistoryLog.toggle()
         AudioManager.playSFX("click")
-    elseif key == "tab" then
-        -- Quick mode switch request if player wants to check PC
-        EventBus.emit("game:request_switch_mode", { mode = "desktop", transition = "fade" })
     end
 end
 

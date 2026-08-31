@@ -190,8 +190,8 @@ function TaskManager.drawCelebrationBanner()
     love.graphics.rectangle("fill", bannerX, bannerY, 4, bannerH)
 
     -- Text Content
-    local bannerFont = love.graphics.newFont("font/x14y24pxHeadUpDaisy.ttf", 20) or love.graphics.getFont()
-    local bannerSmallFont = love.graphics.newFont("font/x14y24pxHeadUpDaisy.ttf", 16) or love.graphics.getFont()
+    local bannerFont = love.graphics.newFont("font/IBMPlexSans-Bold.ttf", 15) or love.graphics.newFont(15)
+    local bannerSmallFont = love.graphics.newFont("font/Nunito-Regular.ttf", 12) or love.graphics.newFont(12)
     
     love.graphics.setFont(bannerFont)
     love.graphics.setColor(0.96, 0.98, 1.0, alpha)
@@ -199,7 +199,7 @@ function TaskManager.drawCelebrationBanner()
 
     love.graphics.setFont(bannerSmallFont)
     love.graphics.setColor(0.0, 0.55, 0.95, alpha)
-    love.graphics.print(b.subtext .. "  |  Level " .. tostring(PlayerStats.level) .. " (" .. PlayerStats.title .. ")", bannerX + 16, bannerY + 30)
+    love.graphics.print(b.subtext .. "  |  Level " .. tostring(PlayerStats.level) .. " (" .. PlayerStats.title .. ")", bannerX + 16, bannerY + 28)
 
     love.graphics.pop()
 end

@@ -15,13 +15,23 @@ function EmailApp.new()
     -- Mock Email Data
     self.emails = {
         {
+            id = 101,
+            subject = "Mom's Birthday & Rent Money!!",
+            sender = "Maya (Sister)",
+            email = "maya.brooks@mail.net",
+            time = "01:15 AM",
+            body = "Hey! Are you still up coding at this ungodly hour?\n\nDon't forget Mom's 50th birthday is this weekend! Also, did you transfer your half for the gift and apartment utilities yet? Let me know once you send it!\n\nLove,\nMaya",
+            unread = true,
+            starred = true
+        },
+        {
             id = 1,
             subject = "Welcome to Our Workspace",
-            sender = "Goooole Workspace Team",
-            email = "workspace-noreply@Goooole.com",
+            sender = "Google Workspace Team",
+            email = "workspace-noreply@google.com",
             time = "9:41 AM",
             body = "Welcome to your new inbox!\n\nWe are excited to have you on board. Discover new integrations, customized shortcuts, and smart search queries designed to make your development workflow seamless.",
-            unread = true,
+            unread = false,
             starred = false
         },
         {
@@ -606,6 +616,10 @@ function EmailApp:handleListInteractions(startX, listWidth, padding, isCompact)
                 self.selected = i
                 email.unread = false
                 self.scrollOffset = 0
+                pcall(function()
+                    local EventBus = require("src.core.event_bus")
+                    EventBus.emit("email:read", email)
+                end)
                 
                 -- In compact mode, switch to detail view
                 if isCompact then

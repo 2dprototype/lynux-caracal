@@ -18,8 +18,8 @@ local function loadCustomFont(path, size)
 end
 
 function ChoiceBox.init()
-    ChoiceBox.font = loadCustomFont("font/x14y24pxHeadUpDaisy.ttf", 20)
-    ChoiceBox.promptFont = loadCustomFont("font/x14y24pxHeadUpDaisy.ttf", 22)
+    ChoiceBox.font = loadCustomFont("font/Nunito-Regular.ttf", 15)
+    ChoiceBox.promptFont = loadCustomFont("font/IBMPlexSans-Bold.ttf", 16) or loadCustomFont("font/Nunito-Regular.ttf", 16)
 end
 
 function ChoiceBox.show(prompt, options, callback)

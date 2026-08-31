@@ -39,6 +39,7 @@ function ChatApp.new()
     local self = setmetatable({}, ChatApp)
     
     self.users = {
+        { id = 10, name = "Chloe (Girlfriend)", color = {0.92, 0.42, 0.62}, online = true, messages = { {text="Babe, it's 2 AM... why are you still online? :)", sender="ai", time="02:14", seen=false}, {text="You better not be staying up drinking energy drinks again :p", sender="ai", time="02:15", seen=false} } },
         { id = 1, name = "NexusBot", color = {0.13, 0.59, 0.95}, online = true, messages = { {text="Hello! I'm NexusBot.", sender="ai", time="10:00", seen=true} } },
         { id = 2, name = "Alice", color = {0.96, 0.27, 0.31}, online = true, messages = { {text="Hey there!", sender="ai", time="09:15", seen=true}, {text="Are we still meeting?", sender="ai", time="09:16", seen=false} } },
         { id = 3, name = "Bob", color = {1, 0.61, 0}, online = false, messages = { {text="Send me the files when you can.", sender="ai", time="Yesterday", seen=true} } },
@@ -659,8 +660,9 @@ function ChatApp:sendMessage()
     local user = self:getActiveUser()
     if not user then return end
     
+    local sentText = self.inputText
     table.insert(user.messages, {
-        text = self.inputText,
+        text = sentText,
         sender = "user",
         time = os.date("%H:%M"),
         seen = true
@@ -669,9 +671,14 @@ function ChatApp:sendMessage()
     self.inputText = ""
     self:scrollToBottom()
     
+    pcall(function()
+        local EventBus = require("src.core.event_bus")
+        EventBus.emit("chat:sent", { user = user.name, userId = user.id, text = sentText })
+    end)
+    
     if not self.isTyping then
         self.isTyping = true
-        self.typingTimer = math.random() * 2 + 1
+        self.typingTimer = math.random() * 1.5 + 1.0
         self.typingUser = user
     end
 end

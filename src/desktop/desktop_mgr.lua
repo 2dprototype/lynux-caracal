@@ -1,5 +1,5 @@
 -- src/desktop/desktop_mgr.lua
--- Windows 10 Style Desktop Environment with Start Menu and Taskbar integration
+-- Windows 10 Style Desktop Environment with Multi-Process Management & Standard Fonts
 
 local json = require("lib/json")
 local filesystemModule = require("src.core.filesystem")
@@ -33,8 +33,7 @@ local DesktopManager = {
     shortcutIcon = nil,
     font = nil,
     boldFont = nil,
-    smallFont = nil,
-    hoveredApp = nil
+    smallFont = nil
 }
 
 local function loadCustomFont(path, size)
@@ -49,9 +48,9 @@ function DesktopManager.init()
     TaskHUD.init()
     Notifications.init()
 
-    DesktopManager.font = loadCustomFont("font/x14y24pxHeadUpDaisy.ttf", 18)
-    DesktopManager.boldFont = loadCustomFont("font/x14y24pxHeadUpDaisy.ttf", 20)
-    DesktopManager.smallFont = loadCustomFont("font/x14y24pxHeadUpDaisy.ttf", 15)
+    DesktopManager.font = loadCustomFont("font/Nunito-Regular.ttf", 14)
+    DesktopManager.boldFont = loadCustomFont("font/IBMPlexSans-Bold.ttf", 15) or loadCustomFont("font/Nunito-Regular.ttf", 15)
+    DesktopManager.smallFont = loadCustomFont("font/Nunito-Regular.ttf", 12)
 
     pcall(function()
         DesktopManager.folderIcon = love.graphics.newImage("assets/folder.png")
@@ -77,16 +76,16 @@ function DesktopManager.init()
     end
 
     DesktopManager.apps = {
-        { name = "TextEditor", module = TextEditor, instance = nil, icon = loadImg("assets/file.png") },
-        { name = "Terminal", module = TerminalApp, instance = nil, icon = loadImg("assets/terminal.png") },
-        { name = "Files", module = FilesApp, instance = nil, icon = loadImg("assets/files.png") },
-        { name = "Chat", module = ChatApp, instance = nil, icon = loadImg("assets/chat.png") },
-        { name = "Email", module = EmailApp, instance = nil, icon = loadImg("assets/email.png") },
-        { name = "Browser", module = BrowserApp, instance = nil, icon = loadImg("assets/browser.png") },
-        { name = "ImageViewer", module = ImageViewer, instance = nil, icon = loadImg("assets/image.png") },
-        { name = "ObjViewer", module = ObjViewer, instance = nil, icon = loadImg("assets/cube.png") },
-        { name = "Tessarect", module = TessarectApp, instance = nil, icon = loadImg("assets/box.png") },
-        { name = "Settings", module = SettingsApp, instance = nil, icon = loadImg("assets/settings.png") },
+        { name = "TextEditor", module = TextEditor, icon = loadImg("assets/file.png") },
+        { name = "Terminal", module = TerminalApp, icon = loadImg("assets/terminal.png") },
+        { name = "Files", module = FilesApp, icon = loadImg("assets/files.png") },
+        { name = "Chat", module = ChatApp, icon = loadImg("assets/chat.png") },
+        { name = "Email", module = EmailApp, icon = loadImg("assets/email.png") },
+        { name = "Browser", module = BrowserApp, icon = loadImg("assets/browser.png") },
+        { name = "ImageViewer", module = ImageViewer, icon = loadImg("assets/image.png") },
+        { name = "ObjViewer", module = ObjViewer, icon = loadImg("assets/cube.png") },
+        { name = "Tessarect", module = TessarectApp, icon = loadImg("assets/box.png") },
+        { name = "Settings", module = SettingsApp, icon = loadImg("assets/settings.png") },
     }
 
     _G.openFileDirectly = function(node)
@@ -107,9 +106,9 @@ end
 
 function DesktopManager.updateDockLayout()
     local screenH = love.graphics.getHeight()
-    local itemW = 42
+    local itemW = 44
     local itemH = 34
-    local startX = 196 -- Offset past Search box
+    local startX = 196
     local dockY = screenH - Taskbar.bottomBarHeight + (Taskbar.bottomBarHeight - itemH) / 2
 
     for _, app in ipairs(DesktopManager.apps) do
@@ -117,19 +116,19 @@ function DesktopManager.updateDockLayout()
         app.y = dockY
         app.width = itemW
         app.height = itemH
-        startX = startX + itemW + 4
+        startX = startX + itemW + 3
     end
 end
 
-function DesktopManager.openAppByName(appName)
+function DesktopManager.openAppByName(appName, forceNew)
     for _, app in ipairs(DesktopManager.apps) do
         if app.name == appName then
-            WindowManager.toggleApp(app)
-            return app
+            return WindowManager.toggleApp(app, forceNew)
         end
     end
 end
 
+-- Opens a text file in a dedicated process instance or focuses existing instance
 function DesktopManager.openTextFile(node)
     local editorApp = nil
     for _, app in ipairs(DesktopManager.apps) do
@@ -140,27 +139,27 @@ function DesktopManager.openTextFile(node)
     end
     if not editorApp then return end
 
+    -- Check if an open window is already viewing this exact file
     local existingWin = nil
-    for _, win in ipairs(WindowManager.openApps) do
-        if win.app == editorApp then
-            existingWin = win
-            break
+    if node then
+        for _, win in ipairs(WindowManager.openApps) do
+            if win.app == editorApp and win.instance and win.instance.filename == node.name then
+                existingWin = win
+                break
+            end
         end
     end
 
     if existingWin then
         existingWin.minimized = false
         WindowManager.setFocus(existingWin)
-        if node then
-            existingWin.instance.filename = node.name
-            existingWin.instance.fileNode = node
-            if node.content then
-                existingWin.instance:loadContent(node.content)
-            end
-        end
     else
-        editorApp.instance = editorApp.module.new(node and node.name or "untitled.txt", node)
-        WindowManager.openWindow(editorApp)
+        -- Launch a new process instance for this file!
+        local newInstance = editorApp.module.new(node and node.name or "untitled.txt", node)
+        if node and node.content then
+            newInstance:loadContent(node.content)
+        end
+        WindowManager.openWindow(editorApp, 560, 350, newInstance, node and (node.name .. " - TextEditor") or "TextEditor")
     end
     AudioManager.playSFX("click")
 end
@@ -174,13 +173,11 @@ function DesktopManager.openImageFile(node)
         end
     end
     if imgApp then
-        if not imgApp.instance then
-            imgApp.instance = imgApp.module.new()
+        local newInstance = imgApp.module.new()
+        if newInstance.loadImage then
+            newInstance:loadImage(node)
         end
-        WindowManager.openWindow(imgApp)
-        if imgApp.instance.loadImage then
-            imgApp.instance:loadImage(node)
-        end
+        WindowManager.openWindow(imgApp, 540, 340, newInstance, node and (node.name .. " - ImageViewer") or "ImageViewer")
     end
 end
 
@@ -193,10 +190,8 @@ function DesktopManager.openObjFile(node)
         end
     end
     if objApp then
-        if not objApp.instance then
-            objApp.instance = objApp.module.new()
-        end
-        WindowManager.openWindow(objApp)
+        local newInstance = objApp.module.new()
+        WindowManager.openWindow(objApp, 540, 340, newInstance, node and (node.name .. " - 3D Viewer") or "3D Viewer")
     end
 end
 
@@ -207,7 +202,7 @@ function DesktopManager.drawWallpaper()
     love.graphics.setColor(0.09, 0.12, 0.16)
     love.graphics.rectangle("fill", 0, 0, screenW, screenH)
 
-    -- Subtle Windows 10 Light Angle Accent
+    -- Subtle Windows Angle Accent
     love.graphics.setColor(0.0, 0.47, 0.83, 0.08)
     love.graphics.polygon("fill", screenW * 0.4, 0, screenW, 0, screenW, screenH * 0.7, screenW * 0.7, screenH)
 end
@@ -215,8 +210,8 @@ end
 function DesktopManager.drawDesktopIcons()
     DesktopManager.desktopHomeIcons = {}
     local iconSize = 36
-    local spacingX, spacingY = 76, 74
-    local startX, startY = 275, 45 -- Offset past Task HUD sticky note
+    local spacingX, spacingY = 78, 74
+    local startX, startY = 275, 45
     local cols = 5
     local index = 0
 
@@ -236,7 +231,7 @@ function DesktopManager.drawDesktopIcons()
                 love.graphics.rectangle("fill", x, y, iconSize, iconSize, 2, 2)
             end
 
-            -- Label (Clean typography, no emojis)
+            -- Label
             love.graphics.setFont(DesktopManager.smallFont or DesktopManager.font)
             love.graphics.setColor(0.96, 0.96, 0.98)
             love.graphics.printf(name, x - 16, y + iconSize + 3, iconSize + 32, "center")
@@ -257,14 +252,13 @@ function DesktopManager.drawTaskbarApps()
     love.graphics.push()
 
     for _, app in ipairs(DesktopManager.apps) do
-        local isRunning = false
+        local instances = WindowManager.getAppInstances(app)
+        local isRunning = #instances > 0
         local isFocused = false
-        for _, win in ipairs(WindowManager.openApps) do
-            if win.app == app then
-                isRunning = true
-                if win == WindowManager.focusedWindow and not win.minimized then
-                    isFocused = true
-                end
+
+        for _, win in ipairs(instances) do
+            if win == WindowManager.focusedWindow and not win.minimized then
+                isFocused = true
                 break
             end
         end
@@ -287,6 +281,13 @@ function DesktopManager.drawTaskbarApps()
             love.graphics.rectangle("fill", app.x + (app.width - 18) / 2, dockY + (dockH - 18) / 2, 18, 18, 2, 2)
         end
 
+        -- Multi-process instance counter badge (if > 1 process running)
+        if #instances > 1 then
+            love.graphics.setFont(DesktopManager.smallFont)
+            love.graphics.setColor(0.0, 0.65, 1.0)
+            love.graphics.print(tostring(#instances), app.x + app.width - 10, dockY + 4)
+        end
+
         -- Windows 10 Active Underline Indicator Bar
         if isRunning then
             if isFocused then
@@ -306,7 +307,7 @@ function DesktopManager.drawStartMenu()
     if not DesktopManager.startMenuOpen then return end
 
     local screenH = love.graphics.getHeight()
-    local menuW, menuH = 220, 280
+    local menuW, menuH = 220, 290
     local menuX, menuY = 0, screenH - Taskbar.bottomBarHeight - menuH
 
     love.graphics.push()
@@ -339,7 +340,7 @@ function DesktopManager.drawStartMenu()
         love.graphics.setFont(DesktopManager.font)
         love.graphics.setColor(0.9, 0.92, 0.96)
         love.graphics.print(app.name, menuX + 40, itemY)
-        itemY = itemY + 22
+        itemY = itemY + 23
     end
 
     love.graphics.pop()
@@ -363,26 +364,24 @@ function DesktopManager.draw()
 end
 
 function DesktopManager.mousepressed(x, y, button)
-    -- 1. Toast Notifications
     if Notifications.mousepressed(x, y, button) then return end
-
-    -- 2. Taskbar System Tray Controls
     if Taskbar.mousepressed(x, y, button) then return end
 
-    -- 3. Start Menu handling
+    -- Start Menu handling
     if DesktopManager.startMenuOpen then
         local screenH = love.graphics.getHeight()
-        local menuW, menuH = 220, 280
+        local menuW, menuH = 220, 290
         local menuX, menuY = 0, screenH - Taskbar.bottomBarHeight - menuH
         if x >= menuX and x <= menuX + menuW and y >= menuY and y <= menuY + menuH then
             local itemY = menuY + 44
             for _, app in ipairs(DesktopManager.apps) do
-                if y >= itemY and y <= itemY + 22 then
-                    WindowManager.toggleApp(app)
+                if y >= itemY and y <= itemY + 23 then
+                    -- Right click or shift opens new instance, left click toggles
+                    WindowManager.toggleApp(app, button == 2)
                     DesktopManager.startMenuOpen = false
                     return
                 end
-                itemY = itemY + 22
+                itemY = itemY + 23
             end
             return
         else
@@ -390,7 +389,7 @@ function DesktopManager.mousepressed(x, y, button)
         end
     end
 
-    -- 4. Bottom Taskbar Start Button & App Icons
+    -- Bottom Taskbar Start Button & App Icons
     local screenH = love.graphics.getHeight()
     local dockH = Taskbar.bottomBarHeight
     local dockY = screenH - dockH
@@ -403,23 +402,23 @@ function DesktopManager.mousepressed(x, y, button)
             return
         end
 
-        -- Taskbar App Launcher Icons
+        -- Taskbar App Launcher Icons (Left click toggles, Right click forces new instance)
         for _, app in ipairs(DesktopManager.apps) do
             if x >= app.x and x <= app.x + app.width then
-                WindowManager.toggleApp(app)
+                WindowManager.toggleApp(app, button == 2)
                 return
             end
         end
         return
     end
 
-    -- 5. Windows
+    -- Windows
     if WindowManager.mousepressed(x, y, button) then return end
 
-    -- 6. Task HUD
+    -- Task HUD
     if TaskHUD.mousepressed(x, y, button) then return end
 
-    -- 7. Desktop File/Folder Icons
+    -- Desktop File/Folder Icons
     for _, iconInfo in ipairs(DesktopManager.desktopHomeIcons) do
         if x >= iconInfo.x and x <= iconInfo.x + iconInfo.width and y >= iconInfo.y and y <= iconInfo.y + iconInfo.height + 18 then
             if button == 1 then
@@ -458,10 +457,7 @@ function DesktopManager.textinput(text)
 end
 
 function DesktopManager.keypressed(key)
-    if key == "tab" then
-        EventBus.emit("game:request_switch_mode", { mode = "story", transition = "fade" })
-        return
-    end
+    -- Manual Tab mode switching disabled! (Controlled purely by narrative)
     WindowManager.keypressed(key)
 end
 
