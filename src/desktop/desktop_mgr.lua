@@ -35,7 +35,7 @@ local DesktopManager = {
     font = nil,
     boldFont = nil,
     smallFont = nil,
-    taskbarIcons = {} -- store calculated positions
+    taskbarIcons = {}
 }
 
 local function loadCustomFont(path, size)
@@ -114,30 +114,24 @@ function DesktopManager.updateDockLayout()
 
     -- Calculate available space for app icons (between Start button and system tray)
     local startBtnWidth = 44
-    local systemTrayWidth = 225 -- space for clock + level bar + margins
+    local systemTrayWidth = 225
     local availableWidth = screenW - startBtnWidth - systemTrayWidth - 20
     
-    -- Determine icon size based on available space
     local numApps = #DesktopManager.apps
     local minItemWidth = 40
     local maxItemWidth = 52
     local spacing = 4
     
-    -- Calculate how many icons can fit with reasonable size
     local idealItemWidth = math.min(maxItemWidth, math.max(minItemWidth, (availableWidth - (numApps - 1) * spacing) / numApps))
     local itemW = math.floor(idealItemWidth)
-    local itemH = math.floor(itemW * 0.8) -- slightly shorter than wide
+    local itemH = math.floor(itemW * 0.8)
     
-    -- Start position after Start button
     local startX = startBtnWidth + 8
-    
-    -- Center the icons in the available space
     local totalWidth = numApps * itemW + (numApps - 1) * spacing
     if totalWidth < availableWidth then
         startX = startX + (availableWidth - totalWidth) / 2
     end
     
-    -- Check if we need to reduce icon size to fit
     local maxIterations = 3
     while totalWidth > availableWidth and itemW > 28 and maxIterations > 0 do
         itemW = itemW - 2
@@ -146,15 +140,12 @@ function DesktopManager.updateDockLayout()
         maxIterations = maxIterations - 1
     end
     
-    -- If still too many, hide some icons (show scroll indicator later)
     local visibleApps = numApps
     if totalWidth > availableWidth then
-        -- Calculate max visible
         local maxVisible = math.floor((availableWidth + spacing) / (minItemWidth + spacing))
         visibleApps = math.max(3, maxVisible)
     end
 
-    -- Position each app icon
     local currentX = startX
     for i, app in ipairs(DesktopManager.apps) do
         if i <= visibleApps then
@@ -169,7 +160,6 @@ function DesktopManager.updateDockLayout()
         end
     end
     
-    -- Store for later use
     DesktopManager.taskbarIcons = {
         startX = startX,
         itemW = itemW,
@@ -188,7 +178,6 @@ function DesktopManager.openAppByName(appName, forceNew)
     end
 end
 
--- Opens a text file in a dedicated process instance or focuses existing instance
 function DesktopManager.openTextFile(node)
     local editorApp = nil
     for _, app in ipairs(DesktopManager.apps) do
@@ -199,7 +188,6 @@ function DesktopManager.openTextFile(node)
     end
     if not editorApp then return end
 
-    -- Check if an open window is already viewing this exact file
     local existingWin = nil
     if node then
         for _, win in ipairs(WindowManager.openApps) do
@@ -214,7 +202,6 @@ function DesktopManager.openTextFile(node)
         existingWin.minimized = false
         WindowManager.setFocus(existingWin)
     else
-        -- Launch a new process instance for this file!
         local newInstance = editorApp.module.new(node and node.name or "untitled.txt", node)
         if node and node.content then
             newInstance:loadContent(node.content)
@@ -258,31 +245,40 @@ end
 function DesktopManager.drawWallpaper()
     local screenW, screenH = love.graphics.getWidth(), love.graphics.getHeight()
     
-    -- Clean white/light gray gradient (modern minimal)
-    love.graphics.setColor(0.96, 0.97, 0.98)  -- very light gray
+    -- Modern deep blue (Windows 11 style)
+    love.graphics.setColor(0.10, 0.15, 0.25)  -- #192A3E
     love.graphics.rectangle("fill", 0, 0, screenW, screenH)
+    
     -- Subtle top accent line
-    love.graphics.setColor(0.9, 0.92, 0.95)
+    love.graphics.setColor(0.2, 0.35, 0.55, 0.4)
     love.graphics.rectangle("fill", 0, 0, screenW, 2)
 end
-
+-- ============================================================
+--  FIXED: Desktop icons now left‑aligned and dynamically gridded
+-- ============================================================
 function DesktopManager.drawDesktopIcons()
     DesktopManager.desktopHomeIcons = {}
     local iconSize = 40
-    local spacingX, spacingY = 84, 80
-    local startX, startY = 275, 45
-    local cols = 5
-    local index = 0
+    local spacingX = 84
+    local spacingY = 80
+    local leftMargin = 20
+    local topMargin = 40
+    local rightMargin = 20
+    local screenW, screenH = love.graphics.getWidth(), love.graphics.getHeight()
 
+    local availWidth = screenW - leftMargin - rightMargin
+    local cols = math.max(1, math.floor((availWidth + spacingX) / (iconSize + spacingX)))
+
+    local index = 0
     if DesktopManager.desktopHome and DesktopManager.desktopHome.children then
         for name, node in pairs(DesktopManager.desktopHome.children) do
             local col = index % cols
             local row = math.floor(index / cols)
-            local x = startX + col * spacingX
-            local y = startY + row * spacingY
+            local x = leftMargin + col * spacingX
+            local y = topMargin + row * spacingY
 
-            -- Icon with subtle shadow
-            love.graphics.setColor(0, 0, 0, 0.08)
+            -- Icon background with subtle shadow
+            love.graphics.setColor(0, 0, 0, 0.25)
             love.graphics.rectangle("fill", x + 2, y + 2, iconSize, iconSize, 4)
             love.graphics.setColor(1, 1, 1, 0.95)
             love.graphics.rectangle("fill", x, y, iconSize, iconSize, 4)
@@ -296,13 +292,32 @@ function DesktopManager.drawDesktopIcons()
                 love.graphics.rectangle("fill", x, y, iconSize, iconSize, 4)
             end
 
-            -- Label
+            -- Label with semi-transparent background for readability
             love.graphics.setFont(DesktopManager.smallFont or DesktopManager.font)
-            love.graphics.setColor(0.12, 0.14, 0.18)
+            
+            -- Measure text for background
+            local labelWidth = love.graphics.getFont():getWidth(name)
+            local labelHeight = love.graphics.getFont():getHeight()
+            local labelX = x + (iconSize - labelWidth) / 2 - 4
+            local labelY = y + iconSize + 4
+            
+            -- Subtle dark background behind text
+            love.graphics.setColor(0, 0, 0, 0.35)
+            love.graphics.rectangle("fill", labelX - 2, labelY - 1, labelWidth + 4, labelHeight + 2, 2, 2)
+            
+            -- Text shadow
+            love.graphics.setColor(0, 0, 0, 0.6)
+            love.graphics.printf(name, x - 16 + 1, y + iconSize + 4 + 1, iconSize + 32, "center")
+            
+            -- Main white text
+            love.graphics.setColor(1, 1, 1, 0.98)
             love.graphics.printf(name, x - 16, y + iconSize + 4, iconSize + 32, "center")
 
             table.insert(DesktopManager.desktopHomeIcons, {
-                x = x, y = y, width = iconSize, height = iconSize, node = node, name = name
+                x = x, y = y,
+                width = iconSize, height = iconSize,
+                node = node,
+                name = name
             })
             index = index + 1
         end
@@ -317,7 +332,7 @@ function DesktopManager.drawTaskbarApps()
     love.graphics.push()
 
     for _, app in ipairs(DesktopManager.apps) do
-        if not app.visible then break end -- Skip hidden icons
+        if not app.visible then break end
         
         local instances = WindowManager.getAppInstances(app)
         local isRunning = #instances > 0
@@ -330,7 +345,6 @@ function DesktopManager.drawTaskbarApps()
             end
         end
 
-        -- Light theme taskbar button background
         if isFocused then
             love.graphics.setColor(0.85, 0.9, 0.95, 0.7)
             love.graphics.rectangle("fill", app.x, dockY + 2, app.width, dockH - 4, 2, 2)
@@ -339,7 +353,6 @@ function DesktopManager.drawTaskbarApps()
             love.graphics.rectangle("fill", app.x, dockY + 2, app.width, dockH - 4, 2, 2)
         end
 
-        -- App Icon (proportional to button size)
         local iconSize = math.min(app.width - 8, app.height - 8, 24)
         if app.icon then
             love.graphics.setColor(1, 1, 1, isRunning and 1.0 or 0.7)
@@ -350,17 +363,15 @@ function DesktopManager.drawTaskbarApps()
             love.graphics.rectangle("fill", app.x + (app.width - 18) / 2, app.y + (app.height - 18) / 2, 18, 18, 2, 2)
         end
 
-        -- Multi-process instance counter badge
         if #instances > 1 then
             love.graphics.setFont(DesktopManager.smallFont)
             love.graphics.setColor(0.0, 0.65, 1.0)
             love.graphics.print(tostring(#instances), app.x + app.width - 14, dockY + 4)
         end
 
-        -- Active underline indicator
         if isRunning then
             if isFocused then
-                love.graphics.setColor(0.0, 0.47, 0.83) -- Accent Blue
+                love.graphics.setColor(0.0, 0.47, 0.83)
                 love.graphics.rectangle("fill", app.x + 6, dockY + dockH - 3, app.width - 12, 2)
             else
                 love.graphics.setColor(0.5, 0.55, 0.6)
@@ -369,7 +380,6 @@ function DesktopManager.drawTaskbarApps()
         end
     end
     
-    -- Show "more apps" indicator if some are hidden
     if DesktopManager.taskbarIcons and DesktopManager.taskbarIcons.visibleApps < DesktopManager.taskbarIcons.totalApps then
         local lastApp = DesktopManager.apps[DesktopManager.taskbarIcons.visibleApps]
         if lastApp then
@@ -391,25 +401,19 @@ function DesktopManager.drawStartMenu()
     local menuX, menuY = 0, screenH - Taskbar.bottomBarHeight - menuH
 
     love.graphics.push()
-
-    -- Drop shadow
     love.graphics.setColor(0, 0, 0, 0.15)
     love.graphics.rectangle("fill", menuX + 4, menuY + 4, menuW, menuH)
-
-    -- White background with subtle border
     love.graphics.setColor(1, 1, 1, 0.98)
     love.graphics.rectangle("fill", menuX, menuY, menuW, menuH)
     love.graphics.setColor(0.85, 0.88, 0.92)
     love.graphics.rectangle("line", menuX, menuY, menuW, menuH)
 
-    -- Header
     love.graphics.setColor(0.1, 0.12, 0.16)
     love.graphics.setFont(DesktopManager.boldFont or DesktopManager.font)
     love.graphics.print("Applications", menuX + 18, menuY + 14)
     love.graphics.setColor(0.85, 0.88, 0.92)
     love.graphics.line(menuX + 14, menuY + 38, menuX + menuW - 14, menuY + 38)
 
-    -- List apps
     local itemY = menuY + 46
     for _, app in ipairs(DesktopManager.apps) do
         if app.icon then
@@ -446,7 +450,6 @@ function DesktopManager.mousepressed(x, y, button)
     if Notifications.mousepressed(x, y, button) then return end
     if Taskbar.mousepressed(x, y, button) then return end
 
-    -- Start Menu handling
     if DesktopManager.startMenuOpen then
         local screenH = love.graphics.getHeight()
         local menuW, menuH = 240, 300
@@ -467,20 +470,16 @@ function DesktopManager.mousepressed(x, y, button)
         end
     end
 
-    -- Bottom Taskbar Start Button & App Icons
     local screenH = love.graphics.getHeight()
     local dockH = Taskbar.bottomBarHeight
     local dockY = screenH - dockH
 
     if y >= dockY then
-        -- Windows Start Button
         if x >= 0 and x <= 44 then
             DesktopManager.startMenuOpen = not DesktopManager.startMenuOpen
             AudioManager.playSFX("click")
             return
         end
-
-        -- Taskbar App Launcher Icons (only visible ones)
         for _, app in ipairs(DesktopManager.apps) do
             if app.visible and x >= app.x and x <= app.x + app.width then
                 WindowManager.toggleApp(app, button == 2)
@@ -490,13 +489,10 @@ function DesktopManager.mousepressed(x, y, button)
         return
     end
 
-    -- Windows
     if WindowManager.mousepressed(x, y, button) then return end
-
-    -- Task HUD
     if TaskHUD.mousepressed(x, y, button) then return end
 
-    -- Desktop File/Folder Icons
+    -- Desktop icons hit detection
     for _, iconInfo in ipairs(DesktopManager.desktopHomeIcons) do
         if x >= iconInfo.x and x <= iconInfo.x + iconInfo.width and y >= iconInfo.y and y <= iconInfo.y + iconInfo.height + 20 then
             if button == 1 then
@@ -540,7 +536,8 @@ end
 
 function DesktopManager.resize(w, h)
     DesktopManager.updateDockLayout()
-    TaskHUD.resize() 
+    TaskHUD.resize()
+    -- Desktop icon positions are recalculated on the next draw, nothing more needed.
 end
 
 return DesktopManager
