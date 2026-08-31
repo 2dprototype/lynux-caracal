@@ -179,6 +179,116 @@ function SceneView.draw()
         love.graphics.setColor(0.12, 0.6, 0.3) -- Terminal green screen
         love.graphics.rectangle("fill", w - 176, tableY + 9, 72, 42)
 
+    elseif SceneView.currentScene == "commute_morning" then
+        -- Morning Commute Street with Blue Sky & Morning Sunlight
+        love.graphics.setColor(0.55, 0.78, 0.96) -- Morning clear blue sky
+        love.graphics.rectangle("fill", 0, 0, w, h)
+
+        -- Distant Morning Clouds & City Skyline
+        love.graphics.setColor(1, 1, 1, 0.6)
+        love.graphics.circle("fill", 80, 50, 25)
+        love.graphics.circle("fill", 110, 55, 20)
+        love.graphics.circle("fill", w - 120, 60, 30)
+
+        -- Distant School Roofs & Trees (Ginkgo trees with yellow-gold autumn leaves)
+        local groundY = h * 0.6
+        love.graphics.setColor(0.92, 0.75, 0.28) -- Golden yellow ginkgo canopy
+        love.graphics.circle("fill", 140, groundY - 20, 45)
+        love.graphics.circle("fill", 180, groundY - 30, 40)
+        love.graphics.circle("fill", w - 100, groundY - 25, 50)
+
+        -- Suburban Road & Sidewalk
+        love.graphics.setColor(0.52, 0.54, 0.58) -- Asphalt road
+        love.graphics.rectangle("fill", 0, groundY, w, h - groundY)
+        love.graphics.setColor(0.78, 0.78, 0.8) -- Concrete curb
+        love.graphics.rectangle("fill", 0, groundY - 12, w, 12)
+
+        -- Utility Pole & Wires (Classic anime commute aesthetic)
+        love.graphics.setColor(0.35, 0.36, 0.38)
+        love.graphics.rectangle("fill", 50, 10, 8, groundY - 10)
+        love.graphics.rectangle("fill", 35, 30, 38, 4)
+        love.graphics.setColor(0.2, 0.2, 0.2, 0.6)
+        love.graphics.line(0, 35, w, 45)
+        love.graphics.line(0, 40, w, 52)
+
+    elseif SceneView.currentScene == "hallway_day" then
+        -- High School Corridor
+        love.graphics.setColor(0.9, 0.88, 0.84) -- Cream walls
+        love.graphics.rectangle("fill", 0, 0, w, h)
+
+        -- Large windows along left side
+        local winY = 30
+        local winH = h * 0.5
+        for i = 1, 3 do
+            local winX = 30 + (i - 1) * 120
+            love.graphics.setColor(0.55, 0.8, 0.98) -- Sky through window
+            love.graphics.rectangle("fill", winX, winY, 100, winH)
+            love.graphics.setColor(0.8, 0.8, 0.85)
+            love.graphics.setLineWidth(2)
+            love.graphics.rectangle("line", winX, winY, 100, winH)
+            love.graphics.line(winX + 50, winY, winX + 50, winY + winH)
+        end
+
+        -- Classroom Wooden Sliding Doors on right
+        love.graphics.setColor(0.75, 0.58, 0.42)
+        love.graphics.rectangle("fill", w - 160, 40, 120, h * 0.55, 2, 2)
+        love.graphics.setColor(0.55, 0.38, 0.24)
+        love.graphics.rectangle("line", w - 160, 40, 120, h * 0.55, 2, 2)
+        -- Door window glass
+        love.graphics.setColor(0.85, 0.92, 0.98, 0.8)
+        love.graphics.rectangle("fill", w - 145, 60, 90, 60, 2, 2)
+
+        -- Polished Linoleum Floor
+        local floorY = h * 0.6
+        love.graphics.setColor(0.78, 0.68, 0.54)
+        love.graphics.rectangle("fill", 0, floorY, w, h - floorY)
+
+    elseif SceneView.currentScene == "cat_cafe" then
+        -- Warm Cozy Meow Latte Cat Cafe
+        love.graphics.setColor(0.96, 0.92, 0.86) -- Warm peach/cream interior
+        love.graphics.rectangle("fill", 0, 0, w, h)
+
+        -- Large Cafe Bay Window overlooking sunlit garden
+        local winX = 40
+        local winY = 20
+        local winW = 180
+        local winH = h * 0.52
+        love.graphics.setColor(0.65, 0.88, 0.95)
+        love.graphics.rectangle("fill", winX, winY, winW, winH, 4, 4)
+        love.graphics.setColor(0.85, 0.72, 0.55)
+        love.graphics.setLineWidth(3)
+        love.graphics.rectangle("line", winX, winY, winW, winH, 4, 4)
+
+        -- Cat Tree / Scratching Post in corner
+        love.graphics.setColor(0.82, 0.72, 0.58) -- Sisal rope post
+        love.graphics.rectangle("fill", winX + winW + 30, 40, 16, h * 0.5)
+        -- Platforms
+        love.graphics.setColor(0.94, 0.78, 0.65)
+        love.graphics.rectangle("fill", winX + winW + 10, 70, 56, 10, 4, 4)
+        love.graphics.rectangle("fill", winX + winW + 15, 120, 50, 10, 4, 4)
+
+        -- Cat Silhouette resting on upper perch
+        love.graphics.setColor(0.25, 0.25, 0.28) -- Black cat Luna
+        love.graphics.circle("fill", winX + winW + 38, 62, 7)
+        love.graphics.ellipse("fill", winX + winW + 46, 65, 10, 6)
+
+        -- Cafe Wooden Table & Soft Cushion Seating
+        local floorY = h * 0.58
+        love.graphics.setColor(0.74, 0.62, 0.48) -- Natural oak floor
+        love.graphics.rectangle("fill", 0, floorY, w, h - floorY)
+
+        local tableY = h * 0.65
+        love.graphics.setColor(0.58, 0.42, 0.3) -- Round cafe table
+        love.graphics.rectangle("fill", w - 240, tableY, 200, h - tableY, 6, 6)
+        
+        -- Strawberry Parfait & Milk Tea cups on table
+        love.graphics.setColor(0.95, 0.45, 0.55) -- Parfait glass
+        love.graphics.rectangle("fill", w - 180, tableY - 24, 16, 24, 2, 2)
+        love.graphics.setColor(1, 1, 1) -- Whipped cream & cat paw marshmallow
+        love.graphics.circle("fill", w - 172, tableY - 26, 8)
+        love.graphics.setColor(0.92, 0.45, 0.55)
+        love.graphics.circle("fill", w - 172, tableY - 26, 3)
+
     elseif SceneView.currentScene == "server_room" then
         love.graphics.setColor(0.08, 0.09, 0.12)
         love.graphics.rectangle("fill", 0, 0, w, h)

@@ -52,6 +52,13 @@
                                             "created": 1577836800,
                                             "modified": 1608912000
                                         }
+                                        "final_dual_issue_master.txt": {
+                                            "content": "========================================================\n       KAMIYAMA HIGH PRESS - SPECIAL DUAL EDITION\n                      ISSUE #42 (MASTER PROOF)\n========================================================\n[FRONT COVER FEATURE: THE FELINE OASIS]\nTITLE: Warm Paws and Sweet Whispers at 'Meow Latte'\nAUTHORS: Suzumia (Vice President) & Aki (Lead Editor)\n\nLocated just three minutes from Kamiyama Station South Exit, 'Meow Latte' has quickly become the favorite hideaway for students seeking tranquility among purring companions. Resident stars Mochi, Chobi, and Luna welcome all guests with playful affection. \n\n*SPECIAL OFFER*: Show your Kamiyama High Student ID for 10% off all parfaits and hot drinks!\n\n--------------------------------------------------------\n[BACK COVER FEATURE: THE INVESTIGATIVE SCOOP]\nTITLE: The Ghost Repeater: Echoes in the 3rd Floor Conduits\nAUTHORS: Nagahashi (President), Aki & Hoshida (Special Contributor)\n\nRecent network anomalies across campus have been traced to the decommissioned 3rd-floor server array. Further traceroute analysis confirms signals routing directly through node 192.168.1.254 in the basement substation.\n\nVERIFIED SECURITY TOKEN: [SHADOW-CAT-09]\nSTATUS: APPROVED FOR PRINT BY STUDENT COUNCIL AUDIT",
+                                            "type": "file",
+                                            "name": "final_dual_issue_master.txt",
+                                            "created": 1577836800,
+                                            "modified": 1608912000
+                                        }
                                     },
                                     "type": "directory",
                                     "name": "newspaper",
@@ -59,14 +66,14 @@
                                     "modified": 1608912000
                                 },
                                 "aki_journal.txt": {
-                                    "content": "[October 14]\nAnother chaotic editorial meeting today. Nagahashi wanted to turn our club into a tabloid scandal sheet, but Suzumia fought hard for her cat cafe idea. When she talks about cats, her eyes light up completely. It's really cute.\n\nWe agreed on a dual cover. Now the pressure is on me to assemble the layout and make sure both sides look amazing.\n\nHoshida handed me a network dump earlier... he pretends to be a lazy slacker, but the code he writes is frighteningly advanced.",
+                                    "content": "[October 14]\nAnother chaotic editorial meeting today. Nagahashi wanted to turn our club into a tabloid scandal sheet, but Suzumia fought hard for her cat cafe idea. When she talks about cats, her eyes light up completely. It's really cute.\n\nWe agreed on a dual cover. Now the pressure is on me to assemble the layout and make sure both sides look amazing.\n\nHoshida handed me a network dump earlier... he pretends to be a lazy slacker, but the code he writes is frighteningly advanced.\n\n[October 15 - Morning]\nHiko told me something interesting on our morning walk: that 3rd-floor server was officially unplugged years ago. If packets are bouncing through it, someone plugged in an independent power source in the basement conduits. Suzumia gave me warm honey tea before 1st period. Her hands were trembling slightly with nervous excitement for the council audit today. I won't let her down.",
                                     "type": "file",
                                     "name": "aki_journal.txt",
                                     "created": 1577836800,
                                     "modified": 1608912000
                                 },
                                 "notes.txt": {
-                                    "content": "Newspaper Club Tasks:\n[✓] Secure Meow Latte interview permission (Suzumia)\n[✓] Collect rumor testimonies (Nagahashi)\n[ ] Check Hiko's homework (Aki)\n[ ] Review server log packet dump on port 8080 (Hoshida & Aki)\n[ ] Finalize Dual Issue layout in TextEditor",
+                                    "content": "Newspaper Club Tasks:\n[✓] Secure Meow Latte interview permission (Suzumia)\n[✓] Collect rumor testimonies (Nagahashi)\n[✓] Check Hiko's homework (Aki)\n[✓] Review server log packet dump on port 8080 (Hoshida & Aki)\n[✓] Secure cipher.txt [SHADOW-CAT-09]\n[ ] Inspect traceroute_dump.txt from Hoshida\n[ ] Verify final_dual_issue_master.txt for Student Council inspection\n[ ] Deliver Issue #42 proofs to Auditor at 17:00",
                                     "type": "file",
                                     "name": "notes.txt",
                                     "created": 1577836800,
@@ -84,6 +91,13 @@
                                     "content": "[23:14:02] [ETH-0] INBOUND PACKET on Port 8080 from 192.168.1.144 (Old 3rd Floor Rack)\n[23:14:03] [PAYLOAD] Encrypted XOR stream detected [Length: 256 bytes]\n[23:14:04] [DECRYPTOR] Matching signature with Newspaper Club archive...\n[23:14:05] [KEY_FOUND] Secret Token: SHADOW-CAT-09\n[23:14:06] [STATUS] Remote node ping active. Traceroute bounces through 3 internal relays.\n[23:14:07] [NOTE] Hoshida: 'Aki, someone is definitely using the school old repeater as a proxy.'",
                                     "type": "file",
                                     "name": "school_server_dump.log",
+                                    "created": 1598918400,
+                                    "modified": 1598918400
+                                },
+                                "traceroute_dump.txt": {
+                                    "content": "=== KAMIYAMA HIGH INTRANET TRACEROUTE LOG ===\nTARGET: port8080.ghost-relay.local\n\nHOP 1: 192.168.1.1 (Kamiyama Gateway Router) [1.2ms]\nHOP 2: 192.168.1.144 (3rd Floor Switchboard 04) [4.5ms]\nHOP 3: 192.168.1.254 (Basement Electrical Conduit Sub-Station) [0.8ms]\n\nALERT: Target IP 192.168.1.254 responds with MAC: 00:1A:C2:7B:99:4F\nNOTE (Hoshida): This MAC address belongs to an external commercial mesh router, not school inventory!\nCIPHER VERIFIED: [SHADOW-CAT-09]",
+                                    "type": "file",
+                                    "name": "traceroute_dump.txt",
                                     "created": 1598918400,
                                     "modified": 1598918400
                                 },

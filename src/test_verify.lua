@@ -114,10 +114,19 @@ local function runTests()
     _G.openFileDirectly(dummyNode2)
     assert(#WindowManager.openApps == 2, "Opening 2 files should spawn 2 distinct TextEditor process windows")
     assert(WindowManager.openApps[1].pid ~= WindowManager.openApps[2].pid, "Each window should have a unique PID")
+    
+    -- Test Maximize & Restore
+    local testWin = WindowManager.openApps[1]
+    assert(not testWin.isMaximized, "Window should initially be unmaximized")
+    WindowManager.toggleMaximize(testWin)
+    assert(testWin.isMaximized, "Window should be maximized")
+    WindowManager.toggleMaximize(testWin)
+    assert(not testWin.isMaximized, "Window should be restored")
+
     WindowManager.closeWindow(WindowManager.openApps[2])
     WindowManager.closeWindow(WindowManager.openApps[1])
     assert(#WindowManager.openApps == 0, "All windows should be closed")
-    log("[PASS] Multi-Process Window Management & File Instances")
+    log("[PASS] Multi-Process Window Management, Maximize & File Instances")
 
     -- Test 7: Email & Chat Task Conditions
     local emailCond = TaskConditions.emailRead("Suzumia")

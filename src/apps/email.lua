@@ -63,6 +63,16 @@ function EmailApp.new()
             body = "Yo Aki,\n\nI dug through our club's old backup drive and found the raw network dump from last year's website server. I put it in your Downloads folder as 'school_server_dump.log'.\n\nNagahashi thinks he's just inventing spooky rumors to scare freshmen, but... honestly, there are some strange outbound packets logged on port 8080 from the old terminal. Take a look when you're at your desk.\n\nAnyway, back to watching my late-night anime stream. 2D cat maids > 3D drama any day.\n\n( ^ _ ^ )/\n- Hoshida",
             unread = true,
             starred = false
+        },
+        {
+            id = 106,
+            subject = "[CONFIDENTIAL] Traceroute analysis & Basement Sub-Station Anomaly",
+            sender = "Hoshida",
+            email = "hoshida.tech@kamiyama-press.org",
+            time = "07:15 AM",
+            body = "Aki,\n\nI ran a subnet traceroute on the repeater while eating morning Pocky.\n\nThe packet route does not end on the 3rd floor. The signal is being re-routed down the elevator shaft into the locked basement power sub-station (IP: 192.168.1.254).\n\nCheck 'traceroute_dump.txt' in your Downloads folder.\n\nThe MAC address matches a commercial high-gain transceiver. Someone is piggybacking on our school grid to host an external server.\n\nKeep this between us until we pass the Student Council audit at 5 PM.\n\n- Hoshida [Root]",
+            unread = true,
+            starred = true
         }
     }
     
