@@ -1,5 +1,5 @@
 -- src/tasks/task_conditions.lua
-local filesystemModule = require("filesystem")
+local filesystemModule = require("src.core.filesystem")
 
 local TaskConditions = {}
 

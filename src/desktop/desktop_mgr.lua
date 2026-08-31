@@ -1,6 +1,6 @@
 -- src/desktop/desktop_mgr.lua
 local json = require("lib/json")
-local filesystemModule = require("filesystem")
+local filesystemModule = require("src.core.filesystem")
 local AudioManager = require("src.core.audio_manager")
 local EventBus = require("src.core.event_bus")
 local Taskbar = require("src.desktop.taskbar")
@@ -9,16 +9,16 @@ local TaskHUD = require("src.desktop.task_hud")
 local Notifications = require("src.desktop.notifications")
 
 -- Load App Modules
-local EmailApp = require("email")
-local BrowserApp = require("browser")
-local FilesApp = require("files")
-local TerminalApp = require("terminal") 
-local TextEditor = require("texteditor")
-local TessarectApp = require("tessarect")
-local ImageViewer = require("imageviewer")
-local ObjViewer = require("objviewer")
-local ChatApp = require("chat")
-local SettingsApp = require("settings")
+local EmailApp = require("src.apps.email")
+local BrowserApp = require("src.apps.browser")
+local FilesApp = require("src.apps.files")
+local TerminalApp = require("src.apps.terminal") 
+local TextEditor = require("src.apps.texteditor")
+local TessarectApp = require("src.apps.tessarect")
+local ImageViewer = require("src.apps.imageviewer")
+local ObjViewer = require("src.apps.objviewer")
+local ChatApp = require("src.apps.chat")
+local SettingsApp = require("src.apps.settings")
 
 local DesktopManager = {
     apps = {},

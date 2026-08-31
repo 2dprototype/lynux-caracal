@@ -1,7 +1,7 @@
--- terminal.lua
+-- src/apps/terminal.lua
 local json = require "lib/json"  -- ensure you have a json module
-local filesystem = require("filesystem")
-local TerminalCommands = require("terminal_commands")
+local filesystem = require("src.core.filesystem")
+local TerminalCommands = require("src.apps.terminal_commands")
 
 local THEMES = {
     default = {

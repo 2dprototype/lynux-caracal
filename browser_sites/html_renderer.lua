@@ -25,7 +25,7 @@ function HTMLRenderer.new(browser, dom)
     }
     
     -- Find title
-    local Websites = require("websites")
+    local Websites = require("src.apps.websites")
     local titleNode = Websites.findFirst(dom, "title")
     if titleNode and titleNode._children and titleNode._children[1] then
         self.title = titleNode._children[1]._text or "HTML Page"
@@ -142,7 +142,7 @@ function HTMLRenderer:draw(x, y, w, h)
         return ny
     end
 
-    local Websites = require("websites")
+    local Websites = require("src.apps.websites")
     local body = Websites.findFirst(self.dom, "body") or self.dom
     local totalHeight = renderNode(body, x + 20, cy, w - 40)
     

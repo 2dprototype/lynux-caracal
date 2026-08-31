@@ -1,5 +1,5 @@
 local utf8 = require("utf8")
-local Websites = require("websites")
+local Websites = require("src.apps.websites")
 local HTMLRenderer = require("browser_sites.html_renderer")
 local BrowserApp = {}
 BrowserApp.__index = BrowserApp

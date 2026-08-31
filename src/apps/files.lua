@@ -1,7 +1,7 @@
--- files.lua
-local filesystem = require("filesystem")
-local TextEditor = require("texteditor")
-local ImageViewer = require("imageviewer")
+-- src/apps/files.lua
+local filesystem = require("src.core.filesystem")
+local TextEditor = require("src.apps.texteditor")
+local ImageViewer = require("src.apps.imageviewer")
 local loveTimer = love.timer  -- alias for convenience
 
 local FilesApp = {}

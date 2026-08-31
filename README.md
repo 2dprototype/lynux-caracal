@@ -1,95 +1,262 @@
-# Lynux
+# 🐱 Lynux Caracal
 
-Lynux is a Linux desktop emulator game built with [Love2D](https://love2d.org/). It simulates a Linux‑style desktop complete with a top bar (showing date and time), a bottom bar of app icons, and draggable windows for individual applications. The project is modular—each app is contained in its own Lua file—and many share a common file system.
+> **A Hybrid Cyberpunk Visual Novel & Simulated Desktop Operating System Game Engine**  
+> Built with [Love2D (Lua)](https://love2d.org/) • Featuring a Retro Yellow Gaming / Kawaii Aesthetic • Smooth 60 FPS Architecture
 
+---
 
-## Why?
-I'm developing a game based on this. However, I wanted the base code to be open source, which led to the creation of Lynux.
+## 🌟 Overview
 
-## Features
+**Lynux Caracal** is a hybrid narrative game that seamlessly switches between **Storytelling Mode (Visual Novel)** and the **Protagonist's Personal Computer (Lynux OS Desktop Simulation)**.
 
-- **Linux Desktop Emulation:**  
-  Emulates a Linux desktop with a status bar at the top and a taskbar at the bottom.
+As the protagonist uncovers encrypted transmissions, decompiles payloads, and faces mysterious network intrusions, the game transitions from atmospheric narrative scenes directly into a fully interactive Linux-like desktop. Players inspect files, edit decrypted ciphers, execute terminal commands, and converse via encrypted chat apps to solve objectives, earn XP, level up their hacker rank, and branch the story.
 
-- **Multiple Applications:**  
-  - **Email App:** Displays dummy email content.  
-  - **Browser App:** Minimal web browser with a URL bar and dummy webpage content.  
-  - **Files App:** A file manager that navigates a shared file system (loaded from `filesystem.json` or default data). Supports directory navigation and file operations.  
-  - **Terminal App:** A full-featured terminal supporting common commands (echo, pwd, cd, mkdir, etc.) and inline function calls (e.g. `$pwd()`, `$date()`).  
-  - **Roulette App:** A roulette game with betting and spin mechanics.  
-  - **Text Editor:** Integrated with the Files App; opens files for editing. Displays the full file path at the top and uses red text if unsaved (dirty) and black when saved.  
-  - **Dino App:** A simple dino game (or placeholder) for extra fun.
+---
 
-- **Shared File System:**  
-  The file manager and terminal both operate on a shared file system stored in JSON format. If no saved file exists, default data is loaded from `data/filesystem.json`.
+## 🎮 Gameplay Flow
 
-- **Scripting and Inline Substitutions in Terminal:**  
-  Supports both usual commands (e.g., `echo "hello"`, `pwd`, `mkdir dir`) and function‑like commands using inline substitutions (e.g., `$echo("hello")`, `$pwd()`, `$date()`). Inline substitution looks for variables or built‑in function names and replaces them with their output.
+```mermaid
+graph TD
+    A["📖 Story Mode (Visual Novel)"] -->|"Plot Intrusion & Monologue"| B["★ Quest Issued in Story"]
+    B -->|"Smooth CRT Zoom Transition"| C["💻 Desktop Mode (Lynux OS)"]
+    C -->|"Open TextEditor / Terminal / Files"| D["⚙ Complete Technical Task"]
+    D -->|"Objective Met & Condition Evaluated"| E["🎉 Level-Up & Celebration Banner (+XP)"]
+    E -->|"Click Continue Story / Top Bar"| F["📖 Story Resumes with Branching Consequences"]
+```
 
-## Installation and Running
+---
 
-1. **Install Love2D:**  
-   Download and install [Love2D](https://love2d.org/).
+## ✨ Features
 
-2. **Clone or Download Lynux:**  
-   Place the project folder (`Lynux/`) on your computer.
+### 📖 1. Visual Novel & Narrative Engine
+- **Atmospheric Monologues & Dialogues**: Clean floating text box with typewriter effects, character-specific colored badges (`♥ Ghost`, `★ Thought`), and ambient typing blips.
+- **Branching Choice System**: Interactive option cards with number pills (`[ 1 ]`, `[ 2 ]`, `[ 3 ]`), keyboard navigation (`1-9` / `Up-Down-Enter`), and mouse hover feedback.
+- **Dialogue Transcript Backlog**: Scrollable history log overlay toggled with `H` key or scroll wheel.
+- **Character Manager**: Configurable character profiles, custom nameplates, colors, and positioning.
+- **Decoupled Lua Story Scripts**: Narrative chapters written in declarative Lua script tables.
 
-3. **Project Structure:**
+### 💻 2. Simulated Desktop Operating System (Lynux OS)
+- **Retro Traffic-Light Window Chrome**: Draggable, minimizable, and resizable window system with pastel controls (`●` Strawberry Pink Close, `●` Sunny Lemon Minimize, `●` Soda Mint Focus).
+- **Direct File Opening**: Single/double-clicking files on the desktop or in the **Files App** automatically launches and loads them directly into **TextEditor** or the appropriate viewer.
+- **Top System Status Bar (28px)**:
+  - `★ Lynux` brand badge.
+  - Player Level progress pill (`♥ Lv. 1 [████░░░░] 0/100 XP`).
+  - Active quest tracker pill (`★ Secure Key`).
+  - `[ 📖 Story Mode ]` button to return to narrative mode.
+  - Real-time digital clock.
+- **Pinned Task HUD**: Draggable quest sticky note on the desktop displaying active objectives, live checkmarks `[✓]`, XP reward badge, hint drawer, and a `[ ▶ Continue Story ]` action button.
+- **Suite of Integrated Desktop Apps**:
+  - 📝 **TextEditor**: Full syntax editing, cursor navigation, unsaved dirty markers, and Ctrl+S saving.
+  - 📁 **Files App**: Directory navigation, file browsing, and direct file launching.
+  - 💻 **Terminal**: Interactive shell with command execution, pipes, filesystem operations, and inline function substitutions.
+  - 💬 **Chat**: Encrypted messaging application with contact threads.
+  - ✉️ **Email**: Mail client with unread badges and attachments.
+  - 🌐 **Browser**: Minimal browser rendering HTML pages and mock web engines.
+  - 🖼️ **ImageViewer** & 🧊 **ObjViewer**: Image previewer and 3D wireframe object inspector.
+  - ⚙️ **Settings**: Desktop wallpaper and visual customizer.
 
-   ```
-   Lynux/
-   ├── main.lua                  -- Entry point; sets up the desktop environment and window system.
-   ├── email.lua                 -- Email app module.
-   ├── browser.lua               -- Browser app module.
-   ├── files.lua                 -- File manager module.
-   ├── terminal.lua              -- Terminal app module.
-   ├── terminal_commands.lua     -- Terminal command processing & inline substitutions.
-   ├── roulette.lua              -- Roulette game app module.
-   ├── texteditor.lua            -- Text editor module.
-   ├── dino.lua                  -- Dino game module.
-   ├── filesystem.lua            -- Shared file system module.
-   ├── data/
-   │   └── filesystem.json       -- Default file system data.
-   └── assets/                   -- Images and icons for the apps.
-   ```
+### 🏆 3. Task & Level Progression System
+- **Event-Driven Task Evaluator**: Condition listeners evaluate actions (e.g. file content matching, terminal commands, story flags).
+- **Player Stats & Hacker Ranks**: Earn XP to level up from *Script Novice* $\rightarrow$ *Code Initiator* $\rightarrow$ *Sandbox Breaker*.
+- **Celebration Banner**: Animated level-up banner with star insignia, XP rewards, and audio fanfare.
 
-4. **Run the Game:**  
-   Launch Love2D and select the `Lynux/` folder or run via command line:
-   ```bash
-   love Lynux/
-   ```
+### ⚙️ 4. Professional ESC Pause & Settings Menu
+- Accessible anytime in both Story and Desktop modes by pressing `ESC`.
+- **Resume Game**: Seamlessly return to gameplay.
+- **Switch Story / PC Mode**: Instantly toggle between narrative and desktop modes.
+- **Settings & Audio**: Interactive sliders for Master SFX and BGM volume, plus typewriter text speed choices.
+- **Reset Chapter**: Safely restart the current story script from step 1.
+- **Exit Game**: Clean exit to desktop.
 
-## How to Play
+### 🎨 5. Retro Yellow Gaming / Kawaii Aesthetic & 60 FPS Performance
+- **Color Palette**:
+  - **Base Canvas**: Warm espresso dark slate (`#1e1b18` / `#28231d`)
+  - **Sunny Yellow & Honey Gold**: `#ffd166` / `#ffb703`
+  - **Kawaii Pastels**: Strawberry Pink (`#ff70a6`), Soda Mint (`#06d6a0`), Warm Cream (`#fffdfa`)
+- **Zero Lag**: Optimized geometry rendering and clean scissor clipping running at silky-smooth 60 FPS.
 
-- **Desktop Interface:**  
-  Click on the application icons in the taskbar at the bottom to launch apps. Windows can be dragged by their title bar, minimized, closed, or resized.
+---
 
-- **Terminal App:**  
-  - Type commands such as `echo "hello"`, `pwd`, `mkdir myDir`, etc.  
-  - Use inline function calls like `$pwd()`, `$date()`, `$time()` to insert dynamic values.
-  - Type `help` in the terminal to see all available commands.
+## 📁 Clean Codebase Architecture
 
-- **Files App and Text Editor:**  
-  - Navigate directories and double‑click files to open them in the Text Editor.
-  - The Text Editor displays the full file path at its top header.  
-  - The file path appears in red if there are unsaved changes (dirty) and black once saved.  
-  - Use Ctrl+S within the editor to save changes back to the shared file system.
+All source code is strictly structured within `./src/`, leaving only `main.lua` and `conf.lua` in the root:
 
-- **Other Applications:**  
-  Explore the Email, Browser, Roulette, and Dino apps for additional functionality and fun.
+```
+lynux-caracal/
+├── main.lua                  -- Root entry point; delegates to GameManager
+├── conf.lua                  -- Window resolution (760x480, resizable) & Love2D config
+├── README.md                 -- Engine documentation
+├── assets/                   -- App icons and UI graphics
+├── audio/                    -- Music and sound assets
+├── data/
+│   ├── filesystem.json       -- Virtual OS filesystem template
+│   └── stories/
+│       └── prologue.lua      -- Chapter 1 narrative and quest script
+├── font/                     -- TrueType fonts
+├── lib/                      -- JSON, XML, and helper libraries
+├── src/
+│   ├── core/
+│   │   ├── game_manager.lua  -- Master state machine & lifecycle coordinator
+│   │   ├── event_bus.lua     -- Global pub/sub messaging bus
+│   │   ├── player_stats.lua  -- Player XP, level, title, and persistent flags
+│   │   ├── audio_manager.lua -- Procedural sound synth fallbacks & audio playback
+│   │   ├── transitions.lua   -- CRT zoom, glitch, and fade mode transitions
+│   │   └── filesystem.lua    -- Virtual in-memory hierarchical filesystem
+│   ├── story/
+│   │   ├── story_engine.lua  -- Narrative script interpreter
+│   │   ├── dialogue_box.lua  -- Minimalist dialogue and thought textplate
+│   │   ├── choice_box.lua    -- Interactive choice overlay cards
+│   │   ├── scene_view.lua    -- Background scenery renderer
+│   │   ├── character_mgr.lua -- Character portraits, tags, and colors
+│   │   └── history_log.lua   -- Dialogue transcript backlog
+│   ├── desktop/
+│   │   ├── desktop_mgr.lua   -- Desktop background, icons, dock, and start menu
+│   │   ├── window_mgr.lua    -- Window chrome, input routing, and focus handling
+│   │   ├── taskbar.lua       -- 28px top status bar
+│   │   ├── task_hud.lua      -- Draggable quest tracker sticky note
+│   │   └── notifications.lua -- Toast notification cards
+│   ├── tasks/
+│   │   ├── task_manager.lua  -- Quest lifecycle and celebration banner
+│   │   └── task_conditions.lua-- Condition evaluators (e.g. fileContentContains)
+│   ├── ui/
+│   │   └── pause_menu.lua    -- Professional ESC pause & settings menu
+│   └── apps/                 -- Standalone desktop applications
+│       ├── browser.lua
+│       ├── chat.lua
+│       ├── email.lua
+│       ├── files.lua
+│       ├── imageviewer.lua
+│       ├── objviewer.lua
+│       ├── settings.lua
+│       ├── terminal.lua
+│       ├── terminal_commands.lua
+│       ├── tessarect.lua
+│       ├── texteditor.lua
+│       └── websites.lua
+```
 
-## Customization
+---
 
-- **Adding Commands:**  
-  The terminal commands and inline function calls are implemented in `terminal_commands.lua` via an `inlineSubstitutions` table. You can easily add new commands by adding a new entry to this table.
+## 🛠️ Story Scripting Guide
 
-- **Modular Apps:**  
-  Each app is a standalone module, making it simple to extend or replace individual applications.
+Stories are written as declarative Lua arrays in `data/stories/*.lua`.
 
-## Credits
+### Example Script (`data/stories/chapter1.lua`):
 
-- **Project Name:** Lynux  
-- **Built with:** Love2D  
-- **Inspiration:** Linux desktop environments, retro game emulators, and interactive prototyping.
+```lua
+local TaskConditions = require("src.tasks.task_conditions")
 
-Enjoy exploring your very own Linux desktop emulator game—Lynux!
+return {
+    -- 1. Set Background Scene
+    { type = "bg", name = "bedroom_night" },
+
+    -- 2. Internal Monologue
+    { type = "monologue", text = "02:43 AM. A strange packet hit my firewall on port 8080." },
+    { type = "monologue", text = "The decrypted key is 'DELTA-99'. I must secure it on my desktop." },
+
+    -- 3. Issue Quest Objective
+    {
+        type = "task",
+        task = {
+            id = "save_key",
+            title = "Secure the Key",
+            desc = "Create a file named 'cipher.txt' in your home directory containing 'DELTA-99'.",
+            hint = "Launch TextEditor from the dock, type 'DELTA-99', and save as 'cipher.txt'.",
+            xp = 100,
+            condition = TaskConditions.fileContentContains("home/cipher.txt", "DELTA-99"),
+            onComplete = function(task)
+                local Notifications = require("src.desktop.notifications")
+                Notifications.add("Ghost (Encrypted)", "I see you secured the cipher. Not bad.")
+            end
+        }
+    },
+
+    -- 4. Transition to Desktop Mode
+    { type = "switch_mode", mode = "desktop", transition = "crt_zoom" },
+
+    -- 5. Narrative Resumption after Quest
+    { type = "label", name = "post_task" },
+    { type = "say", speaker = "Ghost", text = "You're fast with that keyboard. Who taught you to code?" },
+
+    -- 6. Branching Choices
+    {
+        type = "choice",
+        prompt = "How do you respond to Ghost?",
+        options = {
+            { text = "Demand to know who they work for", target = "branch_demand" },
+            { text = "Ask what they want with DELTA-99", target = "branch_ask" }
+        }
+    },
+
+    -- Branch Targets
+    { type = "label", name = "branch_demand" },
+    { type = "say", speaker = "Ghost", text = "I don't have a master, and neither should you." },
+    { type = "jump", target = "conclusion" },
+
+    { type = "label", name = "branch_ask" },
+    { type = "say", speaker = "Ghost", text = "DELTA-99 is the override key to Caracal Corp." },
+    { type = "jump", target = "conclusion" },
+
+    { type = "label", name = "conclusion" },
+    { type = "monologue", text = "The connection abruptly severed..." }
+}
+```
+
+### Available Story Step Types:
+| Step Type | Arguments | Description |
+|---|---|---|
+| `monologue` / `thought` | `text` | Displays internal thought plate with `★ Thought` badge |
+| `say` | `speaker`, `text` | Character dialogue with custom colored nameplate |
+| `bg` | `name` | Changes the scene backdrop (`bedroom_night`, `server_room`) |
+| `task` | `task` | Registers a quest with conditions and XP rewards |
+| `switch_mode` | `mode`, `transition` | Switches mode (`story` $\leftrightarrow$ `desktop`) with transition (`crt_zoom`, `fade`) |
+| `choice` | `prompt`, `options` | Presents interactive choice cards with branch targets |
+| `label` | `name` | Defines a jump destination |
+| `jump` | `target` | Jumps execution to a label |
+| `flag` | `name`, `value` | Sets a persistent narrative flag |
+| `sfx` | `name`, `pitch`, `vol` | Plays a sound effect |
+
+---
+
+## ⌨️ Controls & Keybindings
+
+### 📖 Storytelling Mode
+| Action | Keybinding | Mouse |
+|---|---|---|
+| Advance Dialogue | `Space` / `Enter` / `Z` | Left Click |
+| Auto-Play Toggle | `A` | — |
+| Dialogue Backlog | `H` / `L` | Right Click / Scroll Up |
+| Quick PC Mode Check | `Tab` | — |
+| **Pause & Settings Menu** | **`ESC`** | — |
+
+### 💻 Desktop OS Mode
+| Action | Keybinding | Mouse |
+|---|---|---|
+| Launch App | — | Click Dock Icon |
+| Open Desktop File | — | Click Desktop Icon |
+| Move / Drag Window | — | Drag Window Titlebar |
+| Resize Window | — | Drag Bottom-Right Grip |
+| Minimize / Close Window | — | Click Window Controls (`● ● ●`) |
+| Save File in Editor | `Ctrl + S` | Click Save Icon / Header |
+| Stand Up / Return to Story | `Tab` | Click `[ 📖 Story Mode ]` or Task HUD |
+| **Pause & Settings Menu** | **`ESC`** | — |
+
+---
+
+## 🚀 Installation & Running
+
+### Requirements
+- [Love2D](https://love2d.org/) version 11.0 or higher.
+
+### Run Directly:
+```bash
+# From the root directory of the project:
+love .
+```
+
+---
+
+## 📜 License & Credits
+- **Engine**: Lynux Caracal
+- **Framework**: Love2D (Lua)
+- **Built for**: Interactive storytelling, hacking simulation games, and visual novel hybrids.

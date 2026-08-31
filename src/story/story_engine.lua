@@ -63,6 +63,18 @@ function StoryEngine.loadScript(scriptData)
     StoryEngine.nextStep()
 end
 
+function StoryEngine.restart()
+    StoryEngine.currentIndex = 0
+    StoryEngine.waitingForInput = false
+    StoryEngine.waitingForChoice = false
+    StoryEngine.isFinished = false
+    CharacterManager.init()
+    DialogueBox.init()
+    ChoiceBox.hide()
+    HistoryLog.init()
+    StoryEngine.nextStep()
+end
+
 function StoryEngine.jumpToLabel(labelName)
     local idx = StoryEngine.labels[labelName]
     if idx then

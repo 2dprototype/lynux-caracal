@@ -1,5 +1,5 @@
--- texteditor.lua
-local filesystem = require("filesystem")
+-- src/apps/texteditor.lua
+local filesystem = require("src.core.filesystem")
 
 local TextEditor = {}
 TextEditor.__index = TextEditor

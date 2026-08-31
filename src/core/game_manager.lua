@@ -7,6 +7,7 @@ local TaskManager = require("src.tasks.task_manager")
 local StoryEngine = require("src.story.story_engine")
 local DesktopManager = require("src.desktop.desktop_mgr")
 local Notifications = require("src.desktop.notifications")
+local PauseMenu = require("src.ui.pause_menu")
 
 local GameManager = {
     mode = "story", -- "story", "desktop"
@@ -20,17 +21,17 @@ function GameManager.init()
     TaskManager.init()
     StoryEngine.init()
     DesktopManager.init()
+    PauseMenu.init()
 
     -- Listen to switch mode requests
     EventBus.on("game:request_switch_mode", function(data)
-        local targetMode = (type(data) == "table" and data.mode) or data or "desktop"
+        local targetMode = (type(data) == "table" and data.mode) or data or (GameManager.mode == "story" and "desktop" or "story")
         local transType = (type(data) == "table" and data.transition) or "fade"
         GameManager.switchMode(targetMode, transType)
     end, "gm_switch_mode")
 
     -- Listen to task completion events
     EventBus.on("task:completed", function(task)
-        -- Send in-game notification
         Notifications.add("Objective Completed!", task.title .. " (+ " .. tostring(task.xp) .. " XP)")
     end, "gm_task_completed")
 
@@ -59,10 +60,13 @@ function GameManager.update(dt)
     Transitions.update(dt)
     TaskManager.update(dt)
 
-    if GameManager.mode == "story" then
-        StoryEngine.update(dt)
-    elseif GameManager.mode == "desktop" then
-        DesktopManager.update(dt)
+    -- If pause menu is open, pause game background updates
+    if not PauseMenu.isOpen then
+        if GameManager.mode == "story" then
+            StoryEngine.update(dt)
+        elseif GameManager.mode == "desktop" then
+            DesktopManager.update(dt)
+        end
     end
 end
 
@@ -73,8 +77,11 @@ function GameManager.draw()
         DesktopManager.draw()
     end
 
-    -- Draw Quest / Level-Up Celebration Banner (Always on top layer)
+    -- Draw Quest / Level-Up Celebration Banner
     TaskManager.drawCelebrationBanner()
+
+    -- Draw Pause Menu overlay (when active)
+    PauseMenu.draw()
 
     -- Draw Cinematic Transition (Topmost overlay)
     Transitions.draw()
@@ -82,6 +89,7 @@ end
 
 function GameManager.mousepressed(x, y, button)
     if Transitions.isActive() then return end
+    if PauseMenu.mousepressed(x, y, button) then return end
 
     if GameManager.mode == "story" then
         StoryEngine.mousepressed(x, y, button)
@@ -92,6 +100,10 @@ end
 
 function GameManager.mousemoved(x, y, dx, dy)
     if Transitions.isActive() then return end
+    if PauseMenu.isOpen then
+        PauseMenu.mousemoved(x, y)
+        return
+    end
 
     if GameManager.mode == "story" then
         StoryEngine.mousemoved(x, y, dx, dy)
@@ -101,7 +113,7 @@ function GameManager.mousemoved(x, y, dx, dy)
 end
 
 function GameManager.mousereleased(x, y, button)
-    if Transitions.isActive() then return end
+    if Transitions.isActive() or PauseMenu.isOpen then return end
 
     if GameManager.mode == "desktop" then
         DesktopManager.mousereleased(x, y, button)
@@ -109,7 +121,7 @@ function GameManager.mousereleased(x, y, button)
 end
 
 function GameManager.wheelmoved(x, y)
-    if Transitions.isActive() then return end
+    if Transitions.isActive() or PauseMenu.isOpen then return end
 
     if GameManager.mode == "story" then
         StoryEngine.wheelmoved(x, y)
@@ -119,7 +131,7 @@ function GameManager.wheelmoved(x, y)
 end
 
 function GameManager.textinput(text)
-    if Transitions.isActive() then return end
+    if Transitions.isActive() or PauseMenu.isOpen then return end
 
     if GameManager.mode == "desktop" then
         DesktopManager.textinput(text)
@@ -128,6 +140,9 @@ end
 
 function GameManager.keypressed(key)
     if Transitions.isActive() then return end
+
+    -- Check Pause Menu keypress first (handles ESC, Up/Down, Enter)
+    if PauseMenu.keypressed(key) then return end
 
     if GameManager.mode == "story" then
         StoryEngine.keypressed(key)

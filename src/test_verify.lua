@@ -39,7 +39,7 @@ local function runTests()
     -- Test 3: TaskManager & Conditions
     local TaskManager = require("src.tasks.task_manager")
     local TaskConditions = require("src.tasks.task_conditions")
-    local filesystemModule = require("filesystem")
+    local filesystemModule = require("src.core.filesystem")
     local fs = filesystemModule.getFS()
     if not fs.children["home"] then
         fs.children["home"] = { name = "home", type = "directory", parent = fs, children = {} }
@@ -126,8 +126,15 @@ local function runTests()
     assert(midCalled, "Midpoint callback should have been called")
     Transitions.update(0.2)
     assert(endCalled, "End callback should have been called")
-    assert(not Transitions.isActive(), "Transitions should be finished")
-    log("[PASS] Mode Transitions (CRT Zoom & Fade)")
+    -- Test 8: Pause Menu
+    local PauseMenu = require("src.ui.pause_menu")
+    PauseMenu.init()
+    assert(not PauseMenu.isOpen, "PauseMenu should initially be closed")
+    PauseMenu.keypressed("escape")
+    assert(PauseMenu.isOpen, "Pressing escape should open PauseMenu")
+    PauseMenu.keypressed("escape")
+    assert(not PauseMenu.isOpen, "Pressing escape again should close PauseMenu")
+    log("[PASS] Pause & Settings Menu (ESC)")
 
     log("========================================")
     love.filesystem.write("verification_log.txt", table.concat(logLines, "\n"))

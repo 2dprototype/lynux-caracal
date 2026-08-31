@@ -1,5 +1,5 @@
--- terminal_commands.lua
-local filesystem = require("filesystem")
+-- src/apps/terminal_commands.lua
+local filesystem = require("src.core.filesystem")
 local TerminalCommands = {}
 
 -- Custom argument parser that supports quoted strings.
