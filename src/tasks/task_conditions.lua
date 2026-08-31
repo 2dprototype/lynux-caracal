@@ -85,6 +85,22 @@ function TaskConditions.chatSentTo(userSubstr)
     end
 end
 
+-- Checks if a browser site was visited
+function TaskConditions.browserVisited(siteSubstr)
+    local PlayerStats = require("src.core.player_stats")
+    return function()
+        for k, v in pairs(PlayerStats.flags) do
+            if k:find("browser_visited:") and k:find(siteSubstr:lower(), 1, true) and v == true then
+                return true
+            end
+        end
+        if siteSubstr:lower():find("cat") and PlayerStats.getFlag("browsed_cat_cafe") then
+            return true
+        end
+        return false
+    end
+end
+
 -- Checks if a custom flag is set in PlayerStats
 function TaskConditions.flagIsSet(flagName, expectedValue)
     if expectedValue == nil then expectedValue = true end

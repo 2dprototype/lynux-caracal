@@ -15,6 +15,7 @@ function Home.new(browser)
     self.ui = { sites = {} }
     
     self.sites = {
+        {name="Meow Latte", url="http://meowlatte.com", color={0.95, 0.55, 0.62}},
         {name="Google", url="http://google.com", color={0.26, 0.52, 0.96}},
         {name="Bing", url="http://bing.com", color={0, 0.5, 0.5}},
         {name="Twitter", url="http://twitter.com", color={0.11, 0.63, 0.95}},
@@ -22,8 +23,6 @@ function Home.new(browser)
         {name="4CHAN", url="http://4chan.org", color={0.2, 0.4, 0.2}},
         {name="News", url="http://news.com", color={0.7, 0, 0}},
         {name="Github", url="http://github.com", color={0.15, 0.15, 0.15}},
-        {name="YouTube", url="http://youtube.com", color={1, 0, 0}},
-        {name="HTML Home", url="http://lynux.home", color={0.4, 0.4, 0.4}},
         {name="Directory", url="http://links.lynux", color={0.2, 0.6, 0.2}},
     }
     

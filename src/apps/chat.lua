@@ -28,24 +28,84 @@ local colors = {
     scrollbarFg = {0, 0, 0, 0.3}
 }
 
--- Dummy responses
-local dummyResponses = {
-    "Lol really?", "That's cool!", "I'm busy right now.", "Can we talk later?", 
-    "Haha ok", "Sounds good to me.", "Wow!", "I didn't know that.", "Sure!",
-    "Let me check on that.", "I'll let you know.", "Thanks!", "No way!", "Agreed."
+-- Contextual responses per character
+local characterResponses = {
+    ["Suzumia"] = {
+        "Aki-kun, you're the best! That layout idea sounds so cute!",
+        "Mochi really is the sweetest cat... I can't stop smiling thinking about it.",
+        "Let's make sure our article blows the Student Council away tomorrow!",
+        "Don't stay up too late staring at the screen, okay? Get some rest too!",
+        "I'll bring some fresh melon bread to the clubroom tomorrow as thanks!",
+        "Hehe, I'm glad you liked the parfait photos. We should definitely go there together!"
+    },
+    ["Hoshida"] = {
+        "Aki, check your Downloads folder. That packet dump from port 8080 isn't random noise.",
+        "My traceroute script pinged an internal MAC address from the 3rd floor switch.",
+        "Nagahashi thinks he's writing fiction, but someone really breached the school subnet.",
+        "If you decode the cipher buffer with XOR, the key looks like 'SHADOW-CAT-09'.",
+        "Hold on, downloading the latest anime episode while running Wireshark.",
+        "2D cat maids provide 100% emotional stability. Science proven."
+    },
+    ["Nagahashi"] = {
+        "EXCELLENT PROGRESS, AKI! Make the headlines bold and menacing!",
+        "The Student Council won't know what hit them! Circulation will triple!",
+        "Aki, did you remember to add exclamation marks to the subheading?!",
+        "The truth is out there, and the Newspaper Club shall unveil it!"
+    },
+    ["Hiko"] = {
+        "Stop typing so loud! I can hear your mechanical keyboard from my room!",
+        "Did you eat the curry yet? Don't leave the plate in the sink!",
+        "If you don't buy milk tomorrow, I'm telling Mom you stayed up till 3 AM.",
+        "Goodnight dummy brother, don't fall asleep at your desk."
+    }
 }
 
 function ChatApp.new()
     local self = setmetatable({}, ChatApp)
     
     self.users = {
-        { id = 10, name = "Chloe (Girlfriend)", color = {0.92, 0.42, 0.62}, online = true, messages = { {text="Babe, it's 2 AM... why are you still online? :)", sender="ai", time="02:14", seen=false}, {text="You better not be staying up drinking energy drinks again :p", sender="ai", time="02:15", seen=false} } },
-        { id = 1, name = "NexusBot", color = {0.13, 0.59, 0.95}, online = true, messages = { {text="Hello! I'm NexusBot.", sender="ai", time="10:00", seen=true} } },
-        { id = 2, name = "Alice", color = {0.96, 0.27, 0.31}, online = true, messages = { {text="Hey there!", sender="ai", time="09:15", seen=true}, {text="Are we still meeting?", sender="ai", time="09:16", seen=false} } },
-        { id = 3, name = "Bob", color = {1, 0.61, 0}, online = false, messages = { {text="Send me the files when you can.", sender="ai", time="Yesterday", seen=true} } },
-        { id = 4, name = "Charlie", color = {0.47, 0.33, 0.28}, online = false, messages = { {text="Haha yeah.", sender="ai", time="Tuesday", seen=true} } },
-        { id = 5, name = "Dave", color = {0.6, 0.27, 0.88}, online = false, messages = { {text="Ok.", sender="ai", time="Monday", seen=true} } },
-        { id = 6, name = "Eve", color = {0.0, 0.67, 0.55}, online = true, messages = { {text="Call me!", sender="ai", time="May 1", seen=false} } }
+        {
+            id = 1,
+            name = "Suzumia (Vice President)",
+            color = {0.94, 0.48, 0.58},
+            online = true,
+            messages = {
+                { text = "Aki-kun, are you still awake working on the layout? :)", sender = "ai", time = "11:45", seen = false },
+                { text = "I was looking at the photo of Mochi the Scottish Fold again... do you think we should make it the main cover photo?", sender = "ai", time = "11:46", seen = false },
+                { text = "I'm so excited for our cat cafe article! (///_///)", sender = "ai", time = "11:47", seen = false }
+            }
+        },
+        {
+            id = 2,
+            name = "Hoshida (Club Member)",
+            color = {0.32, 0.72, 0.48},
+            online = true,
+            messages = {
+                { text = "Yo Aki! Did you see the latest magical girl episode?", sender = "ai", time = "11:30", seen = true },
+                { text = "Also, check the school server log in your Downloads folder when you get a chance...", sender = "ai", time = "11:32", seen = false },
+                { text = "Something weird is transmitting on port 8080 from the 3rd floor switch. No joke.", sender = "ai", time = "11:33", seen = false }
+            }
+        },
+        {
+            id = 3,
+            name = "Nagahashi (President)",
+            color = {0.95, 0.65, 0.22},
+            online = true,
+            messages = {
+                { text = "Aki! The fate of the Newspaper Club rests upon our shoulders tonight!", sender = "ai", time = "10:40", seen = true },
+                { text = "Make that Mystery Report headline sensational! The Student Council shall tremble!", sender = "ai", time = "10:41", seen = true }
+            }
+        },
+        {
+            id = 4,
+            name = "Hiko (Sister)",
+            color = {0.22, 0.78, 0.85},
+            online = true,
+            messages = {
+                { text = "Hey, don't forget to put away the curry dishes.", sender = "ai", time = "11:20", seen = true },
+                { text = "And buy milk on your way home tomorrow! -_-", sender = "ai", time = "11:21", seen = true }
+            }
+        }
     }
     
     self.currentView = "inbox" -- "inbox" or "chat"
@@ -94,8 +154,16 @@ function ChatApp:update(dt)
         self.typingTimer = self.typingTimer - dt
         if self.typingTimer <= 0 then
             self.isTyping = false
+            local replyList = nil
+            for charKey, replies in pairs(characterResponses) do
+                if self.typingUser.name:find(charKey) then
+                    replyList = replies
+                    break
+                end
+            end
+            local replyText = replyList and replyList[math.random(#replyList)] or "Sounds good!"
             table.insert(self.typingUser.messages, {
-                text = dummyResponses[math.random(#dummyResponses)],
+                text = replyText,
                 sender = "ai",
                 time = os.date("%H:%M"),
                 seen = false

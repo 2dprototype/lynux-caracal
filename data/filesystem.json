@@ -29,33 +29,48 @@
                     "children": {
                         "Documents": {
                             "children": {
+                                "newspaper": {
+                                    "children": {
+                                        "cat_cafe_review.txt": {
+                                            "content": "=== KAMIYAMA HIGH NEWSPAPER: SPECIAL FEATURE ===\nTITLE: A Whiskered Paradise: Visiting 'Meow Latte' Cat Cafe\nAUTHOR: Suzumia (VP) & Aki (Reporter)\n\n[HIGHLIGHTS]\n- Location: 3 minutes walking from Kamiyama Station South Exit.\n- Atmosphere: Warm wood interior, sunlight through large bay windows, relaxing jazz music.\n- Featured Stars:\n  * Mochi (White Scottish Fold) - Extremely friendly, curled up on our notes!\n  * Chobi (Calico Shorthair) - Playful and curious, loved our camera straps.\n- Recommended Treats: Strawberry Cat-Paw Parfait (¥680), Souffle Pancakes (¥750).\n- Student Special: 10% discount when presenting Kamiyama High ID card!\n\nNote from Suzumia: Aki-kun, let's make sure Mochi's picture is front and center on the main cover!",
+                                            "type": "file",
+                                            "name": "cat_cafe_review.txt",
+                                            "created": 1577836800,
+                                            "modified": 1608912000
+                                        },
+                                        "urban_legend_notes.txt": {
+                                            "content": "=== KAMIYAMA HIGH MYSTERY REPORT (DRAFT) ===\nAUTHOR: President Nagahashi\n\n[INVESTIGATION TARGET: 3RD FLOOR OLD SERVER ROOM]\n- Rumor: After 18:00, rhythmic blinking red LEDs and high-pitched modem tones heard from behind the locked steel fire-door.\n- Student Testimonies:\n  * First-year students report sudden Wi-Fi disconnections and phantom SSID 'GHOST_NET_8080'.\n  * Biology club claims their digital scale zeroed out when near the wall.\n- Nagahashi's Theory: Secret underground society or phantom radio operator tampering with midterm exam grades!\n\nEditor's Note (Aki): Nagahashi is definitely exaggerating, but Hoshida noticed real packet anomalies on the school router.",
+                                            "type": "file",
+                                            "name": "urban_legend_notes.txt",
+                                            "created": 1577836800,
+                                            "modified": 1608912000
+                                        },
+                                        "dual_issue_draft.txt": {
+                                            "content": "========================================================\n       KAMIYAMA HIGH PRESS - SPECIAL DUAL EDITION\n========================================================\n[FRONT COVER] Whiskers & Warm Lattes: The Meow Latte Story\nBy Suzumia & Aki\nDiscover the cozy charm of Kamiyama Station's newest feline sanctuary.\nFresh souffles, playful rescue cats, and a warm welcome for students.\n\n--------------------------------------------------------\n[BACK COVER] Shadows in the Repeater: The 3rd Floor Anomaly\nBy Nagahashi, Aki & Hoshida\nUnexplained signals on port 8080. Urban legend or unauthorized intrusion?\n\nSTATUS: DRAFTING IN PROGRESS\nCIPHER_VERIFIED: [SHADOW-CAT-09]",
+                                            "type": "file",
+                                            "name": "dual_issue_draft.txt",
+                                            "created": 1577836800,
+                                            "modified": 1608912000
+                                        }
+                                    },
+                                    "type": "directory",
+                                    "name": "newspaper",
+                                    "created": 1577836800,
+                                    "modified": 1608912000
+                                },
+                                "aki_journal.txt": {
+                                    "content": "[October 14]\nAnother chaotic editorial meeting today. Nagahashi wanted to turn our club into a tabloid scandal sheet, but Suzumia fought hard for her cat cafe idea. When she talks about cats, her eyes light up completely. It's really cute.\n\nWe agreed on a dual cover. Now the pressure is on me to assemble the layout and make sure both sides look amazing.\n\nHoshida handed me a network dump earlier... he pretends to be a lazy slacker, but the code he writes is frighteningly advanced.",
+                                    "type": "file",
+                                    "name": "aki_journal.txt",
+                                    "created": 1577836800,
+                                    "modified": 1608912000
+                                },
                                 "notes.txt": {
-                                    "content": "[12 Jun, 2018] - Tutorial cancelled due to 'technical difficulties' (teacher's cat walked on keyboard)\n\n[18 Jun 2018] - Bought umbrella. It's sunny. Murphy's law at work.\n\n[5 July 2018] - Depression. Also discovered my umbrella is upside down.\n\n[23 Jan 2020] - Finally figured out why my code wasn't working... missing semicolon. Classic.\n\n[14 Feb 2020] - Valentine's Day alone. At least my computer loves me.\n\n[01 Apr 2020] - Joke's on me, I thought 2020 would be a good year.\n\n[25 Dec 2020] - Santa brought me a debugging session. Thanks, I guess?",
+                                    "content": "Newspaper Club Tasks:\n[✓] Secure Meow Latte interview permission (Suzumia)\n[✓] Collect rumor testimonies (Nagahashi)\n[ ] Check Hiko's homework (Aki)\n[ ] Review server log packet dump on port 8080 (Hoshida & Aki)\n[ ] Finalize Dual Issue layout in TextEditor",
                                     "type": "file",
                                     "name": "notes.txt",
                                     "created": 1577836800,
                                     "modified": 1608912000
-                                },
-                                "passwords.txt": {
-                                    "content": "WARNING: This is a parody OS. DO NOT store real passwords here!\n\n- WiFi: password123 (don't judge me)\n- Email: hunter2 (very secure)\n- Bank: mydogschipsname (please don't hack me)\n- Secret Lair: thekeyisundertherug\n\nP.S. If you're reading this, you have too much free time.",
-                                    "type": "file",
-                                    "name": "passwords.txt",
-                                    "created": 1583020800,
-                                    "modified": 1596240000
-                                },
-                                "resume.docx": {
-                                    "content": "EXPERIENCE:\n- Professional meme connoisseur (2019-present)\n- Expert in copying code from Stack Overflow (2018-present)\n- Professional coffee drinker (2015-present)\n\nSKILLS:\n- Ctrl+C, Ctrl+V mastery\n- Advanced Google searching\n- Turning it off and on again\n- Blaming the compiler\n\nREFERENCES:\n- My cat (she's very supportive)\n- Stack Overflow community (they tolerate me)\n- The IT guy (he sighs a lot when I call)",
-                                    "type": "file",
-                                    "name": "resume.docx",
-                                    "created": 1588291200,
-                                    "modified": 1606780800
-                                },
-                                "todo.x69": {
-                                    "content": "[✓] Install x69 OS\n[✓] Wonder why I installed x69 OS\n[ ] Actually do something productive\n[ ] Learn to code (maybe next year)\n[ ] Touch grass (optional)\n[ ] Find the meaning of life (probably 42)\n[ ] Pet cat (urgent priority)",
-                                    "type": "file",
-                                    "name": "todo.x69",
-                                    "created": 1609459200,
-                                    "modified": 1612137600
                                 }
                             },
                             "type": "directory",
@@ -65,26 +80,19 @@
                         },
                         "Downloads": {
                             "children": {
-                                "totally_not_a_virus.exe": {
-                                    "content": "print('Just kidding! This is a parody OS. No viruses here!')",
+                                "school_server_dump.log": {
+                                    "content": "[23:14:02] [ETH-0] INBOUND PACKET on Port 8080 from 192.168.1.144 (Old 3rd Floor Rack)\n[23:14:03] [PAYLOAD] Encrypted XOR stream detected [Length: 256 bytes]\n[23:14:04] [DECRYPTOR] Matching signature with Newspaper Club archive...\n[23:14:05] [KEY_FOUND] Secret Token: SHADOW-CAT-09\n[23:14:06] [STATUS] Remote node ping active. Traceroute bounces through 3 internal relays.\n[23:14:07] [NOTE] Hoshida: 'Aki, someone is definitely using the school old repeater as a proxy.'",
                                     "type": "file",
-                                    "name": "totally_not_a_virus.exe",
+                                    "name": "school_server_dump.log",
                                     "created": 1598918400,
                                     "modified": 1598918400
                                 },
-                                "ubuntu.iso": {
-                                    "content": "Just a text file pretending to be an ISO. Don't actually try to boot this.",
+                                "hoshida_notes.txt": {
+                                    "content": "Yo Aki,\n\nIf you need to verify the packet key in TextEditor or Terminal, save the extracted token 'SHADOW-CAT-09' into 'cipher.txt' in your home folder.\n\nThat will trigger my automated script to lock down the repeater port before the intruder notices us.\n\n- Hoshida [Root]",
                                     "type": "file",
-                                    "name": "ubuntu.iso",
-                                    "created": 1585708800,
-                                    "modified": 1585708800
-                                },
-                                "important_document.pdf": {
-                                    "content": "This is a very important document.\n\nIt says: 'Stay hydrated and take breaks while coding.'\n\nThat's it. That's the document.\n\nYou're welcome.",
-                                    "type": "file",
-                                    "name": "important_document.pdf",
-                                    "created": 1590969600,
-                                    "modified": 1590969600
+                                    "name": "hoshida_notes.txt",
+                                    "created": 1598918400,
+                                    "modified": 1598918400
                                 }
                             },
                             "type": "directory",

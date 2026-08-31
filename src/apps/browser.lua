@@ -6,6 +6,8 @@ BrowserApp.__index = BrowserApp
 
 local urlMapping = {
     ["http://home.com"] = "browser_sites.home",
+    ["http://meowlatte.com"] = "browser_sites.cat_cafe",
+    ["http://catcafe.com"] = "browser_sites.cat_cafe",
     ["http://google.com"] = "browser_sites.google",
     ["http://bing.com"] = "browser_sites.bing",
     ["http://twitter.com"] = "browser_sites.twitter",
@@ -121,6 +123,13 @@ function BrowserApp:finishLoading()
         if title == "" then title = "Browser" end
         self.title = title
     end
+
+    pcall(function()
+        local EventBus = require("src.core.event_bus")
+        local PlayerStats = require("src.core.player_stats")
+        EventBus.emit("browser:navigate", { url = self.currentURL, title = self.title })
+        PlayerStats.setFlag("browser_visited:" .. self.currentURL:lower(), true)
+    end)
 end
 
 function BrowserApp:create404()

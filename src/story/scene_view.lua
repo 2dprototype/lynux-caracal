@@ -78,6 +78,107 @@ function SceneView.draw()
         love.graphics.rectangle("fill", monX + monW / 2 - 12, monY + monH, 24, 24)
         love.graphics.rectangle("fill", monX + monW / 2 - 32, monY + monH + 20, 64, 6, 2, 2)
 
+    elseif SceneView.currentScene == "clubroom_sunset" or SceneView.currentScene == "clubroom_day" then
+        local isSunset = SceneView.currentScene == "clubroom_sunset"
+        
+        -- Wall background (Warm cream/amber for sunset, crisp warm beige for day)
+        if isSunset then
+            love.graphics.setColor(0.24, 0.16, 0.14) -- Deep sunset interior shadow
+            love.graphics.rectangle("fill", 0, 0, w, h)
+            -- Gradient sunset glow
+            love.graphics.setColor(0.95, 0.52, 0.28, 0.35)
+            love.graphics.rectangle("fill", 0, 0, w, h * 0.7)
+        else
+            love.graphics.setColor(0.88, 0.86, 0.82) -- Daylight classroom wall
+            love.graphics.rectangle("fill", 0, 0, w, h)
+            love.graphics.setColor(0.98, 0.98, 0.95, 0.4)
+            love.graphics.rectangle("fill", 0, 0, w, h * 0.6)
+        end
+
+        -- Tall Clubroom Windows (Left/Center background)
+        local winY = 20
+        local winH = h * 0.52
+        for i = 1, 3 do
+            local winX = 35 + (i - 1) * 110
+            local winW = 95
+            
+            -- Outside Sky
+            if isSunset then
+                love.graphics.setColor(0.95, 0.45, 0.22) -- Bright Orange Sunset Sky
+                love.graphics.rectangle("fill", winX, winY, winW, winH)
+                -- Sunset pink/gold gradient
+                love.graphics.setColor(1.0, 0.78, 0.35, 0.7)
+                love.graphics.rectangle("fill", winX, winY + winH * 0.4, winW, winH * 0.6)
+            else
+                love.graphics.setColor(0.45, 0.72, 0.95) -- Clear Blue Sky
+                love.graphics.rectangle("fill", winX, winY, winW, winH)
+                love.graphics.setColor(1, 1, 1, 0.6)
+                love.graphics.circle("fill", winX + 50, winY + 40, 20)
+                love.graphics.circle("fill", winX + 70, winY + 45, 16)
+            end
+
+            -- Window Frame & Mullions
+            love.graphics.setColor(isSunset and {0.28, 0.2, 0.18} or {0.75, 0.75, 0.78})
+            love.graphics.setLineWidth(2)
+            love.graphics.rectangle("line", winX, winY, winW, winH)
+            love.graphics.line(winX + winW/2, winY, winX + winW/2, winY + winH)
+            love.graphics.line(winX, winY + winH * 0.6, winX + winW, winY + winH * 0.6)
+        end
+
+        -- Bulletin Board / Corkboard (Right wall)
+        local boardX = w - 190
+        local boardY = 30
+        local boardW = 160
+        local boardH = 110
+        love.graphics.setColor(0.55, 0.38, 0.24) -- Wood frame
+        love.graphics.rectangle("fill", boardX, boardY, boardW, boardH, 3, 3)
+        love.graphics.setColor(0.78, 0.62, 0.42) -- Cork
+        love.graphics.rectangle("fill", boardX + 4, boardY + 4, boardW - 8, boardH - 8, 2, 2)
+
+        -- Pinned Notes, Newspaper Clippings & Cat Photo
+        love.graphics.setColor(0.95, 0.95, 0.92) -- Newspaper proof
+        love.graphics.rectangle("fill", boardX + 12, boardY + 14, 50, 70)
+        love.graphics.setColor(0.2, 0.2, 0.2)
+        love.graphics.rectangle("fill", boardX + 16, boardY + 18, 42, 6) -- Headline mockup
+        love.graphics.setColor(0.6, 0.6, 0.6)
+        love.graphics.line(boardX + 16, boardY + 30, boardX + 56, boardY + 30)
+        love.graphics.line(boardX + 16, boardY + 36, boardX + 56, boardY + 36)
+        love.graphics.line(boardX + 16, boardY + 42, boardX + 56, boardY + 42)
+
+        -- Kawaii Cat Cafe flyer pinned with red pin
+        love.graphics.setColor(1.0, 0.88, 0.92) -- Pink Cat Cafe Flyer
+        love.graphics.rectangle("fill", boardX + 72, boardY + 18, 48, 60)
+        love.graphics.setColor(0.92, 0.45, 0.55)
+        love.graphics.circle("fill", boardX + 96, boardY + 38, 12) -- Cat silhouette head
+        love.graphics.polygon("fill", boardX + 86, boardY + 30, boardX + 90, boardY + 22, boardX + 94, boardY + 30) -- Ears
+        love.graphics.polygon("fill", boardX + 98, boardY + 30, boardX + 102, boardY + 22, boardX + 106, boardY + 30)
+        -- Red pin
+        love.graphics.setColor(0.9, 0.2, 0.2)
+        love.graphics.circle("fill", boardX + 96, boardY + 16, 3)
+
+        -- Floor (Polished wooden classroom parquet)
+        local floorY = h * 0.58
+        love.graphics.setColor(isSunset and {0.42, 0.24, 0.16} or {0.58, 0.44, 0.32})
+        love.graphics.rectangle("fill", 0, floorY, w, h - floorY)
+
+        -- Large Wooden Editorial Conference Table
+        local tableY = h * 0.64
+        love.graphics.setColor(isSunset and {0.32, 0.18, 0.12} or {0.48, 0.34, 0.24})
+        love.graphics.rectangle("fill", 40, tableY, w - 80, h - tableY)
+        love.graphics.setColor(isSunset and {0.48, 0.28, 0.18} or {0.62, 0.46, 0.34})
+        love.graphics.line(40, tableY, w - 40, tableY)
+
+        -- Stacks of Newspapers, Red Pens, and Notebooks on Table
+        love.graphics.setColor(0.92, 0.92, 0.9) -- Newspaper stack
+        love.graphics.rectangle("fill", 70, tableY + 12, 100, 18, 2, 2)
+        love.graphics.rectangle("fill", 72, tableY + 8, 96, 4, 1, 1)
+
+        -- Hoshida's Open Laptop (Right side of table)
+        love.graphics.setColor(0.18, 0.2, 0.22)
+        love.graphics.rectangle("fill", w - 180, tableY + 5, 80, 50, 2, 2)
+        love.graphics.setColor(0.12, 0.6, 0.3) -- Terminal green screen
+        love.graphics.rectangle("fill", w - 176, tableY + 9, 72, 42)
+
     elseif SceneView.currentScene == "server_room" then
         love.graphics.setColor(0.08, 0.09, 0.12)
         love.graphics.rectangle("fill", 0, 0, w, h)
@@ -87,6 +188,11 @@ function SceneView.draw()
             love.graphics.rectangle("fill", rackX, 40, 90, h - 80, 2, 2)
             love.graphics.setColor(0.22, 0.24, 0.28)
             love.graphics.rectangle("line", rackX, 40, 90, h - 80, 2, 2)
+            -- Blinking LED lights
+            love.graphics.setColor(0.2, 0.8, 0.4)
+            love.graphics.circle("fill", rackX + 15, 60, 2)
+            love.graphics.setColor(0.9, 0.3, 0.3)
+            love.graphics.circle("fill", rackX + 25, 60, 2)
         end
 
     else

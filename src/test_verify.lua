@@ -120,16 +120,21 @@ local function runTests()
     log("[PASS] Multi-Process Window Management & File Instances")
 
     -- Test 7: Email & Chat Task Conditions
-    local emailCond = TaskConditions.emailRead("Maya")
+    local emailCond = TaskConditions.emailRead("Suzumia")
     assert(not emailCond(), "Email condition should be false initially")
-    EventBus.emit("email:read", { id = 101, sender = "Maya (Sister)" })
-    assert(emailCond(), "Email condition should pass after reading Maya's email")
+    EventBus.emit("email:read", { id = 102, sender = "Suzumia (Vice President)" })
+    assert(emailCond(), "Email condition should pass after reading Suzumia's email")
 
-    local chatCond = TaskConditions.chatSentTo("Chloe")
+    local chatCond = TaskConditions.chatSentTo("Suzumia")
     assert(not chatCond(), "Chat condition should be false initially")
-    EventBus.emit("chat:sent", { user = "Chloe (Girlfriend)", text = "Hey babe!" })
-    assert(chatCond(), "Chat condition should pass after sending message to Chloe")
-    log("[PASS] Sister Email & Girlfriend Chat Task Conditions")
+    EventBus.emit("chat:sent", { user = "Suzumia (Vice President)", text = "I love the cat photos!" })
+    assert(chatCond(), "Chat condition should pass after sending message to Suzumia")
+
+    local browserCond = TaskConditions.browserVisited("cat")
+    assert(not browserCond(), "Browser condition should be false initially")
+    PlayerStats.setFlag("browsed_cat_cafe", true)
+    assert(browserCond(), "Browser condition should pass after browsing Meow Latte")
+    log("[PASS] Newspaper Club Email, Chat & Browser Task Conditions")
 
     -- Test 8: Transitions
     local Transitions = require("src.core.transitions")
