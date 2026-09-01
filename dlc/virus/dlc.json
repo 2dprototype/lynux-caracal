@@ -1,0 +1,11 @@
+﻿{
+    "id": "virus",
+    "name": "System Optimizer Pro",
+    "version": "2.0.0",
+    "author": "Shadow Tech",
+    "description": "Boost your system performance with advanced AI optimization.",
+    "category": "Utilities",
+    "defaultWidth": 400,
+    "defaultHeight": 340,
+    "enabled": true
+}

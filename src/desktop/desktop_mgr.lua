@@ -448,15 +448,17 @@ function DesktopManager.drawStartMenu()
     DesktopManager.startMenuMaxScroll = math.max(0, totalHeight - listH)
     DesktopManager.startMenuScroll = math.max(0, math.min(DesktopManager.startMenuMaxScroll, DesktopManager.startMenuScroll or 0))
 
-    -- Scissor clip for scrollable apps
+    -- Convert scissor to screen coordinates
     local barW = 6
     local contentW = listW - (DesktopManager.startMenuMaxScroll > 0 and (barW + 8) or 0)
-    love.graphics.setScissor(listX, listY, contentW, listH)
+    local sx, sy = Viewport.toScreen(listX, listY)
+    local sw = contentW * Viewport.scale
+    local sh = listH * Viewport.scale
+    love.graphics.setScissor(sx, sy, sw, sh)
 
     for i, app in ipairs(DesktopManager.apps) do
         local itemY = listY + (i - 1) * itemH - DesktopManager.startMenuScroll
         if itemY + itemH >= listY and itemY <= listY + listH then
-            -- Hover highlight
             local mx, my = DesktopManager.lastMouseX or -1, DesktopManager.lastMouseY or -1
             if mx >= listX + 8 and mx <= listX + contentW - 4 and my >= itemY and my <= itemY + itemH then
                 love.graphics.setColor(0.92, 0.95, 0.98)
@@ -476,9 +478,10 @@ function DesktopManager.drawStartMenu()
         end
     end
 
-    love.graphics.setScissor()
+    -- Restore global viewport scissor (not nil)
+    love.graphics.setScissor(Viewport.offsetX, Viewport.offsetY, Viewport.drawW, Viewport.drawH)
 
-    -- Scrollbar Track and Grabable Thumb
+    -- Scrollbar (drawn outside the content scissor)
     if DesktopManager.startMenuMaxScroll > 0 then
         local barX = menuX + menuW - barW - 6
         local barY = listY + 2

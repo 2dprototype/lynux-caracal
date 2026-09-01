@@ -162,13 +162,8 @@ function WindowManager.draw()
             love.graphics.setColor(0, 0, 0, isFocused and 0.12 or 0.06)
             love.graphics.rectangle("fill", win.x + 3, win.y + 3, win.width, win.height)
 
-            -- Window body: white with subtle border on bottom/right? We'll use a very light gray for content area.
-            love.graphics.setColor(0.98, 0.98, 0.99)
-            love.graphics.rectangle("fill", win.x, win.y, win.width, win.height)
-
             -- Title bar
             if isFocused then
-                -- Highlighted title bar: light blue accent
                 love.graphics.setColor(0.92, 0.96, 1.0)  -- very light blue
             else
                 love.graphics.setColor(0.96, 0.97, 0.98)
@@ -193,7 +188,7 @@ function WindowManager.draw()
                            or (win.title or (win.app and win.app.name) or "Application")
             love.graphics.print(titleText, win.x + 30, win.y + (titleH - 14) / 2 + 1)
 
-            -- Windows 10 Top-Right Controls: [ _ ] [ □ ] [ ✕ ] (light theme, subtle)
+            -- Windows 10 Top-Right Controls: [ _ ] [ □ ] [ ✕ ]
             local btnCloseW = 44
             local btnOtherW = 38
             local closeX = win.x + win.width - btnCloseW
@@ -222,20 +217,28 @@ function WindowManager.draw()
             love.graphics.line(closeX + 17, win.y + 11, closeX + 27, win.y + 21)
             love.graphics.line(closeX + 27, win.y + 11, closeX + 17, win.y + 21)
 
-            -- Content Area (with scissor clipping)
+            -- ------------------------------------------------------------
+            -- FIXED CONTENT SCISSOR (screen‑space coordinates)
+            -- ------------------------------------------------------------
             local contentY = win.y + titleH
             local contentH = win.height - titleH
-            love.graphics.setScissor(win.x, contentY, win.width, contentH)
 
+            -- Convert virtual area to screen pixels
+            local sx, sy = Viewport.toScreen(win.x, contentY)
+            local sw = win.width * Viewport.scale
+            local sh = contentH * Viewport.scale
+
+            love.graphics.setScissor(sx, sy, sw, sh)
+
+            -- Draw the app instance (it receives virtual coordinates)
             if win.instance and win.instance.draw then
                 pcall(function()
                     win.instance:draw(win.x, contentY, win.width, contentH)
                 end)
             end
 
-            love.graphics.setScissor()
-
-            -- No window border drawn at all (as requested)
+            -- Restore the global viewport scissor (NOT nil!)
+            love.graphics.setScissor(Viewport.offsetX, Viewport.offsetY, Viewport.drawW, Viewport.drawH)
 
             love.graphics.pop()
         end

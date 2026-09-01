@@ -144,7 +144,13 @@ function TaskHUD.draw()
         local contentW = panelW
         local contentH = panelH - headerH
 
-        love.graphics.setScissor(contentX, contentY, contentW, contentH)
+        -- ============================================================
+        -- FIXED: Convert scissor to screen coordinates
+        -- ============================================================
+        local sx, sy = Viewport.toScreen(contentX, contentY)
+        local sw = contentW * Viewport.scale
+        local sh = contentH * Viewport.scale
+        love.graphics.setScissor(sx, sy, sw, sh)
 
         local lineHeight = 20
         local padding = 12
@@ -251,9 +257,12 @@ function TaskHUD.draw()
             TaskHUD.scrollOffset = TaskHUD.maxScroll
         end
 
-        love.graphics.setScissor()
+        -- ============================================================
+        -- FIXED: Restore global viewport scissor (NOT nil!)
+        -- ============================================================
+        love.graphics.setScissor(Viewport.offsetX, Viewport.offsetY, Viewport.drawW, Viewport.drawH)
 
-        -- Scrollbar
+        -- Scrollbar (drawn outside content scissor)
         if TaskHUD.maxScroll > 0 then
             local barX = contentX + contentW - TaskHUD.scrollBarWidth - 4
             local barY = contentY + 4
