@@ -87,6 +87,30 @@ function filesystem.save(fs)
     end)
 end
 
+-- Load the default file system template from "data/filesystem.json"
+function filesystem.loadDefault()
+    local fs = { name = "/", type = "directory", parent = nil, children = {} }
+    if love.filesystem.getInfo("data/filesystem.json") then
+        local data = love.filesystem.read("data/filesystem.json")
+        local fsLoaded = json.decode(data)
+        if fsLoaded then
+            fs = fsLoaded
+            filesystem.restore(fs, nil)
+        end
+    end
+    return fs
+end
+
+-- Reset the filesystem completely to default state
+function filesystem.reset()
+    if love.filesystem.getInfo("filesystem.json") then
+        love.filesystem.remove("filesystem.json")
+    end
+    sharedFS = filesystem.loadDefault()
+    filesystem.save(sharedFS)
+    return sharedFS
+end
+
 -- Load the file system from disk (or load default from "data/filesystem.json" if it does not exist).
 function filesystem.load()
     local fs = { name = "/", type = "directory", parent = nil, children = {} }
@@ -98,18 +122,11 @@ function filesystem.load()
         if fsLoaded then
             fs = fsLoaded
             filesystem.restore(fs, nil)
-        end
-    elseif love.filesystem.getInfo("data/filesystem.json") then
-        -- Load default file system data if no saved filesystem exists.
-        data = love.filesystem.read("data/filesystem.json")
-        fsLoaded = json.decode(data)
-        if fsLoaded then
-            fs = fsLoaded
-            filesystem.restore(fs, nil)
+            return fs
         end
     end
 
-    return fs
+    return filesystem.loadDefault()
 end
 
 -- Returns the shared file system; load it only once.

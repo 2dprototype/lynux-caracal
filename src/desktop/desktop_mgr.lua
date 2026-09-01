@@ -221,12 +221,10 @@ function DesktopManager.openImageFile(node)
         end
     end
     if imgApp then
-        local newInstance = imgApp.module.new()
-        if newInstance.loadImage then
-            newInstance:loadImage(node)
-        end
+        local newInstance = imgApp.module.new(node and node.name, node)
         WindowManager.openWindow(imgApp, 540, 340, newInstance, node and (node.name .. " - ImageViewer") or "ImageViewer")
     end
+    AudioManager.playSFX("click")
 end
 
 function DesktopManager.openObjFile(node)
@@ -238,9 +236,10 @@ function DesktopManager.openObjFile(node)
         end
     end
     if objApp then
-        local newInstance = objApp.module.new()
+        local newInstance = objApp.module.new(node and node.name, node)
         WindowManager.openWindow(objApp, 540, 340, newInstance, node and (node.name .. " - 3D Viewer") or "3D Viewer")
     end
+    AudioManager.playSFX("click")
 end
 
 function DesktopManager.drawWallpaper()
@@ -515,6 +514,7 @@ end
 
 function DesktopManager.mousemoved(x, y, dx, dy)
     Taskbar.mousemoved(x, y)
+    TaskHUD.mousemoved(x, y, dx, dy)
     WindowManager.mousemoved(x, y, dx, dy)
 end
 
@@ -524,6 +524,7 @@ function DesktopManager.mousereleased(x, y, button)
 end
 
 function DesktopManager.wheelmoved(x, y)
+    if TaskHUD.wheelmoved and TaskHUD.wheelmoved(x, y) then return end
     WindowManager.wheelmoved(x, y)
 end
 

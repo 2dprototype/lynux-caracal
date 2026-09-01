@@ -342,14 +342,15 @@ function TaskHUD.mousepressed(x, y, button)
         end
     end
 
-    -- Scrollbar click (only when expanded)
+    -- Scrollbar click & grab (only when expanded)
     if not TaskHUD.collapsed and TaskHUD.maxScroll > 0 then
         local contentX = TaskHUD.x
         local contentY = TaskHUD.y + 28
         local contentH = TaskHUD.height - 28
-        local barX = contentX + TaskHUD.width - TaskHUD.scrollBarWidth - 4
-        if x >= barX and x <= barX + TaskHUD.scrollBarWidth and
-           y >= contentY + 4 and y <= contentY + contentH - 4 then
+        local barX = contentX + TaskHUD.width - TaskHUD.scrollBarWidth - 8
+        -- Generous touch and grab hitbox
+        if x >= barX - 6 and x <= contentX + TaskHUD.width + 4 and
+           y >= contentY and y <= contentY + contentH then
             TaskHUD.isDraggingScroll = true
             TaskHUD.dragStartY = y
             TaskHUD.dragStartScroll = TaskHUD.scrollOffset
@@ -369,23 +370,26 @@ function TaskHUD.mousereleased(x, y, button)
 end
 
 function TaskHUD.mousemoved(x, y, dx, dy)
-    if TaskHUD.isDraggingScroll then
+    if TaskHUD.isDraggingScroll and TaskHUD.maxScroll > 0 then
         local contentY = TaskHUD.y + 28
         local contentH = TaskHUD.height - 28
-        local barY = contentY + 4
         local barH = contentH - 8
-        local dy_rel = y - TaskHUD.dragStartY
-        local ratio = dy_rel / barH
-        TaskHUD.scrollOffset = TaskHUD.dragStartScroll + ratio * TaskHUD.maxScroll
-        TaskHUD.scrollOffset = math.max(0, math.min(TaskHUD.maxScroll, TaskHUD.scrollOffset))
+        local totalContentHeight = TaskHUD.maxScroll + contentH
+        local visibleRatio = contentH / (totalContentHeight + contentH)
+        local thumbH = math.max(20, barH * visibleRatio)
+        local trackSpan = math.max(1, barH - thumbH)
+
+        local deltaY = y - TaskHUD.dragStartY
+        local newOffset = TaskHUD.dragStartScroll + (deltaY / trackSpan) * TaskHUD.maxScroll
+        TaskHUD.scrollOffset = math.max(0, math.min(TaskHUD.maxScroll, newOffset))
         return true
     end
     return false
 end
 
 function TaskHUD.wheelmoved(x, y)
-    if not TaskHUD.collapsed then
-        local scrollAmount = y * 20
+    if not TaskHUD.collapsed and TaskHUD.maxScroll > 0 then
+        local scrollAmount = -y * 28
         TaskHUD.scrollOffset = math.max(0, math.min(TaskHUD.maxScroll, TaskHUD.scrollOffset + scrollAmount))
         return true
     end

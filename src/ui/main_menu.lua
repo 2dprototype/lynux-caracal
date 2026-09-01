@@ -65,6 +65,9 @@ function MainMenu.init()
     MainMenu.menuFont = love.graphics.newFont("font/IBMPlexSans-Bold.ttf", 15) or love.graphics.newFont(15)
     MainMenu.boldFont = love.graphics.newFont("font/IBMPlexSans-Bold.ttf", 13) or love.graphics.newFont(13)
     MainMenu.smallFont = love.graphics.newFont("font/Nunito-Regular.ttf", 11) or love.graphics.newFont(11)
+
+    MainMenu.hasDrawnOnce = false
+    MainMenu.bgmTimer = 0
 end
 
 function MainMenu.getLayout(screenW, screenH)
@@ -106,10 +109,19 @@ function MainMenu.getMenuItems()
 end
 
 function MainMenu.update(dt)
-    -- Clean static menu; no background animations
+    -- Start Main Menu BGM only after the menu interface has rendered on screen
+    if MainMenu.hasDrawnOnce then
+        MainMenu.bgmTimer = (MainMenu.bgmTimer or 0) + dt
+        if MainMenu.bgmTimer >= 0.25 then
+            if not AudioManager.bgm or not AudioManager.bgm:isPlaying() then
+                AudioManager.playBGM("main_menu")
+            end
+        end
+    end
 end
 
 function MainMenu.draw()
+    MainMenu.hasDrawnOnce = true
     local screenW = Viewport.getWidth()
     local screenH = Viewport.getHeight()
     local layout = MainMenu.getLayout(screenW, screenH)

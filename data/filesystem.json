@@ -117,14 +117,14 @@
                         "Pictures": {
                             "children": {
                                 "screenshot_2020.png": {
-                                    "content": "It's a picture of a blue screen. How ironic.",
+                                    "content": "data/images/screenshot_2020.png",
                                     "type": "file",
                                     "name": "screenshot_2020.png",
                                     "created": 1601510400,
                                     "modified": 1601510400
                                 },
                                 "cat.jpg": {
-                                    "content": "A majestic photo of a cat sitting on a keyboard. Probably writing better code than me.",
+                                    "content": "data/images/cat.jpg",
                                     "type": "file",
                                     "name": "cat.jpg",
                                     "created": 1580515200,
@@ -133,14 +133,14 @@
                                 "memes": {
                                     "children": {
                                         "drake_hotline_coding.jpg": {
-                                            "content": "[No] Writing documentation\n[Yes] Writing more code that breaks everything",
+                                            "content": "data/images/drake_hotline_coding.jpg",
                                             "type": "file",
                                             "name": "drake_hotline_coding.jpg",
                                             "created": 1593648000,
                                             "modified": 1593648000
                                         },
                                         "its_not_much_but_its_honest_work.jpg": {
-                                            "content": "Me: *changes one line of code*\nAlso me: 'I have altered the code. Pray I do not alter it further.'",
+                                            "content": "data/images/its_not_much_but_its_honest_work.jpg",
                                             "type": "file",
                                             "name": "its_not_much_but_its_honest_work.jpg",
                                             "created": 1598918400,
@@ -167,28 +167,28 @@
                 "images": {
                     "children": {
                         "img1.jpg": {
-                            "content": "Stock photo of a person smiling while looking at graphs. Probably faking it.",
+                            "content": "data/images/img1.png",
                             "type": "file",
                             "name": "img1.jpg",
                             "created": 1583020800,
                             "modified": 1583020800
                         },
-                        "img3.jpg": {
-                            "content": "Blurry photo of what might be a UFO. Or a smudge on the lens. We'll never know.",
-                            "type": "file",
-                            "name": "img3.jpg",
-                            "created": 1590969600,
-                            "modified": 1590969600
-                        },
                         "img2.jpg": {
-                            "content": "A picture of nothing. Literally just a blank white image. Art.",
+                            "content": "data/images/img2.png",
                             "type": "file",
                             "name": "img2.jpg",
                             "created": 1585708800,
                             "modified": 1585708800
                         },
+                        "img3.jpg": {
+                            "content": "data/images/img3.png",
+                            "type": "file",
+                            "name": "img3.jpg",
+                            "created": 1590969600,
+                            "modified": 1590969600
+                        },
                         "rickroll.gif": {
-                            "content": "Never gonna give you up, never gonna let you down... You've been tricked by a text file.",
+                            "content": "data/images/rickroll.gif",
                             "type": "file",
                             "name": "rickroll.gif",
                             "created": 1593648000,
@@ -290,28 +290,28 @@
                 "models": {
                     "children": {
                         "model.obj": {
-                            "content": "# Blender model of a teapot\n# The classic 3D test model\n# Fun fact: It's not actually a teapot, it's a metaphor",
+                            "content": "data/models/model.obj",
                             "type": "file",
                             "name": "model.obj",
                             "created": 1588291200,
                             "modified": 1588291200
                         },
                         "cube.obj": {
-                            "content": "# The most complex shape known to 3D artists\n# It's a cube. It does cube things.\n# Groundbreaking.",
+                            "content": "data/models/cube.obj",
                             "type": "file",
                             "name": "cube.obj",
                             "created": 1593648000,
                             "modified": 1593648000
                         },
                         "monkey.obj": {
-                            "content": "# Suzanne the monkey\n# Blender's unofficial mascot\n# She judges your modeling skills\n# And finds them wanting",
+                            "content": "data/models/monkey.obj",
                             "type": "file",
                             "name": "monkey.obj",
                             "created": 1598918400,
                             "modified": 1598918400
                         },
                         "death_star.obj": {
-                            "content": "# That's no moon...\n# It's a fully operational battle station\n# Please don't blow up any planets\n# HR would like a word",
+                            "content": "data/models/death_star.obj",
                             "type": "file",
                             "name": "death_star.obj",
                             "created": 1601510400,

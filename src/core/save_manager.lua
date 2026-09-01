@@ -151,9 +151,8 @@ function SaveManager.resetProgress()
     if SaveManager.hasSave() then
         love.filesystem.remove(SaveManager.saveFilename)
     end
-    if love.filesystem.getInfo("filesystem.json") then
-        love.filesystem.remove("filesystem.json")
-    end
+    local filesystem = require("src.core.filesystem")
+    filesystem.reset()
     SaveManager.saveData = {}
 end
 

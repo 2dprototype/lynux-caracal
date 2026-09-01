@@ -3,8 +3,13 @@ local ImageViewer = {}
 ImageViewer.__index = ImageViewer
 
 function ImageViewer.new(__filepath, fileNode)
+    if type(__filepath) == "table" and not fileNode then
+        fileNode = __filepath
+        __filepath = fileNode.name
+    end
+
     local self = setmetatable({}, ImageViewer)
-    self.fileNode = fileNode
+    self.fileNode = fileNode or { name = tostring(__filepath or "image.png") }
     self.image = nil
     self.scale = 1.0
     self.offsetX = 0
@@ -16,8 +21,8 @@ function ImageViewer.new(__filepath, fileNode)
     self.windowX, self.windowY, self.windowWidth, self.windowHeight = 0, 0, 0, 0
     
     -- UI Dimensions
-    self.uiHeight = 40
-    self.controlsHeight = 44
+    self.uiHeight = 36
+    self.controlsHeight = 38
     self.showInfo = true
     
     -- Animation states
@@ -26,30 +31,85 @@ function ImageViewer.new(__filepath, fileNode)
     self.zoomSpeed = 12.0
     self.targetOffsetX = 0
     self.targetOffsetY = 0
+    self.missingSource = nil
     
-    -- Try to load image from virtual filesystem path
-    local success, err = pcall(function()
-        local filepath = "data/files/" .. __filepath 
-        if filepath then
-            self.image = love.graphics.newImage(filepath)
-            -- Set filter for crisp rendering when zooming in/out
-            self.image:setFilter("linear", "nearest")
-        else
-            -- Fallback to virtual path
-            local path = filesystem.getPath(fileNode):gsub("^/", "")
-            self.image = love.graphics.newImage("data/" .. path)
-            self.image:setFilter("linear", "nearest")
+    -- Determine candidate paths from node.content, node.name, __filepath
+    local contentSrc = (self.fileNode and self.fileNode.content and self.fileNode.content ~= "") and self.fileNode.content or nil
+    local fileName = (self.fileNode and self.fileNode.name) or tostring(__filepath or "image.png")
+
+    local candidatePaths = {}
+    if contentSrc then
+        table.insert(candidatePaths, contentSrc)
+        table.insert(candidatePaths, "data/images/" .. contentSrc)
+        table.insert(candidatePaths, "data/files/" .. contentSrc)
+    end
+    if fileName then
+        table.insert(candidatePaths, "data/images/" .. fileName)
+        table.insert(candidatePaths, "data/files/" .. fileName)
+        table.insert(candidatePaths, "data/backgrounds/" .. fileName)
+        table.insert(candidatePaths, "data/characters/" .. fileName)
+        table.insert(candidatePaths, "data/" .. fileName)
+    end
+    if __filepath and __filepath ~= fileName then
+        table.insert(candidatePaths, __filepath)
+        table.insert(candidatePaths, "data/images/" .. __filepath)
+        table.insert(candidatePaths, "data/files/" .. __filepath)
+    end
+
+    -- Try loading image from candidates
+    for _, path in ipairs(candidatePaths) do
+        if love.filesystem.getInfo(path) then
+            local ok, img = pcall(love.graphics.newImage, path)
+            if ok and img then
+                self.image = img
+                self.image:setFilter("linear", "nearest")
+                self.imagePath = path
+                break
+            end
         end
-    end)
+    end
     
-    if not success then
-        self.error = "Failed to load image: " .. tostring(__filepath)
-        print("Image loading error:", err)
+    if not self.image then
+        self.missingSource = contentSrc or ("data/images/" .. fileName)
     else
         self:resetView()
     end
     
     return self
+end
+
+function ImageViewer:loadImage(node)
+    if not node then return end
+    self.fileNode = node
+    local contentSrc = (node.content and node.content ~= "") and node.content or nil
+    local fileName = node.name or "image.png"
+
+    local candidatePaths = {}
+    if contentSrc then
+        table.insert(candidatePaths, contentSrc)
+        table.insert(candidatePaths, "data/images/" .. contentSrc)
+    end
+    table.insert(candidatePaths, "data/images/" .. fileName)
+    table.insert(candidatePaths, "data/files/" .. fileName)
+    table.insert(candidatePaths, "data/backgrounds/" .. fileName)
+    table.insert(candidatePaths, "data/characters/" .. fileName)
+
+    for _, path in ipairs(candidatePaths) do
+        if love.filesystem.getInfo(path) then
+            local ok, img = pcall(love.graphics.newImage, path)
+            if ok and img then
+                self.image = img
+                self.image:setFilter("linear", "nearest")
+                self.imagePath = path
+                self.missingSource = nil
+                self:resetView()
+                return
+            end
+        end
+    end
+
+    self.image = nil
+    self.missingSource = contentSrc or ("data/images/" .. fileName)
 end
 
 function ImageViewer:update(dt)
@@ -80,18 +140,42 @@ end
 function ImageViewer:draw(x, y, width, height)
     self.windowX, self.windowY, self.windowWidth, self.windowHeight = x, y, width, height
     
-    -- Google-style Light Background (#F8F9FA)
+    -- Clean light background
     love.graphics.setColor(0.97, 0.97, 0.98)
     love.graphics.rectangle("fill", x, y, width, height)
     
-    if self.error then
-        love.graphics.setColor(0.85, 0.2, 0.2)
-        love.graphics.printf(self.error, x, y + height/2 - 10, width, "center")
+    if not self.image then
+        -- Developer placeholder card for missing image
+        local cardW = math.min(320, width - 40)
+        local cardH = math.min(180, height - 60)
+        local cardX = x + (width - cardW) / 2
+        local cardY = y + (height - cardH) / 2
+
+        love.graphics.setColor(0.06, 0.09, 0.16, 0.95)
+        love.graphics.rectangle("fill", cardX, cardY, cardW, cardH, 6, 6)
+        love.graphics.setColor(0.2, 0.5, 0.85, 0.8)
+        love.graphics.rectangle("line", cardX, cardY, cardW, cardH, 6, 6)
+
+        -- Title
         love.graphics.setColor(1, 1, 1)
+        love.graphics.printf(self.fileNode and self.fileNode.name or "Image", cardX, cardY + 14, cardW, "center")
+
+        -- Tag
+        love.graphics.setColor(0.95, 0.45, 0.45)
+        love.graphics.printf("[Missing Image File]", cardX, cardY + 38, cardW, "center")
+
+        -- Expected Path box
+        love.graphics.setColor(0.04, 0.06, 0.11)
+        love.graphics.rectangle("fill", cardX + 12, cardY + 64, cardW - 24, 48, 4, 4)
+        love.graphics.setColor(0.45, 0.75, 1.0)
+        love.graphics.printf("Expected Content Source:", cardX + 16, cardY + 70, cardW - 32, "center")
+        love.graphics.setColor(0.85, 0.9, 0.98)
+        love.graphics.printf(tostring(self.missingSource or "data/images/*.png"), cardX + 16, cardY + 88, cardW - 32, "center")
+
+        love.graphics.setColor(0.5, 0.55, 0.65)
+        love.graphics.printf("Place image in data/images/ to view", cardX, cardY + cardH - 24, cardW, "center")
         return
     end
-    
-    if not self.image then return end
     
     -- Capture dimensions and reset view on first draw to ensure fit-to-screen
     if self.windowWidth <= 1 then

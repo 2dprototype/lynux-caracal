@@ -29,9 +29,8 @@ function GameManager.init()
     ChapterManager.init()
     MainMenu.init()
 
-    -- Start in Main Menu with main_menu OST
+    -- Start in Main Menu
     GameManager.mode = "menu"
-    AudioManager.playBGM("main_menu")
 
     -- Listen to switch mode requests
     EventBus.on("game:request_switch_mode", function(data)

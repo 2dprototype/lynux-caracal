@@ -178,25 +178,25 @@ function CharacterManager.draw()
             love.graphics.push()
 
             if img then
-                -- Render loaded visual novel character sprite with mirror/flip support
-                local targetHeight = math.min(h * 0.78, 640)
+                -- Render loaded visual novel character sprite with mirror/flip support (increased size & elevated position)
+                local targetHeight = math.min(h * 0.88, 640)
                 local scale = targetHeight / img:getHeight()
                 local imgW = img:getWidth() * scale
                 local imgH = img:getHeight() * scale
 
                 local scaleX = charData.flipped and -scale or scale
                 local drawX = charData.flipped and math.floor(coords.x + imgW / 2) or math.floor(coords.x - imgW / 2)
-                local drawY = math.floor(h - imgH + 15) -- grounded near bottom
+                local drawY = math.floor(h - imgH - 12) -- elevated higher up on screen
 
                 love.graphics.setColor(1, 1, 1, alpha)
                 love.graphics.draw(img, drawX, drawY, 0, scaleX, scale)
 
             else
                 -- Missing sprite: Developer placeholder card displaying target sprite source
-                local cardW = math.min(220, math.floor(w * 0.26))
-                local cardH = math.min(300, math.floor(h * 0.52))
+                local cardW = math.min(230, math.floor(w * 0.28))
+                local cardH = math.min(310, math.floor(h * 0.56))
                 local cardX = math.floor(coords.x - cardW / 2)
-                local cardY = math.floor(h * 0.42 - cardH / 2)
+                local cardY = math.floor(h * 0.38 - cardH / 2)
 
                 -- Semi-transparent dark blue card body
                 love.graphics.setColor(0.06, 0.09, 0.16, 0.88 * alpha)
