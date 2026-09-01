@@ -5,6 +5,7 @@
 local TaskManager = require("src.tasks.task_manager")
 local AudioManager = require("src.core.audio_manager")
 local EventBus = require("src.core.event_bus")
+local Viewport = require("src.core.viewport")
 
 local TaskHUD = {
     -- Panel geometry (right‑aligned)
@@ -46,8 +47,8 @@ function TaskHUD.init()
     TaskHUD.headerFont = loadCustomFont("font/IBMPlexSans-Bold.ttf", 14) or loadCustomFont("font/Nunito-Regular.ttf", 14)
     TaskHUD.smallFont = loadCustomFont("font/Nunito-Regular.ttf", 12)
 
-    local screenW = love.graphics.getWidth()
-    local screenH = love.graphics.getHeight()
+    local screenW = Viewport.getWidth()
+    local screenH = Viewport.getHeight()
     TaskHUD.x = screenW - TaskHUD.width
     TaskHUD.y = 40
     TaskHUD.scrollOffset = 0
@@ -71,7 +72,7 @@ function TaskHUD.draw()
     local panelW = TaskHUD.collapsed and TaskHUD.collapsedWidth or TaskHUD.width
 
     -- For collapsed, we position at the right edge
-    local screenW = love.graphics.getWidth()
+    local screenW = Viewport.getWidth()
     local x = TaskHUD.collapsed and (screenW - TaskHUD.collapsedWidth) or TaskHUD.x
     local y = TaskHUD.y
     local panelH = TaskHUD.height
@@ -393,8 +394,8 @@ end
 
 -- Called on window resize
 function TaskHUD.resize()
-    local screenW = love.graphics.getWidth()
-    local screenH = love.graphics.getHeight()
+    local screenW = Viewport.getWidth()
+    local screenH = Viewport.getHeight()
     TaskHUD.x = screenW - TaskHUD.width
     TaskHUD.maxHeight = screenH - 100
     TaskHUD.height = math.min(400, TaskHUD.maxHeight)

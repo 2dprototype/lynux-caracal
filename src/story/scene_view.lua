@@ -1,6 +1,8 @@
 -- src/story/scene_view.lua
 -- Background Asset Loader, Scene Management & Dark Blue Fallback
 
+local Viewport = require("src.core.viewport")
+
 local SceneView = {
     currentScene = "clubroom_sunset",
     imageCache = {},
@@ -77,7 +79,7 @@ function SceneView.update(dt)
 end
 
 function SceneView.draw()
-    local w, h = love.graphics.getWidth(), love.graphics.getHeight()
+    local w, h = Viewport.getWidth(), Viewport.getHeight()
     local img, expectedPath = SceneView.getBackground(SceneView.currentScene)
 
     if img then

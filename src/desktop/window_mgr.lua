@@ -1,9 +1,6 @@
--- src/desktop/window_mgr.lua
--- Windows 10 Style Window Manager with Multi-Process / Multi-Instance App Management
--- Light theme, no window borders, focus highlighted in title bar
-
 local AudioManager = require("src.core.audio_manager")
 local EventBus = require("src.core.event_bus")
+local Viewport = require("src.core.viewport")
 
 local WindowManager = {
     openApps = {},
@@ -58,7 +55,7 @@ end
 function WindowManager.openWindow(app, defaultW, defaultH, customInstance, customTitle)
     defaultW = defaultW or 560
     defaultH = defaultH or 350
-    local screenW, screenH = love.graphics.getWidth(), love.graphics.getHeight()
+    local screenW, screenH = Viewport.getWidth(), Viewport.getHeight()
     local x = (screenW - defaultW) / 2 + (#WindowManager.openApps * 24) % 100
     local y = 35 + ((screenH - 75 - defaultH) / 2) + (#WindowManager.openApps * 20) % 80
 
@@ -247,7 +244,7 @@ end
 
 function WindowManager.toggleMaximize(win)
     if not win then return end
-    local screenW, screenH = love.graphics.getWidth(), love.graphics.getHeight()
+    local screenW, screenH = Viewport.getWidth(), Viewport.getHeight()
     local taskbarH = 38
     local titleH = WindowManager.titleBarHeight
     

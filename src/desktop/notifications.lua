@@ -2,6 +2,7 @@
 -- Windows 10 Style Toast Notifications (Action Center Popup) - Light theme
 
 local AudioManager = require("src.core.audio_manager")
+local Viewport = require("src.core.viewport")
 
 local Notifications = {
     list = {},
@@ -64,7 +65,7 @@ end
 
 function Notifications.mousepressed(x, y, button)
     if button ~= 1 then return false end
-    local screenW, screenH = love.graphics.getWidth(), love.graphics.getHeight()
+    local screenW, screenH = Viewport.getWidth(), Viewport.getHeight()
     local marginX = 16
     local startY = screenH - 45 -- Above bottom taskbar
     local currentY = startY
@@ -86,7 +87,7 @@ function Notifications.mousepressed(x, y, button)
 end
 
 function Notifications.draw()
-    local screenW, screenH = love.graphics.getWidth(), love.graphics.getHeight()
+    local screenW, screenH = Viewport.getWidth(), Viewport.getHeight()
     local marginX = 16
     local startY = screenH - 45
     local currentY = startY

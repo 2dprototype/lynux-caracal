@@ -5,6 +5,7 @@
 local PlayerStats = require("src.core.player_stats")
 local TaskManager = require("src.tasks.task_manager")
 local AudioManager = require("src.core.audio_manager")
+local Viewport = require("src.core.viewport")
 
 local Taskbar = {
     bottomBarHeight = 38,
@@ -27,7 +28,7 @@ function Taskbar.init()
 end
 
 function Taskbar.drawBottomBar()
-    local screenW, screenH = love.graphics.getWidth(), love.graphics.getHeight()
+    local screenW, screenH = Viewport.getWidth(), Viewport.getHeight()
     local h = Taskbar.bottomBarHeight
     local y = screenH - h
 
@@ -113,7 +114,7 @@ function Taskbar.mousepressed(x, y, button)
 end
 
 function Taskbar.mousemoved(x, y)
-    local screenW, screenH = love.graphics.getWidth(), love.graphics.getHeight()
+    local screenW, screenH = Viewport.getWidth(), Viewport.getHeight()
     local taskbarY = screenH - Taskbar.bottomBarHeight
 
     if y >= taskbarY and x >= 0 and x <= 44 then

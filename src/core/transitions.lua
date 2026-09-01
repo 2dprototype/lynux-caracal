@@ -1,6 +1,8 @@
 -- src/core/transitions.lua
 -- Standard Visual Novel & Cinematic Transitions Engine
 
+local Viewport = require("src.core.viewport")
+
 local Transitions = {
     active = false,
     duration = 0.5,
@@ -50,7 +52,7 @@ end
 function Transitions.draw()
     if not Transitions.active then return end
 
-    local w, h = love.graphics.getWidth(), love.graphics.getHeight()
+    local w, h = Viewport.getWidth(), Viewport.getHeight()
     local half = Transitions.duration / 2
     local progress = 0 -- 0.0 to 1.0 (0=open/clear, 1=fully covered)
 

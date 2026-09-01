@@ -1,5 +1,6 @@
 -- src/story/choice_box.lua
 local AudioManager = require("src.core.audio_manager")
+local Viewport = require("src.core.viewport")
 
 local ChoiceBox = {
     visible = false,
@@ -72,7 +73,7 @@ end
 function ChoiceBox.mousepressed(x, y, button)
     if not ChoiceBox.visible or button ~= 1 then return false end
 
-    local screenW, screenH = love.graphics.getWidth(), love.graphics.getHeight()
+    local screenW, screenH = Viewport.getWidth(), Viewport.getHeight()
     local itemW = math.min(520, screenW - 60)
     local itemH = 44
     local totalH = #ChoiceBox.options * (itemH + 10)
@@ -92,7 +93,7 @@ end
 
 function ChoiceBox.mousemoved(x, y)
     if not ChoiceBox.visible then return end
-    local screenW, screenH = love.graphics.getWidth(), love.graphics.getHeight()
+    local screenW, screenH = Viewport.getWidth(), Viewport.getHeight()
     local itemW = math.min(520, screenW - 60)
     local itemH = 44
     local totalH = #ChoiceBox.options * (itemH + 10)
@@ -114,7 +115,7 @@ end
 function ChoiceBox.draw()
     if not ChoiceBox.visible then return end
 
-    local screenW, screenH = love.graphics.getWidth(), love.graphics.getHeight()
+    local screenW, screenH = Viewport.getWidth(), Viewport.getHeight()
     local itemW = math.min(520, screenW - 60)
     local itemH = 44
     local totalH = #ChoiceBox.options * (itemH + 10) + 40

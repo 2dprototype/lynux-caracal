@@ -10,6 +10,7 @@ local Taskbar = require("src.desktop.taskbar")
 local WindowManager = require("src.desktop.window_mgr")
 local TaskHUD = require("src.desktop.task_hud")
 local Notifications = require("src.desktop.notifications")
+local Viewport = require("src.core.viewport")
 
 -- Load App Modules
 local EmailApp = require("src.apps.email")
@@ -107,7 +108,7 @@ function DesktopManager.init()
 end
 
 function DesktopManager.updateDockLayout()
-    local screenW = love.graphics.getWidth()
+    local screenW = Viewport.getWidth()
     local screenH = love.graphics.getHeight()
     local dockH = Taskbar.bottomBarHeight
     local dockY = screenH - dockH
@@ -243,7 +244,7 @@ function DesktopManager.openObjFile(node)
 end
 
 function DesktopManager.drawWallpaper()
-    local screenW, screenH = love.graphics.getWidth(), love.graphics.getHeight()
+    local screenW, screenH = Viewport.getWidth(), Viewport.getHeight()
     
     -- Modern deep blue (Windows 11 style)
     love.graphics.setColor(0.10, 0.15, 0.25)  -- #192A3E
@@ -264,7 +265,7 @@ function DesktopManager.drawDesktopIcons()
     local leftMargin = 20
     local topMargin = 40
     local rightMargin = 20
-    local screenW, screenH = love.graphics.getWidth(), love.graphics.getHeight()
+    local screenW, screenH = Viewport.getWidth(), Viewport.getHeight()
 
     local availWidth = screenW - leftMargin - rightMargin
     local cols = math.max(1, math.floor((availWidth + spacingX) / (iconSize + spacingX)))

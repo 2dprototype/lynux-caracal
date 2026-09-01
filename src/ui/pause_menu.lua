@@ -4,6 +4,7 @@
 local AudioManager = require("src.core.audio_manager")
 local EventBus = require("src.core.event_bus")
 local PlayerStats = require("src.core.player_stats")
+local Viewport = require("src.core.viewport")
 
 local PauseMenu = {
     isOpen = false,
@@ -223,7 +224,7 @@ end
 function PauseMenu.mousepressed(x, y, button)
     if not PauseMenu.isOpen or button ~= 1 then return false end
 
-    local screenW, screenH = love.graphics.getWidth(), love.graphics.getHeight()
+    local screenW, screenH = Viewport.getWidth(), Viewport.getHeight()
     local cardW = 420
     local cardH = 330
     local cardX = (screenW - cardW) / 2
@@ -302,7 +303,7 @@ end
 function PauseMenu.mousemoved(x, y)
     if not PauseMenu.isOpen then return end
 
-    local screenW, screenH = love.graphics.getWidth(), love.graphics.getHeight()
+    local screenW, screenH = Viewport.getWidth(), Viewport.getHeight()
     local cardW = 420
     local cardH = 330
     local cardX = (screenW - cardW) / 2
@@ -340,7 +341,7 @@ end
 function PauseMenu.draw()
     if not PauseMenu.isOpen then return end
 
-    local screenW, screenH = love.graphics.getWidth(), love.graphics.getHeight()
+    local screenW, screenH = Viewport.getWidth(), Viewport.getHeight()
     local cardW = 420
     local cardH = 335
     local cardX = (screenW - cardW) / 2

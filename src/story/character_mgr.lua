@@ -1,6 +1,8 @@
 -- src/story/character_mgr.lua
 -- Character Profiles, Sprite Asset Loader & Fallback Management
 
+local Viewport = require("src.core.viewport")
+
 local CharacterManager = {
     characters = {
         ["Aki"] = {
@@ -155,7 +157,7 @@ function CharacterManager.hide(position)
 end
 
 function CharacterManager.draw()
-    local w, h = love.graphics.getWidth(), love.graphics.getHeight()
+    local w, h = Viewport.getWidth(), Viewport.getHeight()
     local posCoords = {
         far_left = { x = w * 0.12 },
         left     = { x = w * 0.24 },

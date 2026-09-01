@@ -4,6 +4,7 @@
 local utf8 = require("utf8")
 local AudioManager = require("src.core.audio_manager")
 local CharacterManager = require("src.story.character_mgr")
+local Viewport = require("src.core.viewport")
 
 local DialogueBox = {
     visible = true,
@@ -207,7 +208,7 @@ end
 function DialogueBox.draw(isAutoPlay)
     if not DialogueBox.visible then return end
 
-    local screenW, screenH = love.graphics.getWidth(), love.graphics.getHeight()
+    local screenW, screenH = Viewport.getWidth(), Viewport.getHeight()
     local marginX = math.max(16, math.floor(screenW * 0.035))
     local boxW = math.min(screenW - marginX * 2, 920)
     local boxH = math.max(115, math.min(150, math.floor(screenH * 0.28)))

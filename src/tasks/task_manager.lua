@@ -2,6 +2,7 @@
 local EventBus = require("src.core.event_bus")
 local AudioManager = require("src.core.audio_manager")
 local PlayerStats = require("src.core.player_stats")
+local Viewport = require("src.core.viewport")
 
 local TaskManager = {
     currentTask = nil,
@@ -160,7 +161,7 @@ function TaskManager.drawCelebrationBanner()
     if not TaskManager.celebrationBanner.active then return end
 
     local b = TaskManager.celebrationBanner
-    local w, h = love.graphics.getWidth(), love.graphics.getHeight()
+    local w, h = Viewport.getWidth(), Viewport.getHeight()
     local bannerW = 380
     local bannerH = 54
     local bannerX = (w - bannerW) / 2

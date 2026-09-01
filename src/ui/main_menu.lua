@@ -5,6 +5,7 @@ local SaveManager = require("src.core.save_manager")
 local ChapterManager = require("src.chapters.chapter_manager")
 local PlayerStats = require("src.core.player_stats")
 local DialogueBox = require("src.story.dialogue_box")
+local Viewport = require("src.core.viewport")
 
 local MainMenu = {
     selectedIndex = 1,
@@ -109,8 +110,8 @@ function MainMenu.update(dt)
 end
 
 function MainMenu.draw()
-    local screenW = love.graphics.getWidth()
-    local screenH = love.graphics.getHeight()
+    local screenW = Viewport.getWidth()
+    local screenH = Viewport.getHeight()
     local layout = MainMenu.getLayout(screenW, screenH)
 
     -- 1. Background Rendering (Image with dark blue overlay, or dark blue fallback)
@@ -426,8 +427,8 @@ end
 function MainMenu.mousepressed(x, y, button)
     if button ~= 1 then return end
 
-    local screenW = love.graphics.getWidth()
-    local screenH = love.graphics.getHeight()
+    local screenW = Viewport.getWidth()
+    local screenH = Viewport.getHeight()
 
     if MainMenu.currentModal == "chapter_select" then
         local modalW = math.min(560, screenW - 32)

@@ -1,5 +1,6 @@
 -- src/story/history_log.lua
 local CharacterManager = require("src.story.character_mgr")
+local Viewport = require("src.core.viewport")
 
 local HistoryLog = {
     visible = false,
@@ -72,7 +73,7 @@ end
 function HistoryLog.draw()
     if not HistoryLog.visible then return end
 
-    local screenW, screenH = love.graphics.getWidth(), love.graphics.getHeight()
+    local screenW, screenH = Viewport.getWidth(), Viewport.getHeight()
     local marginX, marginY = 36, 24
     local logW, logH = screenW - marginX * 2, screenH - marginY * 2
 
