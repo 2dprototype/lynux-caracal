@@ -176,6 +176,14 @@ function StoryEngine.nextStep()
     elseif step.type == "wait" then
         StoryEngine.waitTimer = step.duration or 1.0
 
+    elseif step.type == "load_chapter" then
+        local ChapterManager = require("src.chapters.chapter_manager")
+        ChapterManager.loadChapter(step.chapter or 1)
+
+    elseif step.type == "next_chapter" then
+        local ChapterManager = require("src.chapters.chapter_manager")
+        ChapterManager.nextChapter()
+
     elseif step.type == "custom" then
         if step.fn then step.fn(StoryEngine) end
         StoryEngine.nextStep()

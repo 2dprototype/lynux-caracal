@@ -5,7 +5,19 @@ local AudioManager = {
     currentTrack = nil,
     sfxVolume = 0.8,
     bgmVolume = 0.6,
-    soundDataCache = {}
+    soundDataCache = {},
+
+    -- Map aliases to actual audio files in audio/bgm/
+    bgmAliases = {
+        ["main_menu"] = "audio/bgm/main_menu.mp3",
+        ["menu"] = "audio/bgm/main_menu.mp3",
+        ["main_theme"] = "audio/bgm/main_menu.mp3",
+        ["morning_theme"] = "audio/bgm/main_menu.mp3",
+        ["desktop"] = "audio/bgm/desktop.mp3",
+        ["desktop_theme"] = "audio/bgm/desktop.mp3",
+        ["cat_cafe_theme"] = "audio/bgm/desktop.mp3",
+        ["cat_cafe"] = "audio/bgm/desktop.mp3"
+    }
 }
 
 -- Generate procedural SFX using Love2D SoundData
@@ -38,7 +50,6 @@ local function createTone(freqStart, freqEnd, duration, waveType, decay)
 end
 
 function AudioManager.init()
-    -- Load pre-existing sound files if available
     if love.filesystem.getInfo("audio/sfx/tick.wav") then
         AudioManager.sounds["tick"] = love.audio.newSource("audio/sfx/tick.wav", "static")
     end
@@ -46,32 +57,21 @@ function AudioManager.init()
         AudioManager.sounds["wooh"] = love.audio.newSource("audio/sfx/wooh.wav", "static")
     end
 
-    -- Procedural SFX generators
     pcall(function()
-        -- Typewriter / Monologue blip
         AudioManager.sounds["typewriter"] = createTone(620, 580, 0.035, "sine", 12)
-        -- Dialogue speaker blip (deeper)
         AudioManager.sounds["blip_low"] = createTone(340, 300, 0.04, "triangle", 10)
-        -- UI Click
         AudioManager.sounds["click"] = createTone(880, 440, 0.05, "sine", 15)
-        -- Task completed chime
         AudioManager.sounds["task_complete"] = createTone(523, 1046, 0.35, "sine", 3)
-        -- Level Up fanfare
         AudioManager.sounds["levelup"] = createTone(440, 880, 0.5, "square", 2)
-        -- Error buzz
         AudioManager.sounds["error"] = createTone(180, 120, 0.25, "sawtooth", 4)
-        -- Glitch / Static
         AudioManager.sounds["glitch"] = createTone(400, 100, 0.12, "noise", 8)
-        -- CRT power on/switch mode
         AudioManager.sounds["switch"] = createTone(200, 900, 0.2, "sine", 4)
-        -- Notification toast ping
         AudioManager.sounds["notification"] = createTone(784, 1174, 0.25, "sine", 5)
     end)
 end
 
 function AudioManager.playSFX(name, pitch, volumeScale)
     if not AudioManager.sounds[name] then
-        -- Fallback to tick or generic click
         name = "tick"
     end
     local src = AudioManager.sounds[name]
@@ -87,7 +87,11 @@ end
 
 function AudioManager.playBGM(pathOrName, loop)
     if loop == nil then loop = true end
-    if AudioManager.currentTrack == pathOrName and AudioManager.bgm and AudioManager.bgm:isPlaying() then
+    
+    local resolvedPath = AudioManager.bgmAliases[pathOrName] or pathOrName
+    if not resolvedPath then return end
+
+    if AudioManager.currentTrack == resolvedPath and AudioManager.bgm and AudioManager.bgm:isPlaying() then
         return
     end
 
@@ -96,14 +100,14 @@ function AudioManager.playBGM(pathOrName, loop)
         AudioManager.bgm = nil
     end
 
-    if pathOrName and love.filesystem.getInfo(pathOrName) then
-        local ok, src = pcall(love.audio.newSource, pathOrName, "stream")
+    if resolvedPath and love.filesystem.getInfo(resolvedPath) then
+        local ok, src = pcall(love.audio.newSource, resolvedPath, "stream")
         if ok and src then
             AudioManager.bgm = src
             AudioManager.bgm:setLooping(loop)
             AudioManager.bgm:setVolume(AudioManager.bgmVolume)
             AudioManager.bgm:play()
-            AudioManager.currentTrack = pathOrName
+            AudioManager.currentTrack = resolvedPath
         end
     end
 end

@@ -25,6 +25,7 @@ local PauseMenu = {
         { id = "resume", label = "Resume Game", desc = "Return to current gameplay" },
         { id = "settings", label = "Settings & Audio", desc = "Volume sliders and text options" },
         { id = "reset", label = "Restart Chapter", desc = "Restart narrative from beginning" },
+        { id = "main_menu", label = "Return to Title", desc = "Save & return to main title screen" },
         { id = "exit", label = "Exit to Desktop", desc = "Safely quit the application" }
     },
     
@@ -89,6 +90,11 @@ function PauseMenu.activateCurrent()
             PauseMenu.currentTab = "confirm_reset"
             PauseMenu.selectedIndex = 1
             AudioManager.playSFX("notification")
+        elseif item.id == "main_menu" then
+            PauseMenu.close()
+            local SaveManager = require("src.core.save_manager")
+            SaveManager.saveGame()
+            EventBus.emit("game:request_switch_mode", { mode = "menu", transition = "fade" })
         elseif item.id == "exit" then
             AudioManager.playSFX("click")
             love.event.quit()

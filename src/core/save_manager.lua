@@ -6,9 +6,21 @@ local SaveManager = {
     saveFilename = "save_game.json",
     isSaving = false,
     saveIndicatorTimer = 0,
+    saveData = {}
 }
 
 function SaveManager.init()
+    -- Cache save data info for Main Menu
+    if SaveManager.hasSave() then
+        local data = love.filesystem.read(SaveManager.saveFilename)
+        if data then
+            local ok, parsed = pcall(json.decode, data)
+            if ok and parsed then
+                SaveManager.saveData = parsed
+            end
+        end
+    end
+
     -- Auto-save on task completion
     EventBus.on("task:completed", function(task)
         SaveManager.saveGame()
@@ -33,6 +45,7 @@ function SaveManager.saveGame()
     local TaskManager = require("src.tasks.task_manager")
     local StoryEngine = require("src.story.story_engine")
     local GameManager = require("src.core.game_manager")
+    local ChapterManager = require("src.chapters.chapter_manager")
     local filesystem = require("src.core.filesystem")
 
     local completedTaskIds = {}
@@ -58,6 +71,7 @@ function SaveManager.saveGame()
         saveVersion = 1,
         timestamp = os.time(),
         gameMode = GameManager.mode or "story",
+        chapterIndex = ChapterManager.currentChapterIndex or 1,
         story = {
             currentIndex = StoryEngine.currentIndex or 1,
             isFinished = StoryEngine.isFinished or false
@@ -80,6 +94,7 @@ function SaveManager.saveGame()
         love.filesystem.write(SaveManager.saveFilename, encoded)
         filesystem.save(filesystem.getFS())
         
+        SaveManager.saveData = saveData
         SaveManager.saveIndicatorTimer = 2.0
         EventBus.emit("game:saved", saveData)
         return true
@@ -101,9 +116,10 @@ function SaveManager.loadGame()
         return false
     end
 
+    SaveManager.saveData = saveData
+
     local PlayerStats = require("src.core.player_stats")
-    local TaskManager = require("src.tasks.task_manager")
-    local StoryEngine = require("src.story.story_engine")
+    local ChapterManager = require("src.chapters.chapter_manager")
     local GameManager = require("src.core.game_manager")
 
     -- Restore PlayerStats
@@ -115,16 +131,16 @@ function SaveManager.loadGame()
         PlayerStats.flags = saveData.playerStats.flags or {}
     end
 
-    -- Restore Story Engine
-    if saveData.story and StoryEngine.script and #StoryEngine.script > 0 then
-        StoryEngine.currentIndex = math.max(0, math.min(#StoryEngine.script, (saveData.story.currentIndex or 1) - 1))
-        StoryEngine.isFinished = saveData.story.isFinished or false
-        StoryEngine.nextStep()
-    end
+    -- Restore Chapter & Story Index
+    local chapterIdx = saveData.chapterIndex or 1
+    local storyStepIdx = (saveData.story and saveData.story.currentIndex) or 1
+    ChapterManager.loadChapter(chapterIdx, storyStepIdx)
 
     -- Restore GameManager mode
-    if saveData.gameMode then
+    if saveData.gameMode and saveData.gameMode ~= "menu" then
         GameManager.mode = saveData.gameMode
+    else
+        GameManager.mode = "story"
     end
 
     EventBus.emit("game:loaded", saveData)
@@ -138,6 +154,7 @@ function SaveManager.resetProgress()
     if love.filesystem.getInfo("filesystem.json") then
         love.filesystem.remove("filesystem.json")
     end
+    SaveManager.saveData = {}
 end
 
 function SaveManager.update(dt)
