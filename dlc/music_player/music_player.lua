@@ -15,6 +15,8 @@ function MusicPlayer.new()
     }
     self.currentIndex = 1
     self.isPlaying = true
+    self.width = 460
+    self.height = 360
     self.visualizerBars = {}
     for i = 1, 24 do
         self.visualizerBars[i] = 0.2 + math.random() * 0.5
@@ -62,7 +64,6 @@ function MusicPlayer:prevTrack()
 end
 
 function MusicPlayer:update(dt)
-    -- Animate visualizer bars
     if self.isPlaying then
         for i = 1, #self.visualizerBars do
             local target = 0.15 + 0.85 * math.abs(math.sin(love.timer.getTime() * 4 + i * 0.6)) * (0.5 + math.random() * 0.5)
@@ -76,21 +77,27 @@ function MusicPlayer:update(dt)
 end
 
 function MusicPlayer:draw(x, y, width, height)
+    self.width = width
+    self.height = height
+
+    love.graphics.push()
+    love.graphics.translate(x, y)
+
     -- Background
     love.graphics.setColor(0.08, 0.10, 0.16)
-    love.graphics.rectangle("fill", x, y, width, height)
+    love.graphics.rectangle("fill", 0, 0, width, height)
 
     local curTrack = self.playlist[self.currentIndex] or { title = "Unknown", artist = "Unknown" }
 
     -- Header Album Art & Info Banner
-    local headerH = 120
+    local headerH = 105
     love.graphics.setColor(0.12, 0.15, 0.24)
-    love.graphics.rectangle("fill", x + 10, y + 10, width - 20, headerH, 6, 6)
+    love.graphics.rectangle("fill", 10, 10, width - 20, headerH, 6, 6)
 
     -- Album Art Thumbnail
-    local artSize = 80
-    local artX = x + 24
-    local artY = y + 24
+    local artSize = 75
+    local artX = 24
+    local artY = 24
     love.graphics.setColor(0.18, 0.45, 0.85)
     love.graphics.rectangle("fill", artX, artY, artSize, artSize, 6, 6)
     love.graphics.setColor(1, 1, 1)
@@ -99,24 +106,23 @@ function MusicPlayer:draw(x, y, width, height)
 
     -- Track Title & Artist
     local infoX = artX + artSize + 16
-    local infoW = width - infoX - 24
     love.graphics.setColor(1, 1, 1)
     love.graphics.setFont(self.titleFont)
-    love.graphics.print(curTrack.title, infoX, y + 26)
+    love.graphics.print(curTrack.title, infoX, 24)
 
     love.graphics.setColor(0.55, 0.65, 0.80)
     love.graphics.setFont(self.smallFont)
-    love.graphics.print("Artist: " .. curTrack.artist, infoX, y + 54)
-    love.graphics.print("Now Playing  •  " .. (self.isPlaying and "PLAYING" or "PAUSED"), infoX, y + 74)
+    love.graphics.print("Artist: " .. curTrack.artist, infoX, 50)
+    love.graphics.print("Status: " .. (self.isPlaying and "PLAYING" or "PAUSED"), infoX, 70)
 
     -- Visualizer Waveform Display
-    local vizY = y + 140
-    local vizH = 46
+    local vizY = 125
+    local vizH = 42
     local vizW = width - 24
     local barW = math.floor(vizW / #self.visualizerBars) - 2
 
     for i, val in ipairs(self.visualizerBars) do
-        local bx = x + 12 + (i - 1) * (barW + 2)
+        local bx = 12 + (i - 1) * (barW + 2)
         local bh = math.floor(vizH * val)
         local by = vizY + vizH - bh
 
@@ -125,20 +131,20 @@ function MusicPlayer:draw(x, y, width, height)
     end
 
     -- Control Buttons Bar
-    local ctrlY = vizY + vizH + 14
+    local ctrlY = vizY + vizH + 12
     local btns = {
         { id = "prev", label = "|<<", w = 48 },
         { id = "play", label = self.isPlaying and "PAUSE" or "PLAY", w = 76 },
         { id = "next", label = ">>|", w = 48 }
     }
     local totalW = 48 + 76 + 48 + 16
-    local curX = x + math.floor((width - totalW) / 2)
+    local curX = math.floor((width - totalW) / 2)
 
     love.graphics.setFont(self.font)
     for _, btn in ipairs(btns) do
         btn.x = curX
         btn.y = ctrlY
-        btn.h = 32
+        btn.h = 30
 
         if btn.id == "play" then
             love.graphics.setColor(0.15, 0.52, 0.92)
@@ -147,41 +153,46 @@ function MusicPlayer:draw(x, y, width, height)
         end
         love.graphics.rectangle("fill", btn.x, btn.y, btn.w, btn.h, 4, 4)
         love.graphics.setColor(1, 1, 1)
-        love.graphics.printf(btn.label, btn.x, btn.y + 7, btn.w, "center")
+        love.graphics.printf(btn.label, btn.x, btn.y + 6, btn.w, "center")
 
         curX = curX + btn.w + 8
     end
 
     -- Playlist View
-    local listY = ctrlY + 44
-    love.graphics.setColor(0.12, 0.15, 0.22)
-    love.graphics.rectangle("fill", x + 10, listY, width - 20, height - (listY - y) - 10, 4, 4)
+    local listY = ctrlY + 40
+    local listH = height - listY - 10
+    if listH > 30 then
+        love.graphics.setColor(0.12, 0.15, 0.22)
+        love.graphics.rectangle("fill", 10, listY, width - 20, listH, 4, 4)
 
-    love.graphics.setFont(self.smallFont)
-    for i, track in ipairs(self.playlist) do
-        local ty = listY + 6 + (i - 1) * 22
-        if ty + 20 < y + height - 8 then
-            if i == self.currentIndex then
-                love.graphics.setColor(0.20, 0.50, 0.88, 0.35)
-                love.graphics.rectangle("fill", x + 12, ty - 2, width - 24, 20, 3, 3)
-                love.graphics.setColor(0.35, 0.75, 1.0)
-                love.graphics.print("► " .. track.title, x + 16, ty)
-            else
-                love.graphics.setColor(0.7, 0.75, 0.85)
-                love.graphics.print("  " .. track.title, x + 16, ty)
+        love.graphics.setFont(self.smallFont)
+        for i, track in ipairs(self.playlist) do
+            local ty = listY + 6 + (i - 1) * 22
+            if ty + 20 < listY + listH then
+                if i == self.currentIndex then
+                    love.graphics.setColor(0.20, 0.50, 0.88, 0.35)
+                    love.graphics.rectangle("fill", 12, ty - 2, width - 24, 20, 3, 3)
+                    love.graphics.setColor(0.35, 0.75, 1.0)
+                    love.graphics.print("► " .. track.title, 16, ty)
+                else
+                    love.graphics.setColor(0.7, 0.75, 0.85)
+                    love.graphics.print("  " .. track.title, 16, ty)
+                end
+                love.graphics.setColor(0.5, 0.55, 0.65)
+                love.graphics.printf(track.duration, width - 64, ty, 44, "right")
             end
-            love.graphics.setColor(0.5, 0.55, 0.65)
-            love.graphics.printf(track.duration, x + width - 64, ty, 44, "right")
         end
     end
+
+    love.graphics.pop()
 end
 
 function MusicPlayer:mousepressed(mx, my, button)
     if button ~= 1 then return false end
-    local width = 460
-    local height = 360
-    local vizY = 140
-    local ctrlY = vizY + 46 + 14
+    local width = self.width or 460
+    local height = self.height or 360
+    local vizY = 125
+    local ctrlY = vizY + 42 + 12
     local btns = {
         { id = "prev", w = 48 },
         { id = "play", w = 76 },
@@ -191,7 +202,7 @@ function MusicPlayer:mousepressed(mx, my, button)
     local curX = math.floor((width - totalW) / 2)
 
     for _, btn in ipairs(btns) do
-        if mx >= curX and mx <= curX + btn.w and my >= ctrlY and my <= ctrlY + 32 then
+        if mx >= curX and mx <= curX + btn.w and my >= ctrlY and my <= ctrlY + 30 then
             if btn.id == "prev" then self:prevTrack()
             elseif btn.id == "play" then self:togglePlay()
             elseif btn.id == "next" then self:nextTrack()
@@ -203,7 +214,7 @@ function MusicPlayer:mousepressed(mx, my, button)
     end
 
     -- Playlist click
-    local listY = ctrlY + 44
+    local listY = ctrlY + 40
     for i, _ in ipairs(self.playlist) do
         local ty = listY + 6 + (i - 1) * 22
         if mx >= 10 and mx <= width - 10 and my >= ty - 2 and my <= ty + 18 then

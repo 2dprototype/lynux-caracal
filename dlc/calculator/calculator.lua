@@ -11,14 +11,15 @@ function Calculator.new()
     self.operation = nil
     self.resetOnNextInput = false
     self.history = ""
+    self.width = 340
+    self.height = 440
     self.font = love.graphics.newFont("font/IBMPlexSans-Bold.ttf", 22) or love.graphics.newFont(22)
     self.smallFont = love.graphics.newFont("font/Nunito-Regular.ttf", 12) or love.graphics.newFont(12)
     self.btnFont = love.graphics.newFont("font/IBMPlexSans-Bold.ttf", 15) or love.graphics.newFont(15)
 
-    -- Button grid definition
     self.buttons = {
-        { "C", "±", "%", "÷" },
-        { "7", "8", "9", "×" },
+        { "C", "+/-", "%", "/" },
+        { "7", "8", "9", "*" },
         { "4", "5", "6", "-" },
         { "1", "2", "3", "+" },
         { "0", ".", "DEL", "=" }
@@ -71,9 +72,9 @@ function Calculator:calculate()
         result = a + b
     elseif self.operation == "-" then
         result = a - b
-    elseif self.operation == "×" or self.operation == "*" then
+    elseif self.operation == "*" or self.operation == "x" or self.operation == "X" then
         result = a * b
-    elseif self.operation == "÷" or self.operation == "/" then
+    elseif self.operation == "/" then
         if b == 0 then
             self.display = "Error"
             self.prevValue = nil
@@ -86,7 +87,6 @@ function Calculator:calculate()
         end
     end
 
-    -- Format result cleanly
     if math.floor(result) == result and math.abs(result) < 1e12 then
         self.display = tostring(math.floor(result))
     else
@@ -132,7 +132,7 @@ function Calculator:pressButton(lbl)
         self:clear()
     elseif lbl == "DEL" then
         self:backspace()
-    elseif lbl == "±" then
+    elseif lbl == "+/-" or lbl == "+-" then
         local val = tonumber(self.display)
         if val then
             self.display = tostring(-val)
@@ -144,7 +144,7 @@ function Calculator:pressButton(lbl)
         end
     elseif lbl == "=" then
         self:calculate()
-    elseif lbl == "+" or lbl == "-" or lbl == "×" or lbl == "÷" then
+    elseif lbl == "+" or lbl == "-" or lbl == "*" or lbl == "/" then
         self:setOperator(lbl)
     end
 end
@@ -153,16 +153,22 @@ function Calculator:update(dt)
 end
 
 function Calculator:draw(x, y, width, height)
+    self.width = width
+    self.height = height
+
+    love.graphics.push()
+    love.graphics.translate(x, y)
+
     -- Background
     love.graphics.setColor(0.96, 0.97, 0.98)
-    love.graphics.rectangle("fill", x, y, width, height)
+    love.graphics.rectangle("fill", 0, 0, width, height)
 
     -- Display Screen (Top)
     local screenMargin = 12
     local screenH = 68
     local screenW = width - screenMargin * 2
-    local screenX = x + screenMargin
-    local screenY = y + 10
+    local screenX = screenMargin
+    local screenY = 10
 
     love.graphics.setColor(1, 1, 1)
     love.graphics.rectangle("fill", screenX, screenY, screenW, screenH, 4, 4)
@@ -181,7 +187,7 @@ function Calculator:draw(x, y, width, height)
 
     -- Keypad
     local keypadY = screenY + screenH + 12
-    local keypadH = height - (keypadY - y) - 12
+    local keypadH = height - keypadY - 12
     local rows = #self.buttons
     local cols = 4
     local btnGap = 6
@@ -195,16 +201,15 @@ function Calculator:draw(x, y, width, height)
             local bx = screenX + (c - 1) * (btnW + btnGap)
             local by = keypadY + (r - 1) * (btnH + btnGap)
 
-            -- Color themes for button types
             if lbl == "=" then
                 love.graphics.setColor(0.12, 0.55, 0.95)
                 love.graphics.rectangle("fill", bx, by, btnW, btnH, 4, 4)
                 love.graphics.setColor(1, 1, 1)
-            elseif lbl == "+" or lbl == "-" or lbl == "×" or lbl == "÷" then
+            elseif lbl == "+" or lbl == "-" or lbl == "*" or lbl == "/" then
                 love.graphics.setColor(0.88, 0.92, 0.98)
                 love.graphics.rectangle("fill", bx, by, btnW, btnH, 4, 4)
                 love.graphics.setColor(0.15, 0.45, 0.85)
-            elseif lbl == "C" or lbl == "DEL" or lbl == "±" or lbl == "%" then
+            elseif lbl == "C" or lbl == "DEL" or lbl == "+/-" or lbl == "%" then
                 love.graphics.setColor(0.90, 0.92, 0.95)
                 love.graphics.rectangle("fill", bx, by, btnW, btnH, 4, 4)
                 love.graphics.setColor(0.3, 0.35, 0.45)
@@ -219,21 +224,25 @@ function Calculator:draw(x, y, width, height)
             love.graphics.printf(lbl, bx, by + math.floor((btnH - 18) / 2), btnW, "center")
         end
     end
+
+    love.graphics.pop()
 end
 
 function Calculator:mousepressed(mx, my, button)
     if button ~= 1 then return false end
-    -- Check button clicks
+    local width = self.width or 340
+    local height = self.height or 440
     local screenMargin = 12
     local screenH = 68
-    local screenW = 340 - screenMargin * 2
+    local screenW = width - screenMargin * 2
     local screenX = screenMargin
     local keypadY = 10 + screenH + 12
+    local keypadH = height - keypadY - 12
     local rows = #self.buttons
     local cols = 4
     local btnGap = 6
     local btnW = math.floor((screenW - btnGap * (cols - 1)) / cols)
-    local btnH = math.floor((440 - keypadY - 12 - btnGap * (rows - 1)) / rows)
+    local btnH = math.floor((keypadH - btnGap * (rows - 1)) / rows)
 
     for r, row in ipairs(self.buttons) do
         for c, lbl in ipairs(row) do
@@ -253,8 +262,7 @@ function Calculator:keypressed(key)
         self:pressButton(key)
         return true
     elseif key == "+" or key == "-" or key == "*" or key == "/" then
-        local map = { ["*"] = "×", ["/"] = "÷" }
-        self:pressButton(map[key] or key)
+        self:pressButton(key)
         return true
     elseif key == "return" or key == "kpenter" or key == "=" then
         self:pressButton("=")

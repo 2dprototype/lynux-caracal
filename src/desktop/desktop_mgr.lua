@@ -30,6 +30,13 @@ local DesktopManager = {
     desktopHomeIcons = {},
     desktopHome = nil,
     startMenuOpen = false,
+    startMenuScroll = 0,
+    startMenuMaxScroll = 0,
+    isDraggingStartMenuScroll = false,
+    startMenuDragStartY = 0,
+    startMenuDragStartScroll = 0,
+    lastMouseX = -1,
+    lastMouseY = -1,
     startIcon = nil,
     folderIcon = nil,
     fileIcon = nil,
@@ -123,7 +130,7 @@ end
 
 function DesktopManager.updateDockLayout()
     local screenW = Viewport.getWidth()
-    local screenH = love.graphics.getHeight()
+    local screenH = Viewport.getHeight()
     local dockH = Taskbar.bottomBarHeight
     local dockY = screenH - dockH
 
@@ -339,7 +346,7 @@ function DesktopManager.drawDesktopIcons()
 end
 
 function DesktopManager.drawTaskbarApps()
-    local screenH = love.graphics.getHeight()
+    local screenH = Viewport.getHeight()
     local dockH = Taskbar.bottomBarHeight
     local dockY = screenH - dockH
 
@@ -412,7 +419,7 @@ function DesktopManager.drawStartMenu()
 
     local screenH = Viewport.getHeight()
     local menuW = 240
-    local menuH = math.min(screenH - Taskbar.bottomBarHeight - 12, 54 + #DesktopManager.apps * 26)
+    local menuH = math.min(330, screenH - Taskbar.bottomBarHeight - 12)
     local menuX, menuY = 0, screenH - Taskbar.bottomBarHeight - menuH
 
     love.graphics.push()
@@ -423,22 +430,72 @@ function DesktopManager.drawStartMenu()
     love.graphics.setColor(0.85, 0.88, 0.92)
     love.graphics.rectangle("line", menuX, menuY, menuW, menuH)
 
+    -- Header
     love.graphics.setColor(0.1, 0.12, 0.16)
     love.graphics.setFont(DesktopManager.boldFont or DesktopManager.font)
     love.graphics.print("Applications", menuX + 18, menuY + 14)
     love.graphics.setColor(0.85, 0.88, 0.92)
     love.graphics.line(menuX + 14, menuY + 38, menuX + menuW - 14, menuY + 38)
 
-    local itemY = menuY + 46
-    for _, app in ipairs(DesktopManager.apps) do
-        if app.icon then
-            love.graphics.setColor(0.2, 0.22, 0.26)
-            love.graphics.draw(app.icon, menuX + 16, itemY, 0, 18 / app.icon:getWidth(), 18 / app.icon:getHeight())
+    local headerH = 42
+    local listX = menuX
+    local listY = menuY + headerH
+    local listW = menuW
+    local listH = menuH - headerH - 6
+    local itemH = 26
+    local totalHeight = #DesktopManager.apps * itemH
+
+    DesktopManager.startMenuMaxScroll = math.max(0, totalHeight - listH)
+    DesktopManager.startMenuScroll = math.max(0, math.min(DesktopManager.startMenuMaxScroll, DesktopManager.startMenuScroll or 0))
+
+    -- Scissor clip for scrollable apps
+    local barW = 6
+    local contentW = listW - (DesktopManager.startMenuMaxScroll > 0 and (barW + 8) or 0)
+    love.graphics.setScissor(listX, listY, contentW, listH)
+
+    for i, app in ipairs(DesktopManager.apps) do
+        local itemY = listY + (i - 1) * itemH - DesktopManager.startMenuScroll
+        if itemY + itemH >= listY and itemY <= listY + listH then
+            -- Hover highlight
+            local mx, my = DesktopManager.lastMouseX or -1, DesktopManager.lastMouseY or -1
+            if mx >= listX + 8 and mx <= listX + contentW - 4 and my >= itemY and my <= itemY + itemH then
+                love.graphics.setColor(0.92, 0.95, 0.98)
+                love.graphics.rectangle("fill", listX + 8, itemY, contentW - 12, itemH - 2, 3, 3)
+            end
+
+            if app.icon then
+                love.graphics.setColor(1, 1, 1)
+                love.graphics.draw(app.icon, menuX + 16, itemY + 3, 0, 18 / app.icon:getWidth(), 18 / app.icon:getHeight())
+            else
+                love.graphics.setColor(0.0, 0.47, 0.83)
+                love.graphics.rectangle("fill", menuX + 16, itemY + 3, 18, 18, 2, 2)
+            end
+            love.graphics.setFont(DesktopManager.font)
+            love.graphics.setColor(0.1, 0.12, 0.16)
+            love.graphics.print(app.name, menuX + 42, itemY + 3)
         end
-        love.graphics.setFont(DesktopManager.font)
-        love.graphics.setColor(0.1, 0.12, 0.16)
-        love.graphics.print(app.name, menuX + 42, itemY + 2)
-        itemY = itemY + 26
+    end
+
+    love.graphics.setScissor()
+
+    -- Scrollbar Track and Grabable Thumb
+    if DesktopManager.startMenuMaxScroll > 0 then
+        local barX = menuX + menuW - barW - 6
+        local barY = listY + 2
+        local barH = listH - 4
+
+        love.graphics.setColor(0.92, 0.93, 0.95)
+        love.graphics.rectangle("fill", barX, barY, barW, barH, 3, 3)
+
+        local thumbH = math.max(20, math.floor(barH * (listH / totalHeight)))
+        local thumbY = barY + (barH - thumbH) * (DesktopManager.startMenuScroll / DesktopManager.startMenuMaxScroll)
+
+        if DesktopManager.isDraggingStartMenuScroll then
+            love.graphics.setColor(0.20, 0.50, 0.85)
+        else
+            love.graphics.setColor(0.65, 0.70, 0.76)
+        end
+        love.graphics.rectangle("fill", barX, thumbY, barW, thumbH, 3, 3)
     end
 
     love.graphics.pop()
@@ -468,25 +525,43 @@ function DesktopManager.mousepressed(x, y, button)
     if DesktopManager.startMenuOpen then
         local screenH = Viewport.getHeight()
         local menuW = 240
-        local menuH = math.min(screenH - Taskbar.bottomBarHeight - 12, 54 + #DesktopManager.apps * 26)
+        local menuH = math.min(330, screenH - Taskbar.bottomBarHeight - 12)
         local menuX, menuY = 0, screenH - Taskbar.bottomBarHeight - menuH
+        local headerH = 42
+        local listX = menuX
+        local listY = menuY + headerH
+        local listW = menuW
+        local listH = menuH - headerH - 6
+        local itemH = 26
+
         if x >= menuX and x <= menuX + menuW and y >= menuY and y <= menuY + menuH then
-            local itemY = menuY + 46
-            for _, app in ipairs(DesktopManager.apps) do
-                if y >= itemY and y <= itemY + 26 then
+            -- Check if clicking on scrollbar track / thumb
+            if DesktopManager.startMenuMaxScroll > 0 and x >= menuX + menuW - 16 and y >= listY and y <= listY + listH then
+                DesktopManager.isDraggingStartMenuScroll = true
+                DesktopManager.startMenuDragStartY = y
+                DesktopManager.startMenuDragStartScroll = DesktopManager.startMenuScroll
+                return true
+            end
+
+            -- Check if clicking on an app item
+            if y >= listY and y <= listY + listH then
+                local clickedIdx = math.floor((y - listY + DesktopManager.startMenuScroll) / itemH) + 1
+                local app = DesktopManager.apps[clickedIdx]
+                if app then
                     WindowManager.toggleApp(app, button == 2)
                     DesktopManager.startMenuOpen = false
-                    return
+                    AudioManager.playSFX("click")
+                    return true
                 end
-                itemY = itemY + 26
             end
-            return
+            return true
         else
             DesktopManager.startMenuOpen = false
+            DesktopManager.isDraggingStartMenuScroll = false
         end
     end
 
-    local screenH = love.graphics.getHeight()
+    local screenH = Viewport.getHeight()
     local dockH = Taskbar.bottomBarHeight
     local dockY = screenH - dockH
 
@@ -529,17 +604,44 @@ function DesktopManager.mousepressed(x, y, button)
 end
 
 function DesktopManager.mousemoved(x, y, dx, dy)
+    DesktopManager.lastMouseX = x
+    DesktopManager.lastMouseY = y
+
+    if DesktopManager.isDraggingStartMenuScroll and DesktopManager.startMenuMaxScroll > 0 then
+        local screenH = Viewport.getHeight()
+        local menuH = math.min(330, screenH - Taskbar.bottomBarHeight - 12)
+        local headerH = 42
+        local listH = menuH - headerH - 6
+        local itemH = 26
+        local totalHeight = #DesktopManager.apps * itemH
+        local barH = listH - 4
+        local thumbH = math.max(20, math.floor(barH * (listH / totalHeight)))
+        local trackSpan = math.max(1, barH - thumbH)
+
+        local deltaY = y - DesktopManager.startMenuDragStartY
+        local newScroll = DesktopManager.startMenuDragStartScroll + (deltaY / trackSpan) * DesktopManager.startMenuMaxScroll
+        DesktopManager.startMenuScroll = math.max(0, math.min(DesktopManager.startMenuMaxScroll, newScroll))
+        return
+    end
+
     Taskbar.mousemoved(x, y)
     TaskHUD.mousemoved(x, y, dx, dy)
     WindowManager.mousemoved(x, y, dx, dy)
 end
 
 function DesktopManager.mousereleased(x, y, button)
+    if button == 1 and DesktopManager.isDraggingStartMenuScroll then
+        DesktopManager.isDraggingStartMenuScroll = false
+    end
     WindowManager.mousereleased(x, y, button)
     TaskHUD.mousereleased(x, y, button)
 end
 
 function DesktopManager.wheelmoved(x, y)
+    if DesktopManager.startMenuOpen and DesktopManager.startMenuMaxScroll > 0 then
+        DesktopManager.startMenuScroll = math.max(0, math.min(DesktopManager.startMenuMaxScroll, DesktopManager.startMenuScroll - y * 26))
+        return
+    end
     if TaskHUD.wheelmoved and TaskHUD.wheelmoved(x, y) then return end
     WindowManager.wheelmoved(x, y)
 end

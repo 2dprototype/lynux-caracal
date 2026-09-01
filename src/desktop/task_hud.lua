@@ -65,6 +65,14 @@ function TaskHUD.draw()
     local task = TaskManager.getCurrentTask()
     if not task then return end
 
+    local screenW = Viewport.getWidth()
+    local screenH = Viewport.getHeight()
+
+    TaskHUD.maxHeight = screenH - 75
+    TaskHUD.height = math.min(380, TaskHUD.maxHeight)
+    TaskHUD.x = screenW - TaskHUD.width
+    TaskHUD.y = 35
+
     -- Clear previous interactive areas
     TaskHUD.interactiveAreas = {}
 
@@ -72,7 +80,6 @@ function TaskHUD.draw()
     local panelW = TaskHUD.collapsed and TaskHUD.collapsedWidth or TaskHUD.width
 
     -- For collapsed, we position at the right edge
-    local screenW = Viewport.getWidth()
     local x = TaskHUD.collapsed and (screenW - TaskHUD.collapsedWidth) or TaskHUD.x
     local y = TaskHUD.y
     local panelH = TaskHUD.height
@@ -109,10 +116,10 @@ function TaskHUD.draw()
         love.graphics.setFont(TaskHUD.headerFont)
         if task.completed then
             love.graphics.setColor(0.18, 0.65, 0.35)
-            love.graphics.print("✔ Done", x + 10, y + 4)
+            love.graphics.print("[DONE]", x + 10, y + 5)
         else
             love.graphics.setColor(0.1, 0.12, 0.16)
-            love.graphics.print("Objectives", x + 10, y + 4)
+            love.graphics.print("Objectives", x + 10, y + 5)
         end
 
         -- XP Badge
@@ -287,30 +294,40 @@ function TaskHUD.draw()
     love.graphics.pop()
 end
 
--- Helper: wrap text to fit width
+-- Helper: wrap text to fit width cleanly using Love2D native wrapping and handling newlines and words
 function TaskHUD.wrapText(text, maxWidth, font)
     if not text or text == "" then return {""} end
     font = font or TaskHUD.smallFont or love.graphics.getFont()
-    local words = {}
-    for w in text:gmatch("%S+") do
-        table.insert(words, w)
-    end
+    maxWidth = math.max(20, maxWidth or 200)
+
     local lines = {}
-    local currentLine = ""
-    for _, word in ipairs(words) do
-        local testLine = currentLine == "" and word or currentLine .. " " .. word
-        if font:getWidth(testLine) <= maxWidth then
-            currentLine = testLine
+    for paragraph in (text .. "\n"):gmatch("([^\r\n]*)\r?\n") do
+        if paragraph == "" then
+            table.insert(lines, "")
         else
-            if currentLine ~= "" then
-                table.insert(lines, currentLine)
+            local ok, _, wrapped = pcall(function() return font:getWrap(paragraph, maxWidth) end)
+            if ok and wrapped and #wrapped > 0 then
+                for _, line in ipairs(wrapped) do
+                    table.insert(lines, line)
+                end
+            else
+                local words = {}
+                for w in paragraph:gmatch("%S+") do table.insert(words, w) end
+                local cur = ""
+                for _, w in ipairs(words) do
+                    local test = (cur == "") and w or (cur .. " " .. w)
+                    if font:getWidth(test) <= maxWidth then
+                        cur = test
+                    else
+                        if cur ~= "" then table.insert(lines, cur) end
+                        cur = w
+                    end
+                end
+                if cur ~= "" then table.insert(lines, cur) end
             end
-            currentLine = word
         end
     end
-    if currentLine ~= "" then
-        table.insert(lines, currentLine)
-    end
+    if #lines == 0 then table.insert(lines, text) end
     return lines
 end
 

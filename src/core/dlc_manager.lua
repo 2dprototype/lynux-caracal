@@ -1,4 +1,4 @@
-﻿-- src/core/dlc_manager.lua
+-- src/core/dlc_manager.lua
 -- Dynamic DLC & Addon Management Engine for Lynux Caracal
 
 local json = require("lib/json")
@@ -192,6 +192,9 @@ end
 -- Register an app definition into DesktopManager
 function DLCManager.registerApp(appDef, dlcRecord)
     if not appDef or not appDef.name or not appDef.module then return end
+
+    appDef.defaultWidth = appDef.defaultWidth or appDef.width or 520
+    appDef.defaultHeight = appDef.defaultHeight or appDef.height or 360
 
     -- Generate icon if not provided
     if not appDef.icon then

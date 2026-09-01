@@ -1,0 +1,11 @@
+﻿{
+    "id": "paint_studio",
+    "name": "Paint Studio",
+    "version": "1.0.0",
+    "author": "Lynux Graphics",
+    "description": "Canvas drawing and sketching app with brush sizes and color palette.",
+    "category": "Tools",
+    "defaultWidth": 520,
+    "defaultHeight": 380,
+    "enabled": true
+}

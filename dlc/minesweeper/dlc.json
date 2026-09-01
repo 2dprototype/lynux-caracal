@@ -1,0 +1,11 @@
+﻿{
+    "id": "minesweeper",
+    "name": "Minesweeper",
+    "version": "1.0.0",
+    "author": "Lynux Arcade",
+    "description": "Classic puzzle game of logic, flag placement, and uncovering safe cells.",
+    "category": "Games",
+    "defaultWidth": 380,
+    "defaultHeight": 440,
+    "enabled": true
+}

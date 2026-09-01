@@ -17,6 +17,8 @@ function SnakeGame.new()
     self.paused = false
     self.timer = 0
     self.speed = 0.12
+    self.width = 420
+    self.height = 440
 
     self.font = love.graphics.newFont("font/IBMPlexSans-Bold.ttf", 15) or love.graphics.newFont(15)
     self.largeFont = love.graphics.newFont("font/IBMPlexSans-Bold.ttf", 22) or love.graphics.newFont(22)
@@ -75,14 +77,12 @@ function SnakeGame:update(dt)
         local head = self.snake[1]
         local newHead = { x = head.x + self.dir.x, y = head.y + self.dir.y }
 
-        -- Wall collisions
         if newHead.x < 1 or newHead.x > self.cols or newHead.y < 1 or newHead.y > self.rows then
             self.gameOver = true
             AudioManager.playSFX("glitch", 1.2, 0.4)
             return
         end
 
-        -- Self collisions
         for i = 1, #self.snake - 1 do
             if self.snake[i].x == newHead.x and self.snake[i].y == newHead.y then
                 self.gameOver = true
@@ -93,7 +93,6 @@ function SnakeGame:update(dt)
 
         table.insert(self.snake, 1, newHead)
 
-        -- Food check
         if newHead.x == self.food.x and newHead.y == self.food.y then
             self.score = self.score + 10
             if self.score > self.highScore then
@@ -109,27 +108,33 @@ function SnakeGame:update(dt)
 end
 
 function SnakeGame:draw(x, y, width, height)
+    self.width = width
+    self.height = height
+
+    love.graphics.push()
+    love.graphics.translate(x, y)
+
     -- Background
     love.graphics.setColor(0.06, 0.08, 0.12)
-    love.graphics.rectangle("fill", x, y, width, height)
+    love.graphics.rectangle("fill", 0, 0, width, height)
 
     -- Header stats bar
     local barH = 34
     love.graphics.setColor(0.10, 0.14, 0.22)
-    love.graphics.rectangle("fill", x, y, width, barH)
+    love.graphics.rectangle("fill", 0, 0, width, barH)
 
     love.graphics.setFont(self.font)
     love.graphics.setColor(0.35, 0.75, 1.0)
-    love.graphics.print("SCORE: " .. tostring(self.score), x + 16, y + 8)
+    love.graphics.print("SCORE: " .. tostring(self.score), 16, 8)
 
     love.graphics.setColor(0.85, 0.75, 0.3)
-    love.graphics.printf("HIGH: " .. tostring(self.highScore), x, y + 8, width - 16, "right")
+    love.graphics.printf("HIGH: " .. tostring(self.highScore), 0, 8, width - 16, "right")
 
     -- Playing Grid Area
     local boardW = self.cols * self.gridSize
     local boardH = self.rows * self.gridSize
-    local boardX = x + math.floor((width - boardW) / 2)
-    local boardY = y + barH + math.floor((height - barH - boardH) / 2)
+    local boardX = math.floor((width - boardW) / 2)
+    local boardY = barH + math.floor((height - barH - boardH) / 2)
 
     love.graphics.setColor(0.03, 0.05, 0.08)
     love.graphics.rectangle("fill", boardX, boardY, boardW, boardH)
@@ -169,6 +174,8 @@ function SnakeGame:draw(x, y, width, height)
         love.graphics.setColor(1, 1, 1)
         love.graphics.printf("Press [SPACE] or [R] to Restart", boardX, boardY + boardH / 2 + 6, boardW, "center")
     end
+
+    love.graphics.pop()
 end
 
 function SnakeGame:keypressed(key)
