@@ -15,6 +15,7 @@ return {
     { type = "monologue", text = "07:35 AM. The morning air is crisp with the first hint of late October frost. Golden ginkgo leaves drift gently onto the sidewalk along the slope leading up to Kamiyama High School." },
     { type = "monologue", text = "Beside me, my sister Hiko is marching with brisk steps, clutching a buttered toast in one hand and her oversized school bag in the other." },
 
+    { type = "char_show", char = "Hiko", pos = "center" },
     { type = "say", speaker = "Hiko", text = "Aki, you look completely washed out. You have huge dark circles under your eyes! Did you seriously stay awake clattering on your keyboard until three in the morning?" },
     { type = "say", speaker = "Aki", text = "It wasn't three, it was two-fifteen. And I was working on layout proofs for the club. Our entire budget depends on this special issue." },
     { type = "say", speaker = "Hiko", text = "Uh-huh, sure. 'Layout proofs'. Is that what you call staring at photos of fluffy cats and texting Suzumia-senpai all night?" },
@@ -26,22 +27,28 @@ return {
     { type = "monologue", text = "My heart gives a subtle twitch. If the room has been dead for five years... where was that live XOR packet stream coming from last night?" },
     { type = "say", speaker = "Hiko", text = "So if you hear weird hums or see lights behind that steel fire-door, don't go playing detective alone, okay? Mom would kill me if you got expelled." },
     { type = "say", speaker = "Aki", text = "Don't worry, Hiko. I'm just the layout editor." },
+    { type = "char_hide" },
 
     -- ACT VII: LOCKER RENDEZVOUS
     { type = "bg", name = "hallway_day" },
     { type = "monologue", text = "08:10 AM. We arrive at the first-floor shoe locker hallway. The chatter of arriving students echoes against the tall windows." },
     { type = "monologue", text = "As I switch my outdoor shoes for indoor loafers, a familiar sweet scent of vanilla and lavender catches the autumn breeze." },
+    { type = "char_show", char = "Suzumia", pos = "center" },
     { type = "say", speaker = "Suzumia", text = "Good morning, Aki-kun!" },
     { type = "monologue", text = "Suzumia is standing near the second-year locker bank. Her school blazer is neatly buttoned, and her cheeks have a faint morning glow from the walk." },
     { type = "monologue", text = "She shyly extends two warm aluminum cans of honey milk tea purchased from the courtyard vending machine." },
     { type = "say", speaker = "Suzumia", text = "Here... I bought one for you. I saw your light on late last night when I looked across the neighborhood. Thank you so much for polishing the Meow Latte draft, Aki-kun." },
     { type = "say", speaker = "Aki", text = "Thank you, Suzumia. The tea smells amazing. And your draft was great—Mochi's interview section is going to be the biggest hit in the school." },
     { type = "say", speaker = "Suzumia", text = "Really? (///_///) I was so nervous that President Nagahashi would scrap it for his ghost rumor article! Let's make sure today's printing goes perfectly!" },
+    { type = "char_hide" },
 
     -- ACT VIII: AFTERNOON CLUBROOM & THE COUNCIL THREAT
     { type = "bg", name = "clubroom_day" },
     { type = "monologue", text = "03:45 PM. Afternoon sunlight filters through the high mullioned windows of Clubroom 204. The smell of ink, recycled paper, and warm tea fills the air." },
+    { type = "char_show", char = "Suzumia", pos = "left" },
+    { type = "char_show", char = "Hoshida", pos = "right" },
     { type = "monologue", text = "Suzumia is carefully sorting printed photo glossy sheets of Mochi and Chobi at the table. Hoshida is slouching in his corner chair with a bag of matcha Pocky and his laptop open." },
+    { type = "char_show", char = "Nagahashi", pos = "center" },
     { type = "say", speaker = "Nagahashi", text = "EMERGENCY, MY FELLOW JOURNALISTS! CODE RED IN ROOM 204!" },
     { type = "monologue", text = "President Nagahashi kicks the wooden door open with his usual theatrical flair, slamming a stamped memo onto the conference table." },
     { type = "say", speaker = "Nagahashi", text = "The Student Council Auditing Committee has moved our review forward! Committee Head Saeki will be standing in this very room at exactly 17:00 to inspect our final master proof!" },
@@ -51,6 +58,7 @@ return {
     { type = "say", speaker = "Hoshida", text = "[Whispering] Aki... check your inbox. I sent you the traceroute log from 07:15 AM. The signal isn't on the 3rd floor at all. It's routing straight down into the locked basement power conduit at 192.168.1.254." },
     { type = "say", speaker = "Aki", text = "[Whispering] The basement? Under the gymnasium?" },
     { type = "say", speaker = "Hoshida", text = "[Whispering] Yeah. And whoever set it up is using a commercial MAC router. Open your PC, check the traceroute dump in Downloads, and compile the final master proof in your Documents folder before Saeki arrives." },
+    { type = "char_hide" },
 
     -- CHAPTER 2 TASK: DESKTOP WORKSTATION INVESTIGATION
     {
@@ -78,6 +86,9 @@ return {
     { type = "bg", name = "clubroom_sunset" },
     { type = "monologue", text = "16:58 PM. The clubroom is bathed in deep golden amber. The mimeograph drum cools down on the back shelf, leaving the crisp scent of fresh ink hanging in the quiet room." },
     { type = "monologue", text = "A sharp, measured knock sounds against the door. A girl with silver-framed spectacles and the Student Council Auditing armband steps into Room 204." },
+    { type = "char_show", char = "Suzumia", pos = "left" },
+    { type = "char_show", char = "Nagahashi", pos = "right" },
+    { type = "char_show", char = "Student Council", pos = "center" },
     { type = "say", speaker = "Student Council", text = "Good afternoon, Newspaper Club. I am Saeki from the Council Auditing Committee. I trust your Special Edition proofs are ready for budget evaluation?" },
     { type = "say", speaker = "Nagahashi", text = "Welcome, Auditor Saeki! Feast your eyes upon Issue #42—the pinnacle of Kamiyama journalism!" },
     { type = "monologue", text = "Suzumia steps forward with graceful composure, presenting the freshly printed front-cover proof across the table." },
@@ -89,11 +100,13 @@ return {
     { type = "say", speaker = "Student Council", text = "The dual-cover balance is exceptional. Clean typography, verified facts, and high student appeal. The Auditing Committee hereby APPROVES your full printing quota with a 25% supplementary grant." },
     { type = "say", speaker = "Suzumia", text = "We did it! Thank you so much, Saeki-san!" },
     { type = "say", speaker = "Nagahashi", text = "GLORY UNTO THE PRESS! THE TRUTH SHALL NEVER BE SILENCED!" },
+    { type = "char_hide" },
 
     -- ACT X: CELEBRATION AT MEOW LATTE & THE CLIFFHANGER
     { type = "bg", name = "cat_cafe" },
     { type = "music", track = "cat_cafe_theme" },
     { type = "monologue", text = "18:30 PM. Warm jazz melody drifts through the wooden interior of Meow Latte Cat Cafe." },
+    { type = "char_show", char = "Suzumia", pos = "center" },
     { type = "monologue", text = "Suzumia and I sit side-by-side at a sunlit corner table. A tall strawberry parfait with a cat-paw marshmallow rests between us, accompanied by two steaming cups of caramel latte." },
     { type = "monologue", text = "Mochi, the white Scottish Fold, is purring contentedly curled up right on Suzumia's lap, his tail lazily flicking against her skirt." },
     { type = "say", speaker = "Suzumia", text = "Aki-kun... look at him. Mochi remembered me! He came straight to our table as soon as we sat down!" },

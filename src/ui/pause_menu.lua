@@ -348,17 +348,19 @@ function PauseMenu.draw()
 
     love.graphics.push()
 
-    -- Dim Backdrop
-    love.graphics.setColor(0, 0, 0, 0.75)
+    -- Dark Blue Dim Backdrop
+    love.graphics.setColor(0.03, 0.06, 0.14, 0.82)
     love.graphics.rectangle("fill", 0, 0, screenW, screenH)
 
     -- Drop Shadow
-    love.graphics.setColor(0, 0, 0, 0.45)
+    love.graphics.setColor(0, 0, 0, 0.5)
     love.graphics.rectangle("fill", cardX + 3, cardY + 3, cardW, cardH)
 
-    -- Card Background (Material Dark Surface)
-    love.graphics.setColor(0.1, 0.11, 0.14, 0.98)
-    love.graphics.rectangle("fill", cardX, cardY, cardW, cardH)
+    -- Card Background (Material Dark Navy Surface)
+    love.graphics.setColor(0.08, 0.11, 0.18, 0.98)
+    love.graphics.rectangle("fill", cardX, cardY, cardW, cardH, 6, 6)
+    love.graphics.setColor(0.18, 0.28, 0.44, 0.8)
+    love.graphics.rectangle("line", cardX, cardY, cardW, cardH, 6, 6)
 
     -- Header Bar
     love.graphics.setColor(0.14, 0.15, 0.19)

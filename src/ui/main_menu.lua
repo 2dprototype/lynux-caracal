@@ -20,9 +20,9 @@ local MainMenu = {
     boldFont = nil,
 
     colors = {
-        bgTop = {0.06, 0.08, 0.12},
-        bgBottom = {0.09, 0.12, 0.18},
-        cardBg = {0.12, 0.15, 0.22, 0.96},
+        bgTop = {0.05, 0.08, 0.16},
+        bgBottom = {0.08, 0.12, 0.22},
+        cardBg = {0.10, 0.14, 0.22, 0.96},
         accent = {0.13, 0.59, 0.95},
         accentHover = {0.25, 0.72, 1.0},
         textPrimary = {0.95, 0.97, 1.0},
@@ -30,7 +30,9 @@ local MainMenu = {
         textDisabled = {0.35, 0.38, 0.45},
         border = {0.20, 0.25, 0.36},
         badge = {0.85, 0.18, 0.14}
-    }
+    },
+
+    bgImage = nil
 }
 
 function MainMenu.init()
@@ -38,6 +40,23 @@ function MainMenu.init()
     MainMenu.currentModal = nil
     MainMenu.chapterSelectedIndex = 1
     MainMenu.settingsSelectedIndex = 1
+
+    -- Attempt to load menu background image asset
+    local menuBgCandidates = {
+        "data/backgrounds/main_menu.png",
+        "data/backgrounds/menu.png",
+        "data/backgrounds/title.png",
+        "data/backgrounds/newspaper_club.png",
+        "wallpaper/1.jpg"
+    }
+    MainMenu.bgImage = nil
+    for _, path in ipairs(menuBgCandidates) do
+        local ok, img = pcall(love.graphics.newImage, path)
+        if ok and img then
+            MainMenu.bgImage = img
+            break
+        end
+    end
 
     MainMenu.titleFont = love.graphics.newFont("font/IBMPlexSans-Bold.ttf", 26) or love.graphics.newFont(26)
     MainMenu.titleFontLarge = love.graphics.newFont("font/IBMPlexSans-Bold.ttf", 34) or love.graphics.newFont(34)
@@ -94,12 +113,32 @@ function MainMenu.draw()
     local screenH = love.graphics.getHeight()
     local layout = MainMenu.getLayout(screenW, screenH)
 
-    -- 1. Static Clean Background Gradient
-    love.graphics.setColor(MainMenu.colors.bgTop)
-    love.graphics.rectangle("fill", 0, 0, screenW, screenH)
-    
-    love.graphics.setColor(MainMenu.colors.bgBottom)
-    love.graphics.rectangle("fill", 0, screenH * 0.45, screenW, screenH * 0.55)
+    -- 1. Background Rendering (Image with dark blue overlay, or dark blue fallback)
+    if MainMenu.bgImage then
+        local scaleX = screenW / MainMenu.bgImage:getWidth()
+        local scaleY = screenH / MainMenu.bgImage:getHeight()
+        local scale = math.max(scaleX, scaleY)
+        local drawW = MainMenu.bgImage:getWidth() * scale
+        local drawH = MainMenu.bgImage:getHeight() * scale
+        local drawX = math.floor((screenW - drawW) / 2)
+        local drawY = math.floor((screenH - drawH) / 2)
+
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.draw(MainMenu.bgImage, drawX, drawY, 0, scale, scale)
+
+        -- Dark blue translucent veil for high-contrast UI legibility
+        love.graphics.setColor(0.04, 0.07, 0.14, 0.76)
+        love.graphics.rectangle("fill", 0, 0, screenW, screenH)
+        love.graphics.setColor(0.02, 0.05, 0.10, 0.45)
+        love.graphics.rectangle("fill", 0, 0, layout.startX + layout.btnW + 48, screenH)
+    else
+        -- Fallback Dark Blue Gradient
+        love.graphics.setColor(MainMenu.colors.bgTop)
+        love.graphics.rectangle("fill", 0, 0, screenW, screenH)
+        
+        love.graphics.setColor(MainMenu.colors.bgBottom)
+        love.graphics.rectangle("fill", 0, screenH * 0.4, screenW, screenH * 0.6)
+    end
 
     -- Subtle accent lines
     love.graphics.setColor(0.12, 0.18, 0.28, 0.5)
