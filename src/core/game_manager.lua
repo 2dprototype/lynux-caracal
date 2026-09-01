@@ -11,6 +11,7 @@ local PauseMenu = require("src.ui.pause_menu")
 local MainMenu = require("src.ui.main_menu")
 local SaveManager = require("src.core.save_manager")
 local ChapterManager = require("src.chapters.chapter_manager")
+local ContentRegistry = require("src.core.content_registry")
 
 local GameManager = {
     mode = "menu", -- "menu", "story", "desktop"
@@ -28,6 +29,7 @@ function GameManager.init()
     SaveManager.init()
     ChapterManager.init()
     MainMenu.init()
+    ContentRegistry.init()
 
     -- Start in Main Menu
     GameManager.mode = "menu"
@@ -43,6 +45,11 @@ function GameManager.init()
     EventBus.on("task:completed", function(task)
         Notifications.add("Objective Completed!", task.title .. " (+ " .. tostring(task.xp) .. " XP)")
     end, "gm_task_completed")
+    
+    -- Listen to flag changes to check for new dynamic content
+    EventBus.on("player:flag_changed", function(data)
+        ContentRegistry.checkFlags()
+    end, "gm_content_registry")
 end
 
 function GameManager.switchMode(targetMode, transitionType, onComplete)

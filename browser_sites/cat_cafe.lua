@@ -14,7 +14,7 @@ function CatCafe.new(browser)
     
     self.scroll = 0
     self.maxScroll = 0
-    self.title = "Meow Latte (ニャン・ラテ) - Cat Cafe"
+    self.title = "Meow Latte - Cat Cafe"
     
     self.cats = {
         {
@@ -78,7 +78,7 @@ function CatCafe:draw(x, y, w, h)
     
     love.graphics.setColor(1, 1, 1)
     love.graphics.setFont(self.headerFont)
-    love.graphics.printf("Meow Latte (ニャン・ラテ)", x, y + 10, w, "center")
+    love.graphics.printf("Meow Latte", x, y + 10, w, "center")
     
     love.graphics.setFont(self.smallFont)
     love.graphics.printf("Fresh Artisan Coffee & 8 Adorable Rescue Cats • 3 min from Kamiyama Station", x, y + 44, w, "center")
@@ -129,7 +129,7 @@ function CatCafe:draw(x, y, w, h)
     -- 3. Resident Cats Header
     love.graphics.setColor(0.2, 0.2, 0.2)
     love.graphics.setFont(self.titleFont)
-    love.graphics.print("Our Resident Cat Stars (キャスト紹介)", cx, cy)
+    love.graphics.print("Our Resident Cat Stars", cx, cy)
     cy = cy + 28
     totalH = totalH + 28
     
@@ -181,7 +181,7 @@ function CatCafe:draw(x, y, w, h)
     -- 4. Cafe Menu Header
     love.graphics.setColor(0.2, 0.2, 0.2)
     love.graphics.setFont(self.titleFont)
-    love.graphics.print("Featured Cafe Menu & Desserts (おすすめメニュー)", cx, cy)
+    love.graphics.print("Featured Cafe Menu & Desserts", cx, cy)
     cy = cy + 28
     totalH = totalH + 28
     

@@ -4,8 +4,179 @@
 
 local TaskConditions = require("src.tasks.task_conditions")
 local EventBus = require("src.core.event_bus")
+local ContentRegistry = require("src.core.content_registry")
 
--- Chapter 1 Desktop Task Sequence Definitions
+-- =========================================================================
+-- REGISTER DYNAMIC CONTENT TO APPEAR AS STORY PROGRESSES
+-- =========================================================================
+
+-- Helper function to register emails (handles both single and arrays)
+local function registerEmails(flagName, emails)
+    if type(emails) == "table" and #emails > 0 then
+        for _, email in ipairs(emails) do
+            ContentRegistry.registerOnFlag(flagName, email)
+        end
+    else
+        ContentRegistry.registerOnFlag(flagName, emails)
+    end
+end
+
+-- Helper function to register chat messages
+local function registerChatMessages(flagName, messages)
+    if type(messages) == "table" and #messages > 0 then
+        for _, msg in ipairs(messages) do
+            ContentRegistry.registerChatOnFlag(flagName, msg)
+        end
+    else
+        ContentRegistry.registerChatOnFlag(flagName, messages)
+    end
+end
+
+-- Register Hiko's email (appears immediately when chapter starts)
+registerEmails("chapter_1_started", {
+    {
+        id = 101,
+        subject = "Dinner tonight + DON'T forget the laundry!",
+        sender = "Hiko (Sister)",
+        email = "hiko.akizuki@kamiyama.net",
+        time = "11:15 PM",
+        body = "Hey big brother!\n\nI left some leftover curry in the fridge with plastic wrap. Make sure you microwave it before eating instead of eating it cold like a savage.\n\nAlso, are you still staying up late on the computer? Mom called and said don't forget to buy milk on your way home from school tomorrow.\n\nBy the way, all the first-years in my class were whispering today about weird noises and blinking lights from the 3rd floor old server room after 6 PM... Is your Newspaper Club really investigating that? Don't get suspended, dummy!\n\n- Hiko",
+        unread = true,
+        starred = true,
+        unlocked = true
+    }
+})
+
+-- Register Suzumia's email (appears when she promises to send it in story)
+registerEmails("suzumia_email_sent", {
+    {
+        id = 102,
+        subject = "Cat Cafe Draft Notes & Photo Selection [URGENT cute!]",
+        sender = "Suzumia (Vice President)",
+        email = "suzumia.y@kamiyama-press.org",
+        time = "11:42 PM",
+        body = "Hi Aki-kun,\n\nThank you so much for backing me up during the editorial meeting today when President Nagahashi started going overboard with his ghost story idea!\n\nI just organized my interview notes from the Meow Latte Cat Cafe. The owner was super nice and gave us permission to publish photos of Mochi (the white Scottish Fold) and Chobi (the calico)! Mochi actually climbed into my lap while I was writing notes... it was heaven. (///_///)\n\nI have attached my raw draft notes below ('cat_cafe_review.txt'). Please click the attachment below to download it to your Downloads folder, then check the formatting and menu pricing in TextEditor! I really want our front-cover feature to turn out amazing.\n\nSee you in the clubroom tomorrow!\n\n- Suzumia",
+        unread = true,
+        starred = true,
+        unlocked = true,
+        attachment = {
+            filename = "cat_cafe_review.txt",
+            size = "1.4 KB",
+            content = "=== KAMIYAMA HIGH NEWSPAPER: SPECIAL FEATURE ===\nTITLE: A Whiskered Paradise: Visiting 'Meow Latte' Cat Cafe\nAUTHOR: Suzumia (VP) & Aki (Reporter)\n\n[HIGHLIGHTS]\n- Location: 3 minutes walking from Kamiyama Station South Exit.\n- Atmosphere: Warm wood interior, sunlight through large bay windows, relaxing jazz music.\n- Featured Stars:\n  * Mochi (White Scottish Fold) - Extremely friendly, curled up on our notes!\n  * Chobi (Calico Shorthair) - Playful and curious, loved our camera straps.\n- Recommended Treats: Strawberry Cat-Paw Parfait (¥680), Souffle Pancakes (¥750).\n- Student Special: 10% discount when presenting Kamiyama High ID card!\n\nNote from Suzumia: Aki-kun, let's make sure Mochi's picture is front and center on the main cover!"
+        }
+    }
+})
+
+-- Register Nagahashi's email (appears after reading Suzumia's email)
+registerEmails("email_read:102", {
+    {
+        id = 103,
+        subject = "OPERATION GHOST SCOOP: Editorial Manifesto #42",
+        sender = "Nagahashi (President)",
+        email = "president.nagahashi@kamiyama-press.org",
+        time = "10:30 PM",
+        body = "ATTENTION ALL NEWSPAPER CLUB PERSONNEL:\n\nThe Student Council thinks they can intimidate us with their budget review threats. THEY ARE MISTAKEN.\n\nOur upcoming edition MUST be sensational. Aki, as Lead Layout Editor, I expect you to give the 'Midnight Server Room Urban Legend' article the most dramatic, spine-chilling headline possible! Use red ink borders if the school mimeograph allows it!\n\nI know Suzumia insisted on her cat cafe piece, so we will compromise with the Dual Cover format. But the Mystery Report will be our magnum opus!\n\nJournalistic glory awaits!\n\n- President Nagahashi",
+        unread = true,
+        starred = false,
+        unlocked = true
+    }
+})
+
+-- Register Student Council email (appears after downloading attachment)
+registerEmails("email_downloaded:102", {
+    {
+        id = 104,
+        subject = "Notice of Review: Newspaper Club Operating Budget",
+        sender = "Student Council (Auditing)",
+        email = "council-audit@kamiyama-hs.ed.jp",
+        time = "04:15 PM",
+        body = "To: Kamiyama High Newspaper Club Editorial Board\n\nThis is a formal notification regarding the upcoming Q3 Club Budget Allocation Review.\n\nDue to declining readership in recent issues, your allocated printing quota is subject to a 40% reduction unless circulation and verified student engagement show a marked increase in the upcoming Special Edition.\n\nPlease submit your publication draft by Friday afternoon.\n\nKamiyama High Student Council Auditing Committee",
+        unread = false,
+        starred = false,
+        unlocked = true
+    }
+})
+
+-- Register Hoshida's email (appears after chatting with Suzumia)
+registerEmails("chat_sent:suzumia", {
+    {
+        id = 105,
+        subject = "Found that old server archive dump you asked for",
+        sender = "Hoshida",
+        email = "hoshida.tech@kamiyama-press.org",
+        time = "09:50 PM",
+        body = "Yo Aki,\n\nI dug through our club's old backup drive and found the raw network dump from last year's website server. I put it in your Downloads folder as 'school_server_dump.log'.\n\nNagahashi thinks he's just inventing spooky rumors to scare freshmen, but... honestly, there are some strange outbound packets logged on port 8080 from the old terminal. Take a look when you're at your desk.\n\nAnyway, back to watching my late-night anime stream. 2D cat maids > 3D drama any day.\n\n( ^ _ ^ )/\n- Hoshida",
+        unread = true,
+        starred = false,
+        unlocked = true,
+        attachment = {
+            filename = "school_server_dump.log",
+            size = "2.8 KB",
+            content = "[23:14:02] [ETH-0] INBOUND PACKET on Port 8080 from 192.168.1.144 (Old 3rd Floor Rack)\n[23:14:03] [PAYLOAD] Encrypted XOR stream detected [Length: 256 bytes]\n[23:14:04] [DECRYPTOR] Matching signature with Newspaper Club archive...\n[23:14:05] [KEY_FOUND] Secret Token: SHADOW-CAT-09\n[23:14:06] [STATUS] Remote node ping active. Traceroute bounces through 3 internal relays.\n[23:14:07] [NOTE] Hoshida: 'Aki, someone is definitely using the school old repeater as a proxy.'"
+        }
+    }
+})
+
+-- Register Hoshida's traceroute email (appears after saving cipher.txt)
+registerEmails("file_saved:cipher.txt", {
+    {
+        id = 106,
+        subject = "[CONFIDENTIAL] Traceroute analysis & Basement Sub-Station Anomaly",
+        sender = "Hoshida",
+        email = "hoshida.tech@kamiyama-press.org",
+        time = "07:15 AM",
+        body = "Aki,\n\nI ran a subnet traceroute on the repeater while eating morning Pocky.\n\nThe packet route does not end on the 3rd floor. The signal is being re-routed down the elevator shaft into the locked basement power sub-station (IP: 192.168.1.254).\n\nCheck 'traceroute_dump.txt' in your Downloads folder.\n\nThe MAC address matches a commercial high-gain transceiver. Someone is piggybacking on our school grid to host an external server.\n\nKeep this between us until we pass the Student Council audit at 5 PM.\n\n- Hoshida [Root]",
+        unread = true,
+        starred = true,
+        unlocked = true,
+        attachment = {
+            filename = "traceroute_dump.txt",
+            size = "1.8 KB",
+            content = "=== KAMIYAMA HIGH INTRANET TRACEROUTE LOG ===\nTARGET: port8080.ghost-relay.local\n\nHOP 1: 192.168.1.1 (Kamiyama Gateway Router) [1.2ms]\nHOP 2: 192.168.1.144 (3rd Floor Switchboard 04) [4.5ms]\nHOP 3: 192.168.1.254 (Basement Electrical Conduit Sub-Station) [0.8ms]\n\nALERT: Target IP 192.168.1.254 responds with MAC: 00:1A:C2:7B:99:4F\nNOTE (Hoshida): This MAC address belongs to an external commercial mesh router, not school inventory!\nCIPHER VERIFIED: [SHADOW-CAT-09]"
+        }
+    }
+})
+
+-- Register dynamic chat messages to appear when story progresses
+registerChatMessages("browsed_cat_cafe", {
+    {
+        userId = 1,
+        senderName = "Suzumia (Vice President)",
+        color = {0.94, 0.48, 0.58},
+        text = "Aki-kun! Did you get a chance to check the Meow Latte photos on their site? :)",
+        timestamp = os.time()
+    },
+    {
+        userId = 1,
+        senderName = "Suzumia (Vice President)",
+        color = {0.94, 0.48, 0.58},
+        text = "Mochi (the white Scottish Fold) looked so peaceful in the bay window sunlight... what do you think of making him the main cover photo?",
+        timestamp = os.time() + 1
+    }
+})
+
+-- Register Hoshida's alert after chatting with Suzumia
+registerChatMessages("chat_sent:suzumia", {
+    {
+        userId = 2,
+        senderName = "Hoshida",
+        color = {0.32, 0.72, 0.48},
+        text = "[URGENT] Aki, check your Downloads folder right now.",
+        timestamp = os.time() + 2
+    },
+    {
+        userId = 2,
+        senderName = "Hoshida",
+        color = {0.32, 0.72, 0.48},
+        text = "I dumped the raw packets from the 3rd floor repeater rack ('school_server_dump.log'). There is an encrypted XOR stream active on port 8080. Someone is using the school network as an unauthorized relay bridge.",
+        timestamp = os.time() + 3
+    }
+})
+
+-- =========================================================================
+-- CHAPTER 1 TASK DEFINITIONS
+-- =========================================================================
+
 local ch1Tasks = {}
 
 ch1Tasks.task8 = {
@@ -70,7 +241,6 @@ ch1Tasks.task5 = {
         local Notifications = require("src.desktop.notifications")
         local PlayerStats = require("src.core.player_stats")
         PlayerStats.setFlag("hoshida_alert", true)
-        PlayerStats.setFlag("email_unlocked:105", true)
         Notifications.add("Hoshida [Root]", "URGENT: Port 8080 anomaly detected on school subnet!", nil, 6.0)
         local TaskManager = require("src.tasks.task_manager")
         TaskManager.setTask(ch1Tasks.task6)
@@ -145,12 +315,24 @@ ch1Tasks.task1 = {
     end
 }
 
+-- =========================================================================
+-- CHAPTER 1 STORY SCRIPT
+-- =========================================================================
+
 return {
     -- =========================================================================
     -- ACT I: GOLDEN HOUR IN CLUBROOM 204
     -- =========================================================================
     { type = "bg", name = "clubroom_sunset" },
     { type = "music", track = "main_theme", loop = true },
+
+    -- Trigger content registry to check for initial content
+    { type = "flag", name = "chapter_1_started", value = true },
+    
+    -- Force content check immediately after setting the flag
+    { type = "custom", fn = function()
+        ContentRegistry.checkFlags()
+    end },
 
     { type = "monologue", text = "04:45 PM. October sunlight cuts across the wooden floorboards of Clubroom 204." },
     { type = "monologue", text = "The room always smells faintly of hot mimeograph toner, aged paper, and the sweet roasted barley tea Suzumia brews before each editorial meeting." },
@@ -209,6 +391,16 @@ return {
     { type = "monologue", text = "Suzumia turns to me and offers a gentle, genuine smile that makes my heart skip a quiet beat." },
 
     { type = "say", speaker = "Suzumia", text = "Thank you, Aki-kun. I'll email you my full interview notes and cat photos tonight. Let's make this our best issue yet!" },
+
+    -- TRIGGER: Suzumia sends her email
+    { type = "flag", name = "suzumia_email_sent", value = true },
+    
+    -- Force content check immediately after setting the flag
+    { type = "custom", fn = function()
+        ContentRegistry.checkFlags()
+    end },
+    
+    { type = "monologue", text = "Suzumia's email should arrive in my inbox soon with the cat cafe attachments." },
 
     { type = "say", speaker = "Nagahashi", text = "Then it is settled! Aki, you are in charge of synthesizing both stories on your PC tonight. Kamiyama Press rides to victory!" },
 
