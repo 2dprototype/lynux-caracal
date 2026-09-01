@@ -541,7 +541,7 @@ function EmailApp:drawEmailDetail(startX, detailWidth, absX, absY, isCompact, em
             love.graphics.rectangle("fill", btnX, btnY, btnW, btnH, 4)
             love.graphics.setColor(1, 1, 1)
             love.graphics.setFont(self.font12)
-            love.graphics.printf("✓ Saved in Downloads", btnX, btnY + 9, btnW, "center")
+            love.graphics.printf("Saved in Downloads", btnX, btnY + 9, btnW, "center")
         else
             if isBtnHovered then
                 love.graphics.setColor(0.0, 0.4, 0.75)
@@ -551,7 +551,7 @@ function EmailApp:drawEmailDetail(startX, detailWidth, absX, absY, isCompact, em
             love.graphics.rectangle("fill", btnX, btnY, btnW, btnH, 4)
             love.graphics.setColor(1, 1, 1)
             love.graphics.setFont(self.font12)
-            love.graphics.printf("⬇ Download File", btnX, btnY + 9, btnW, "center")
+            love.graphics.printf("Download File", btnX, btnY + 9, btnW, "center")
         end
         
         self.attachmentButtonRect = {

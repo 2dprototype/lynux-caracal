@@ -223,31 +223,31 @@ function DialogueBox.draw(isAutoPlay)
     love.graphics.push()
 
     -- 1. Soft Shadow
-    love.graphics.setColor(0, 0, 0, 0.45)
-    love.graphics.rectangle("fill", boxX + 2, boxY + 3, boxW, boxH, 6, 6)
+    -- love.graphics.setColor(0, 0, 0, 0.45)
+    -- love.graphics.rectangle("fill", boxX + 2, boxY + 3, boxW, boxH, 6, 6)
 
     -- 2. Material Dark Navy Solid Plate
-    love.graphics.setColor(0.06, 0.08, 0.14, 0.94)
+    love.graphics.setColor(0.06, 0.08, 0.14, 0.75)
     love.graphics.rectangle("fill", boxX, boxY, boxW, boxH, 6, 6)
 
     -- 3. Speaker / Accent Strip
     if DialogueBox.isMonologue then
-        love.graphics.setColor(0.35, 0.65, 0.95, 0.95)
+        love.graphics.setColor(0.35, 0.65, 0.95, 0.8)
         love.graphics.rectangle("fill", boxX, boxY, 4, boxH, 2, 2)
 
         love.graphics.setFont(DialogueBox.nameFont or DialogueBox.font)
-        love.graphics.setColor(0.40, 0.72, 0.98)
+        love.graphics.setColor(0.40, 0.72, 0.8)
         love.graphics.print("Thought", boxX + 16, boxY + 10)
 
         love.graphics.setFont(DialogueBox.italicFont or DialogueBox.font)
-        love.graphics.setColor(0.92, 0.94, 0.97)
+        love.graphics.setColor(0.92, 0.94, 0.87)
         love.graphics.printf(DialogueBox.displayText, boxX + 16, boxY + 36, boxW - 32, "left")
 
     else
         local charInfo = CharacterManager.get(DialogueBox.speaker)
-        local accentColor = charInfo.color or {0.35, 0.65, 0.95}
+        local accentColor = charInfo.color or {0.35, 0.65, 0.8}
 
-        love.graphics.setColor(accentColor[1], accentColor[2], accentColor[3], 0.95)
+        love.graphics.setColor(accentColor[1], accentColor[2], accentColor[3], 0.8)
         love.graphics.rectangle("fill", boxX, boxY, 4, boxH, 2, 2)
 
         local nameStr = charInfo.name or DialogueBox.speaker or "Protagonist"
@@ -256,7 +256,7 @@ function DialogueBox.draw(isAutoPlay)
         love.graphics.print(nameStr, boxX + 16, boxY + 10)
 
         love.graphics.setFont(DialogueBox.font)
-        love.graphics.setColor(0.95, 0.96, 0.98)
+        love.graphics.setColor(0.95, 0.96, 0.8)
         love.graphics.printf(DialogueBox.displayText, boxX + 16, boxY + 36, boxW - 32, "left")
     end
 
@@ -268,7 +268,7 @@ function DialogueBox.draw(isAutoPlay)
         local isHover = (DialogueBox.hoveredBtn == btn.id)
 
         if btn.active then
-            love.graphics.setColor(0.15, 0.50, 0.85, 0.95)
+            love.graphics.setColor(0.15, 0.50, 0.85, 0.8)
             love.graphics.rectangle("fill", btn.x, btn.y, btn.w, btn.h, 3, 3)
             love.graphics.setColor(1, 1, 1)
         elseif isHover then

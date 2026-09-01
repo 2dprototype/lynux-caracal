@@ -179,14 +179,14 @@ function CharacterManager.draw()
 
             if img then
                 -- Render loaded visual novel character sprite with mirror/flip support (increased size & elevated position)
-                local targetHeight = math.min(h * 0.88, 640)
+                local targetHeight = math.min(h * 0.98, 640)
                 local scale = targetHeight / img:getHeight()
                 local imgW = img:getWidth() * scale
                 local imgH = img:getHeight() * scale
 
                 local scaleX = charData.flipped and -scale or scale
                 local drawX = charData.flipped and math.floor(coords.x + imgW / 2) or math.floor(coords.x - imgW / 2)
-                local drawY = math.floor(h - imgH - 12) -- elevated higher up on screen
+                local drawY = math.floor(h - imgH)
 
                 love.graphics.setColor(1, 1, 1, alpha)
                 love.graphics.draw(img, drawX, drawY, 0, scaleX, scale)
