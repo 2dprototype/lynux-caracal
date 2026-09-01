@@ -1,0 +1,11 @@
+﻿{
+    "id": "calculator",
+    "name": "Calculator",
+    "version": "1.0.0",
+    "author": "Lynux Team",
+    "description": "Standard & scientific desktop calculator app with memory and history.",
+    "category": "Utilities",
+    "defaultWidth": 340,
+    "defaultHeight": 440,
+    "enabled": true
+}

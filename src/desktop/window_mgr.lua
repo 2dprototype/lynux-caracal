@@ -53,8 +53,8 @@ end
 
 -- Open a new window / process instance of an app
 function WindowManager.openWindow(app, defaultW, defaultH, customInstance, customTitle)
-    defaultW = defaultW or 560
-    defaultH = defaultH or 350
+    defaultW = defaultW or (app and (app.defaultWidth or app.windowWidth or (app.width and app.width > 100 and app.width))) or 560
+    defaultH = defaultH or (app and (app.defaultHeight or app.windowHeight or (app.height and app.height > 100 and app.height))) or 350
     local screenW, screenH = Viewport.getWidth(), Viewport.getHeight()
     local x = (screenW - defaultW) / 2 + (#WindowManager.openApps * 24) % 100
     local y = 35 + ((screenH - 75 - defaultH) / 2) + (#WindowManager.openApps * 20) % 80

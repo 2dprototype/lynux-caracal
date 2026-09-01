@@ -11,7 +11,7 @@ function SettingsApp.new(availableWallpapers, currentWallpaper, onWallpaperChang
     self.onWallpaperChange = onWallpaperChange or function() end
     
     -- UI State
-    self.tabs = {"Wallpaper", "Display", "System"}
+    self.tabs = {"Wallpaper", "Display", "System", "DLC & Addons"}
     self.selectedTab = 1
     
     -- Dimensions & Layout
@@ -96,6 +96,8 @@ function SettingsApp:draw(x, y, width, height)
         self:drawDisplayTab()
     elseif self.selectedTab == 3 then
         self:drawSystemTab()
+    elseif self.selectedTab == 4 then
+        self:drawDLCTab()
     end
     
     love.graphics.pop()
@@ -269,6 +271,45 @@ function SettingsApp:drawSystemTab()
     self:drawButton("Run Garbage Collector", 20, y + 230, 200, 30)
 end
 
+function SettingsApp:drawDLCTab()
+    local DLCManager = require("src.core.dlc_manager")
+    local installed = DLCManager.getInstalledDLCs()
+    local y = self.tabHeight + 15
+    
+    love.graphics.setColor(0.1, 0.1, 0.1)
+    love.graphics.print("Installed DLC Packages & Addons (" .. #installed .. ")", 20, y)
+    
+    local cardY = y + 25
+    for i, dlc in ipairs(installed) do
+        if cardY + 44 < self.height - 48 then
+            love.graphics.setColor(1, 1, 1)
+            love.graphics.rectangle("fill", 20, cardY, self.width - 40, 40, 4)
+            love.graphics.setColor(0.85, 0.88, 0.92)
+            love.graphics.rectangle("line", 20, cardY, self.width - 40, 40, 4)
+            
+            -- Title & version
+            love.graphics.setColor(0.1, 0.35, 0.75)
+            love.graphics.print(dlc.name .. "  v" .. (dlc.version or "1.0"), 30, cardY + 5)
+            
+            -- Author & description
+            love.graphics.setColor(0.45, 0.5, 0.6)
+            love.graphics.print((dlc.author and ("by " .. dlc.author .. " • ") or "") .. (dlc.description or ""), 30, cardY + 21)
+            
+            cardY = cardY + 46
+        end
+    end
+    
+    if #installed == 0 then
+        love.graphics.setColor(0.5, 0.55, 0.65)
+        love.graphics.print("No external DLC packages found in dlc/ directory.", 20, cardY)
+    end
+    
+    self:drawButton("Reload All DLCs", 20, self.height - 42, 140, 28)
+    
+    love.graphics.setColor(0.45, 0.5, 0.6)
+    love.graphics.printf("Drop new apps / .lua packages into the dlc/ directory to install", 170, self.height - 36, self.width - 180, "left")
+end
+
 function SettingsApp:drawButton(text, x, y, w, h)
     local isHovered = self.mouseX >= x and self.mouseX <= x + w and self.mouseY >= y and self.mouseY <= y + h
     
@@ -309,6 +350,8 @@ function SettingsApp:mousepressed(mx, my, button, wx, wy)
         self:handleDisplayTabClick(mx, my)
     elseif self.selectedTab == 3 then
         self:handleSystemTabClick(mx, my)
+    elseif self.selectedTab == 4 then
+        self:handleDLCTabClick(mx, my)
     end
 end
 
@@ -439,6 +482,15 @@ function SettingsApp:handleSystemTabClick(mx, my)
     local y = self.tabHeight + 20
     if self:isButtonClicked(mx, my, 20, y + 230, 200, 30) then
         collectgarbage("collect")
+    end
+end
+
+function SettingsApp:handleDLCTabClick(mx, my)
+    if self:isButtonClicked(mx, my, 20, self.height - 42, 140, 28) then
+        local DLCManager = require("src.core.dlc_manager")
+        DLCManager.reload()
+        local AudioManager = require("src.core.audio_manager")
+        AudioManager.playSFX("click")
     end
 end
 

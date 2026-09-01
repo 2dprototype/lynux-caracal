@@ -1,0 +1,11 @@
+﻿{
+    "id": "retro_snake",
+    "name": "Retro Snake",
+    "version": "1.0.0",
+    "author": "Lynux Arcade",
+    "description": "Classic arcade snake mini-game with score tracking and speed levels.",
+    "category": "Games",
+    "defaultWidth": 420,
+    "defaultHeight": 440,
+    "enabled": true
+}

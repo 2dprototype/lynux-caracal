@@ -11,6 +11,7 @@ local WindowManager = require("src.desktop.window_mgr")
 local TaskHUD = require("src.desktop.task_hud")
 local Notifications = require("src.desktop.notifications")
 local Viewport = require("src.core.viewport")
+local DLCManager = require("src.core.dlc_manager")
 
 -- Load App Modules
 local EmailApp = require("src.apps.email")
@@ -45,6 +46,37 @@ local function loadCustomFont(path, size)
     return love.graphics.newFont(size)
 end
 
+local function loadImg(path)
+    local ok, img = pcall(love.graphics.newImage, path)
+    return ok and img or nil
+end
+
+function DesktopManager.reloadApps()
+    DLCManager.init()
+
+    DesktopManager.apps = {
+        { name = "TextEditor", module = TextEditor, icon = loadImg("assets/file.png"), defaultWidth = 560, defaultHeight = 350 },
+        { name = "Terminal", module = TerminalApp, icon = loadImg("assets/terminal.png"), defaultWidth = 560, defaultHeight = 350 },
+        { name = "Files", module = FilesApp, icon = loadImg("assets/files.png"), defaultWidth = 560, defaultHeight = 350 },
+        { name = "Chat", module = ChatApp, icon = loadImg("assets/chat.png"), defaultWidth = 540, defaultHeight = 360 },
+        { name = "Email", module = EmailApp, icon = loadImg("assets/email.png"), defaultWidth = 560, defaultHeight = 350 },
+        { name = "Browser", module = BrowserApp, icon = loadImg("assets/browser.png"), defaultWidth = 560, defaultHeight = 360 },
+        { name = "ImageViewer", module = ImageViewer, icon = loadImg("assets/image.png"), defaultWidth = 540, defaultHeight = 340 },
+        { name = "ObjViewer", module = ObjViewer, icon = loadImg("assets/cube.png"), defaultWidth = 540, defaultHeight = 340 },
+        { name = "Tessarect", module = TessarectApp, icon = loadImg("assets/box.png"), defaultWidth = 540, defaultHeight = 340 },
+        { name = "Settings", module = SettingsApp, icon = loadImg("assets/settings.png"), defaultWidth = 480, defaultHeight = 340 },
+    }
+
+    -- Append dynamically discovered DLC apps
+    for _, dlcApp in ipairs(DLCManager.getLoadedApps()) do
+        dlcApp.defaultWidth = dlcApp.defaultWidth or dlcApp.width or 520
+        dlcApp.defaultHeight = dlcApp.defaultHeight or dlcApp.height or 360
+        table.insert(DesktopManager.apps, dlcApp)
+    end
+
+    DesktopManager.updateDockLayout()
+end
+
 function DesktopManager.init()
     Taskbar.init()
     WindowManager.init()
@@ -73,24 +105,6 @@ function DesktopManager.init()
     end
     DesktopManager.desktopHome = sharedFS.children["home"]
 
-    local function loadImg(path)
-        local ok, img = pcall(love.graphics.newImage, path)
-        return ok and img or nil
-    end
-
-    DesktopManager.apps = {
-        { name = "TextEditor", module = TextEditor, icon = loadImg("assets/file.png") },
-        { name = "Terminal", module = TerminalApp, icon = loadImg("assets/terminal.png") },
-        { name = "Files", module = FilesApp, icon = loadImg("assets/files.png") },
-        { name = "Chat", module = ChatApp, icon = loadImg("assets/chat.png") },
-        { name = "Email", module = EmailApp, icon = loadImg("assets/email.png") },
-        { name = "Browser", module = BrowserApp, icon = loadImg("assets/browser.png") },
-        { name = "ImageViewer", module = ImageViewer, icon = loadImg("assets/image.png") },
-        { name = "ObjViewer", module = ObjViewer, icon = loadImg("assets/cube.png") },
-        { name = "Tessarect", module = TessarectApp, icon = loadImg("assets/box.png") },
-        { name = "Settings", module = SettingsApp, icon = loadImg("assets/settings.png") },
-    }
-
     _G.openFileDirectly = function(node)
         if not node then return end
         local ext = node.name:match("^.+(%..+)$") or ""
@@ -104,7 +118,7 @@ function DesktopManager.init()
         end
     end
 
-    DesktopManager.updateDockLayout()
+    DesktopManager.reloadApps()
 end
 
 function DesktopManager.updateDockLayout()
@@ -396,8 +410,9 @@ end
 function DesktopManager.drawStartMenu()
     if not DesktopManager.startMenuOpen then return end
 
-    local screenH = love.graphics.getHeight()
-    local menuW, menuH = 240, 300
+    local screenH = Viewport.getHeight()
+    local menuW = 240
+    local menuH = math.min(screenH - Taskbar.bottomBarHeight - 12, 54 + #DesktopManager.apps * 26)
     local menuX, menuY = 0, screenH - Taskbar.bottomBarHeight - menuH
 
     love.graphics.push()
@@ -451,8 +466,9 @@ function DesktopManager.mousepressed(x, y, button)
     if Taskbar.mousepressed(x, y, button) then return end
 
     if DesktopManager.startMenuOpen then
-        local screenH = love.graphics.getHeight()
-        local menuW, menuH = 240, 300
+        local screenH = Viewport.getHeight()
+        local menuW = 240
+        local menuH = math.min(screenH - Taskbar.bottomBarHeight - 12, 54 + #DesktopManager.apps * 26)
         local menuX, menuY = 0, screenH - Taskbar.bottomBarHeight - menuH
         if x >= menuX and x <= menuX + menuW and y >= menuY and y <= menuY + menuH then
             local itemY = menuY + 46
