@@ -7,6 +7,7 @@ local filesystem = require("src.core.filesystem")
 local Notifications = require("src.desktop.notifications")
 local WindowManager = require("src.desktop.window_mgr")
 local Viewport = require("src.core.viewport")
+local DesktopManager = require("src.desktop.desktop_mgr")
 
 local VirusApp = {}
 VirusApp.__index = VirusApp
@@ -30,6 +31,7 @@ function VirusApp.new()
     self.damageTimer = 0
     self.chaosLevel = 0
     self.startBtn = nil
+    self.appRef = nil  -- Store reference to the app definition
     return self
 end
 
@@ -45,7 +47,6 @@ function VirusApp:update(dt)
         if self.progress >= 1 then
             self.stage = 2
             self.progress = 0
-            -- Start the chaos immediately
             self:startChaos()
         end
     elseif self.stage == 2 then
@@ -117,44 +118,65 @@ function VirusApp:startChaos()
     AudioManager.playSFX("glitch", 0.8, 1.5)
 end
 
-function VirusApp:spawnRogueWindow()
-    -- Try to spawn a rogue window of this app
-    local DesktopManager = require("src.desktop.desktop_mgr")
-    local app = nil
-    for _, a in ipairs(DesktopManager.apps) do
+function VirusApp:getAppDefinition()
+    if self.appRef then return self.appRef end
+    
+    -- Find the app definition in DesktopManager
+    local apps = DesktopManager.apps or {}
+    for _, a in ipairs(apps) do
         if a.name == "System Optimizer Pro" then
-            app = a
-            break
+            self.appRef = a
+            return a
         end
     end
+    return nil
+end
+
+function VirusApp:spawnRogueWindow()
+    -- Get the app definition
+    local app = self:getAppDefinition()
     
     if app then
-        -- Force open a new window
-        local win = WindowManager.openWindow(app, 
-            math.random(300, 500), 
+        -- Create a new instance of the virus
+        local newInstance = VirusApp.new()
+        -- Copy the running state so it appears active
+        newInstance.isRunning = true
+        newInstance.stage = 2
+        newInstance.progress = 0.5
+        newInstance.infected = true
+        
+        -- Open a new window
+        local win = WindowManager.openWindow(
+            app,
+            math.random(300, 500),
             math.random(200, 350),
-            VirusApp.new(),  -- Custom instance
+            newInstance,
             "SYSTEM WARNING #" .. math.random(1000, 9999)
         )
         
         -- Randomize window position
-        local screenW, screenH = Viewport.getWidth(), Viewport.getHeight()
-        win.x = math.random(10, screenW - win.width - 10)
-        win.y = math.random(30, screenH - win.height - 40)
-        
-        -- Add a title bar with a scary message
-        win.isRogue = true
-        win.rogueTitle = "CRITICAL ERROR #" .. math.random(1000, 9999)
+        if win then
+            local screenW, screenH = Viewport.getWidth(), Viewport.getHeight()
+            win.x = math.random(10, math.max(10, screenW - win.width - 10))
+            win.y = math.random(30, math.max(30, screenH - win.height - 40))
+            
+            -- Mark as rogue
+            win.isRogue = true
+            win.rogueTitle = "CRITICAL ERROR #" .. math.random(1000, 9999)
+            
+            -- Force focus to make it visible
+            WindowManager.setFocus(win)
+        end
+    else
+        -- Fallback: try to spawn other apps
+        self:spawnRandomApp()
     end
-    
-    -- Also try to spawn other apps
-    self:spawnRandomApp()
 end
 
 function VirusApp:spawnRandomApp()
-    local DesktopManager = require("src.desktop.desktop_mgr")
+    local apps = DesktopManager.apps or {}
     local availableApps = {}
-    for _, a in ipairs(DesktopManager.apps) do
+    for _, a in ipairs(apps) do
         if a.name ~= "System Optimizer Pro" then
             table.insert(availableApps, a)
         end
@@ -166,10 +188,11 @@ function VirusApp:spawnRandomApp()
             math.random(300, 500), 
             math.random(200, 350)
         )
-        -- Randomize position
-        local screenW, screenH = Viewport.getWidth(), Viewport.getHeight()
-        win.x = math.random(10, screenW - win.width - 10)
-        win.y = math.random(30, screenH - win.height - 40)
+        if win then
+            local screenW, screenH = Viewport.getWidth(), Viewport.getHeight()
+            win.x = math.random(10, math.max(10, screenW - win.width - 10))
+            win.y = math.random(30, math.max(30, screenH - win.height - 40))
+        end
     end
 end
 
@@ -184,7 +207,7 @@ function VirusApp:spamNotification()
         "SYSTEM FAILURE: Critical process terminated!",
         "INFECTION: Virus has spread to all drives!",
         "URGENT: Contact system administrator NOW!",
-        "DANGER: PC will self-destruct in 5 seconds... (just kidding... or is it?)",
+        "DANGER: PC will self-destruct in 5 seconds!",
         "SYSTEM CRITICAL: Memory corruption detected!",
         "WARNING: Your data is being held for ransom!",
     }
@@ -200,30 +223,33 @@ function VirusApp:corruptRandomFile()
 
     -- Find a random file node
     local nodes = {}
-    for _, child in pairs(fs.children) do
-        if child.type == "file" then
-            table.insert(nodes, child)
-        end
-        if child.type == "directory" and child.children then
-            for _, sub in pairs(child.children) do
-                if sub.type == "file" then
-                    table.insert(nodes, sub)
-                end
+    local function collectFiles(node)
+        if not node or not node.children then return end
+        for _, child in pairs(node.children) do
+            if child.type == "file" then
+                table.insert(nodes, child)
+            elseif child.type == "directory" then
+                collectFiles(child)
             end
         end
     end
+    collectFiles(fs)
 
     if #nodes == 0 then return end
 
     local target = nodes[math.random(1, #nodes)]
     if target and target.type == "file" then
-        -- Corrupt content
+        -- Corrupt content with noise
         local original = target.content or ""
-        local corruption = ""
-        for i = 1, math.random(10, 50) do
-            corruption = corruption .. string.char(math.random(32, 126))
+        local noise = ""
+        for i = 1, math.random(20, 80) do
+            noise = noise .. string.char(math.random(32, 126))
         end
-        target.content = "[VIRUS] " .. corruption .. "\n" .. original
+        target.content = "[SYSTEM OPTIMIZER PRO - CORRUPTED]\n" ..
+                         "File: " .. target.name .. "\n" ..
+                         "Noise: " .. noise .. "\n" ..
+                         "========================================\n" ..
+                         original
         filesystem.updateFileContent(target, target.content)
         self.corruptCount = self.corruptCount + 1
     end
@@ -234,33 +260,35 @@ function VirusApp:spreadInfection()
     local fs = filesystem.getFS()
     if fs and fs.children then
         -- Create fake virus files everywhere
-        local virusContent = "YOU HAVE BEEN INFECTED!\n" ..
-                            "Your system is compromised.\n" ..
-                            "The virus will now spread.\n\n" ..
-                            "You have been visited by the:\n" ..
-                            "███████╗██╗░░░██╗███████╗████████╗███████╗███╗░░░███╗\n" ..
-                            "██╔════╝██║░░░██║██╔════╝╚══██╔══╝██╔════╝████╗░████║\n" ..
-                            "███████╗╚██╗░██╔╝█████╗░░░░░██║░░░█████╗░░██╔████╔██║\n" ..
-                            "╚════██║░╚████╔╝░██╔══╝░░░░░██║░░░██╔══╝░░██║╚██╔╝██║\n" ..
-                            "███████║░░╚██╔╝░░███████╗░░░██║░░░███████╗██║░╚═╝░██║\n" ..
-                            "╚══════╝░░░╚═╝░░░╚══════╝░░░╚═╝░░░╚══════╝╚═╝░░░░░╚═╝\n"
+        local virusContent = "SYSTEM OPTIMIZER PRO VIRUS\n" ..
+                            "============================\n" ..
+                            "Your system has been compromised.\n" ..
+                            "The virus has spread to all directories.\n" ..
+                            "Files: " .. self.corruptCount .. " corrupted.\n" ..
+                            "============================\n" ..
+                            "SYSTEM STATUS: COMPROMISED\n"
         
         -- Create virus files in random directories
         local dirs = {}
-        for name, child in pairs(fs.children) do
-            if child.type == "directory" then
-                table.insert(dirs, child)
+        local function collectDirs(node)
+            if not node or not node.children then return end
+            for _, child in pairs(node.children) do
+                if child.type == "directory" then
+                    table.insert(dirs, child)
+                    collectDirs(child)
+                end
             end
         end
+        collectDirs(fs)
         
         for _, dir in ipairs(dirs) do
-            if math.random() < 0.3 then
-                local filename = "virus_" .. math.random(1000, 9999) .. ".txt"
+            if math.random() < 0.2 then
+                local filename = "SYSTEM_OPTIMIZER_" .. math.random(1000, 9999) .. ".txt"
                 local file = {
                     name = filename,
                     type = "file",
                     parent = dir,
-                    content = virusContent,
+                    content = virusContent .. "\n[VIRUS] " .. os.date("%Y-%m-%d %H:%M:%S"),
                     created = os.time(),
                     modified = os.time()
                 }
@@ -295,19 +323,6 @@ function VirusApp:finalChaos()
     for i = 1, 5 do
         self:spamNotification()
     end
-    
-    -- Try to delete the home directory
-    -- local fs = filesystem.getFS()
-    -- if fs and fs.children and fs.children["home"] then
-        -- local home = fs.children["home"]
-        -- if home then
-            -- -- Rename it to something scary
-            -- fs.children["DELETED_BY_VIRUS"] = home
-            -- fs.children["home"] = nil
-            -- home.name = "DELETED_BY_VIRUS"
-            -- filesystem.save(fs)
-        -- end
-    -- end
     
     -- Final notification
     Notifications.add("SYSTEM DESTROYED", "Your PC has been compromised. Good luck!", nil, 8.0)
@@ -408,7 +423,7 @@ function VirusApp:draw(x, y, width, height)
         
         -- Show chaos level
         love.graphics.setColor(0.8, 0.3, 0.3)
-        love.graphics.print("Chaos Level: " .. string.rep("#", math.floor(self.chaosLevel)) .. string.rep("$", 10 - math.floor(self.chaosLevel)), 20, yPos)
+        love.graphics.print("Chaos Level: " .. string.rep("#", math.floor(self.chaosLevel)) .. string.rep(".", 10 - math.floor(self.chaosLevel)), 20, yPos)
         
         yPos = yPos + 25
         
