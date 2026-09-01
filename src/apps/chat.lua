@@ -1,63 +1,38 @@
--- chat.lua
+-- src/apps/chat.lua
 local utf8 = require("utf8")
+local PlayerStats = require("src.core.player_stats")
+local EventBus = require("src.core.event_bus")
+local Notifications = require("src.desktop.notifications")
+local AudioManager = require("src.core.audio_manager")
+
 local ChatApp = {}
 ChatApp.__index = ChatApp
 
--- Google Material Design 2018/19 color palette
+-- Google Material Design color palette
 local colors = {
-    background = {0.95, 0.96, 0.97},        -- Google gray background
-    header = {1, 1, 1},                     -- White header
-    headerText = {0.2, 0.2, 0.2},           -- Dark gray text
-    primary = {0.13, 0.59, 0.95},           -- Google Blue (#2196F3)
-    primaryDark = {0.09, 0.47, 0.76},       -- Darker blue for hover
-    accent = {0.96, 0.27, 0.31},            -- Google Red accent
+    background = {0.95, 0.96, 0.97},
+    header = {1, 1, 1},
+    headerText = {0.2, 0.2, 0.2},
+    primary = {0.13, 0.59, 0.95},
+    primaryDark = {0.09, 0.47, 0.76},
+    disabledBtn = {0.82, 0.84, 0.88},
+    accent = {0.96, 0.27, 0.31},
     inboxBg = {1, 1, 1},
     inputBg = {1, 1, 1},
-    userBubble = {0.87, 0.92, 1.0},         -- Light blue for user (Google style)
-    aiBubble = {1, 1, 1},                   -- White for others
+    userBubble = {0.87, 0.92, 1.0},
+    aiBubble = {1, 1, 1},
     userText = {0.13, 0.13, 0.13},
     aiText = {0.13, 0.13, 0.13},
     border = {0.85, 0.85, 0.85},
     divider = {0.9, 0.9, 0.9},
     timeText = {0.6, 0.6, 0.6},
-    online = {0.27, 0.8, 0.4},              -- Google Green
+    online = {0.27, 0.8, 0.4},
+    offline = {0.65, 0.68, 0.72},
     hover = {0.96, 0.96, 0.98},
     searchBg = {0.96, 0.96, 0.97},
     shadow = {0, 0, 0, 0.08},
     scrollbarBg = {0, 0, 0, 0.1},
     scrollbarFg = {0, 0, 0, 0.3}
-}
-
--- Contextual responses per character
-local characterResponses = {
-    ["Suzumia"] = {
-        "Aki-kun, you're the best! That layout idea sounds so cute!",
-        "Mochi really is the sweetest cat... I can't stop smiling thinking about it.",
-        "Let's make sure our article blows the Student Council away tomorrow!",
-        "Don't stay up too late staring at the screen, okay? Get some rest too!",
-        "I'll bring some fresh melon bread to the clubroom tomorrow as thanks!",
-        "Hehe, I'm glad you liked the parfait photos. We should definitely go there together!"
-    },
-    ["Hoshida"] = {
-        "Aki, check your Downloads folder. That packet dump from port 8080 isn't random noise.",
-        "My traceroute script pinged an internal MAC address from the 3rd floor switch.",
-        "Nagahashi thinks he's writing fiction, but someone really breached the school subnet.",
-        "If you decode the cipher buffer with XOR, the key looks like 'SHADOW-CAT-09'.",
-        "Hold on, downloading the latest anime episode while running Wireshark.",
-        "2D cat maids provide 100% emotional stability. Science proven."
-    },
-    ["Nagahashi"] = {
-        "EXCELLENT PROGRESS, AKI! Make the headlines bold and menacing!",
-        "The Student Council won't know what hit them! Circulation will triple!",
-        "Aki, did you remember to add exclamation marks to the subheading?!",
-        "The truth is out there, and the Newspaper Club shall unveil it!"
-    },
-    ["Hiko"] = {
-        "Stop typing so loud! I can hear your mechanical keyboard from my room!",
-        "Did you eat the curry yet? Don't leave the plate in the sink!",
-        "If you don't buy milk tomorrow, I'm telling Mom you stayed up till 3 AM.",
-        "Goodnight dummy brother, don't fall asleep at your desk."
-    }
 }
 
 function ChatApp.new()
@@ -68,22 +43,18 @@ function ChatApp.new()
             id = 1,
             name = "Suzumia (Vice President)",
             color = {0.94, 0.48, 0.58},
-            online = true,
+            online = false,
             messages = {
-                { text = "Aki-kun, are you still awake working on the layout? :)", sender = "ai", time = "11:45", seen = false },
-                { text = "I was looking at the photo of Mochi the Scottish Fold again... do you think we should make it the main cover photo?", sender = "ai", time = "11:46", seen = false },
-                { text = "I'm so excited for our cat cafe article! (///_///)", sender = "ai", time = "11:47", seen = false }
+                { text = "Good luck assembling the dual-cover tonight, Aki-kun! Let me know when you check the draft notes.", sender = "ai", time = "10:30", seen = true }
             }
         },
         {
             id = 2,
             name = "Hoshida (Club Member)",
             color = {0.32, 0.72, 0.48},
-            online = true,
+            online = false,
             messages = {
-                { text = "Yo Aki! Did you see the latest magical girl episode?", sender = "ai", time = "11:30", seen = true },
-                { text = "Also, check the school server log in your Downloads folder when you get a chance...", sender = "ai", time = "11:32", seen = false },
-                { text = "Something weird is transmitting on port 8080 from the 3rd floor switch. No joke.", sender = "ai", time = "11:33", seen = false }
+                { text = "Yo Aki! Catching the late-night stream. Ping me if you need tech archives.", sender = "ai", time = "10:15", seen = true }
             }
         },
         {
@@ -125,25 +96,149 @@ function ChatApp.new()
     self.cursorVisible = true
     self.cursorTimer = 0
     
-    -- Scrollbar dragging
     self.draggingScrollbar = false
     self.draggingInbox = false
     self.scrollDragStart = 0
     self.scrollStartValue = 0
     
-    -- Search
     self.searchText = ""
     self.searchActive = false
     
-    -- Bot typing simulator
     self.typingTimer = 0
     self.isTyping = false
     self.typingUser = nil
+    self.pendingReply = nil
+    self.onReplyComplete = nil
     
     return self
 end
 
+-- Determine story-based dynamic chat progression
+function ChatApp:syncStoryState()
+    local hasBrowsedCatCafe = PlayerStats.getFlag("browser_visited:cat") or 
+                              PlayerStats.getFlag("browsed_cat_cafe") or
+                              PlayerStats.getFlag("task_cat_cafe_done")
+                              
+    local hasChattedSuzumia = PlayerStats.getFlag("chat_sent:suzumia") or
+                              PlayerStats.getFlag("suzumia_chat_completed")
+
+    -- 1. Suzumia's state
+    local suzumia = self.users[1]
+    if hasBrowsedCatCafe and not suzumia.stageTriggered then
+        suzumia.stageTriggered = true
+        suzumia.online = true
+        table.insert(suzumia.messages, {
+            text = "Aki-kun! Did you get a chance to check the Meow Latte photos on their site? :)",
+            sender = "ai",
+            time = "11:45",
+            seen = false
+        })
+        table.insert(suzumia.messages, {
+            text = "Mochi (the white Scottish Fold) looked so peaceful in the bay window sunlight... what do you think of making him the main cover photo?",
+            sender = "ai",
+            time = "11:46",
+            seen = false
+        })
+        Notifications.add("Chat - Suzumia", "New message from Vice President Suzumia", nil, 5.0)
+        AudioManager.playSFX("notification", 1.2)
+    elseif hasBrowsedCatCafe then
+        suzumia.online = true
+    end
+
+    -- 2. Hoshida's state
+    local hoshida = self.users[2]
+    if hasChattedSuzumia and not hoshida.stageTriggered then
+        hoshida.stageTriggered = true
+        hoshida.online = true
+        table.insert(hoshida.messages, {
+            text = "[URGENT] Aki, check your Downloads folder right now.",
+            sender = "ai",
+            time = "11:50",
+            seen = false
+        })
+        table.insert(hoshida.messages, {
+            text = "I dumped the raw packets from the 3rd floor repeater rack ('school_server_dump.log'). There is an encrypted XOR stream active on port 8080. Someone is using the school network as an unauthorized relay bridge.",
+            sender = "ai",
+            time = "11:51",
+            seen = false
+        })
+        PlayerStats.setFlag("hoshida_alert", true)
+        PlayerStats.setFlag("email_unlocked:105", true)
+        Notifications.add("Hoshida [Root]", "URGENT: Port 8080 anomaly detected on school subnet!", nil, 6.0)
+        AudioManager.playSFX("notification", 1.2)
+    elseif hasChattedSuzumia then
+        hoshida.online = true
+    end
+end
+
+-- Get the scripted reply for Aki based on active user and story progression
+function ChatApp:getScriptedInputForUser(user)
+    if not user then return "", nil, nil end
+
+    if user.id == 1 then -- Suzumia
+        local hasBrowsedCatCafe = PlayerStats.getFlag("browser_visited:cat") or 
+                                  PlayerStats.getFlag("browsed_cat_cafe") or
+                                  PlayerStats.getFlag("task_cat_cafe_done")
+        local hasChatted = PlayerStats.getFlag("chat_sent:suzumia") or PlayerStats.getFlag("suzumia_chat_completed")
+
+        if hasBrowsedCatCafe and not hasChatted then
+            return "The photos are fantastic! Mochi and Chobi are going to look amazing on our front cover. I'll make sure the layout highlights the 10% student discount too!",
+                   "Yay! (///_///) I knew we'd agree! I'm so excited for tomorrow. Thank you so much, Aki-kun! Let's make this our best issue ever!",
+                   function()
+                       PlayerStats.setFlag("chat_sent:suzumia", true)
+                       PlayerStats.setFlag("suzumia_chat_completed", true)
+                       self:syncStoryState()
+                   end
+        else
+            return "", nil, nil
+        end
+
+    elseif user.id == 2 then -- Hoshida
+        local hasChattedSuzumia = PlayerStats.getFlag("chat_sent:suzumia") or PlayerStats.getFlag("suzumia_chat_completed")
+        local hasChattedHoshida = PlayerStats.getFlag("chat_sent:hoshida") or PlayerStats.getFlag("hoshida_chat_completed")
+
+        if hasChattedSuzumia and not hasChattedHoshida then
+            return "Port 8080? I'll open 'school_server_dump.log' and extract the encryption token right away.",
+                   "Find the XOR token. If you save it into 'cipher.txt' in your home folder, my firewall script will sever their proxy tunnel immediately.",
+                   function()
+                       PlayerStats.setFlag("chat_sent:hoshida", true)
+                       PlayerStats.setFlag("hoshida_chat_completed", true)
+                   end
+        else
+            return "", nil, nil
+        end
+
+    elseif user.id == 3 then -- Nagahashi
+        local hasRepliedNagahashi = PlayerStats.getFlag("chat_sent:nagahashi")
+        if not hasRepliedNagahashi then
+            return "Understood, President. I'm balancing the Cat Cafe spotlight with the mystery report right now.",
+                   "SPLENDID! The twin truth of youth and conspiracy shall triumph!",
+                   function()
+                       PlayerStats.setFlag("chat_sent:nagahashi", true)
+                   end
+        else
+            return "", nil, nil
+        end
+
+    elseif user.id == 4 then -- Hiko
+        local hasRepliedHiko = PlayerStats.getFlag("chat_sent:hiko")
+        if not hasRepliedHiko then
+            return "Got it. I'll microwave the curry and get the milk on my way home from school tomorrow.",
+                   "Good. Don't stay up all night clattering on your mechanical keyboard.",
+                   function()
+                       PlayerStats.setFlag("chat_sent:hiko", true)
+                   end
+        else
+            return "", nil, nil
+        end
+    end
+
+    return "", nil, nil
+end
+
 function ChatApp:update(dt)
+    self:syncStoryState()
+
     self.cursorTimer = self.cursorTimer + dt
     if self.cursorTimer > 0.5 then
         self.cursorVisible = not self.cursorVisible
@@ -154,24 +249,25 @@ function ChatApp:update(dt)
         self.typingTimer = self.typingTimer - dt
         if self.typingTimer <= 0 then
             self.isTyping = false
-            local replyList = nil
-            for charKey, replies in pairs(characterResponses) do
-                if self.typingUser.name:find(charKey) then
-                    replyList = replies
-                    break
-                end
-            end
-            local replyText = replyList and replyList[math.random(#replyList)] or "Sounds good!"
+            local replyText = self.pendingReply or "Sounds good!"
             table.insert(self.typingUser.messages, {
                 text = replyText,
                 sender = "ai",
                 time = os.date("%H:%M"),
                 seen = false
             })
+            AudioManager.playSFX("notification", 1.1)
+
+            if self.onReplyComplete then
+                self.onReplyComplete()
+                self.onReplyComplete = nil
+            end
+
             if self.currentView == "chat" and self.activeUserId == self.typingUser.id then
                 self:scrollToBottom()
             end
             self.typingUser = nil
+            self.pendingReply = nil
         end
     end
     
@@ -185,7 +281,7 @@ function ChatApp:calculateScroll()
         local filteredUsers = self:getFilteredUsers()
         local itemHeight = 72
         local totalHeight = #filteredUsers * itemHeight
-        local viewHeight = self.windowHeight - 80 -- Reduced from 116 (removed title)
+        local viewHeight = self.windowHeight - 80
         self.inboxMaxScroll = math.max(0, totalHeight - viewHeight)
         if not self.draggingScrollbar then
             self.inboxScroll = math.max(0, math.min(self.inboxScroll, self.inboxMaxScroll))
@@ -268,20 +364,16 @@ function ChatApp:draw(x, y, width, height)
 end
 
 function ChatApp:drawInbox(x, y, width, height)
-    -- Background
     love.graphics.setColor(colors.background)
     love.graphics.rectangle("fill", x, y, width, height)
     
-    -- Header (just separator line, no title)
     love.graphics.setColor(colors.divider)
     love.graphics.line(x, y + 0, x + width, y + 0)
     
-    -- Search Bar (moved up)
-    local searchY = y + 16 -- Reduced from 64 to 16
+    local searchY = y + 16
     local searchX = x + 16
     local searchWidth = width - 32
     
-    -- Search shadow
     love.graphics.setColor(colors.shadow)
     love.graphics.rectangle("fill", searchX, searchY + 2, searchWidth, 40, 8)
     
@@ -290,29 +382,25 @@ function ChatApp:drawInbox(x, y, width, height)
     love.graphics.setColor(0.6, 0.6, 0.6)
     love.graphics.setFont(self.font)
     
-    -- Search icon
     if self.searchText == "" and not self.searchActive then
-        love.graphics.printf("Search", searchX + 16, searchY + 12, searchWidth - 32, "left")
+        love.graphics.printf("Search contacts...", searchX + 16, searchY + 12, searchWidth - 32, "left")
     else
         love.graphics.setColor(0.2, 0.2, 0.2)
         love.graphics.printf(self.searchText, searchX + 16, searchY + 12, searchWidth - 32, "left")
     end
     
-    -- Content (moved up)
-    local viewY = y + 68 -- Reduced from 116 to 68
-    local viewHeight = height - 68 -- Reduced from 116 to 68
+    local viewY = y + 68
+    local viewHeight = height - 68
     love.graphics.setScissor(x, viewY, width, viewHeight)
     
     local itemHeight = 72
     local currentY = viewY - self.inboxScroll
-    
     local mx, my = love.mouse.getPosition()
     local filteredUsers = self:getFilteredUsers()
     
-    for i, user in ipairs(filteredUsers) do
+    for _, user in ipairs(filteredUsers) do
         local itemRect = {x = x, y = currentY, w = width, h = itemHeight}
         
-        -- Hover effect
         if mx >= itemRect.x and mx <= itemRect.x + itemRect.w and 
            my >= itemRect.y and my < itemRect.y + itemRect.h and
            my >= viewY and my <= viewY + viewHeight then
@@ -320,11 +408,10 @@ function ChatApp:drawInbox(x, y, width, height)
             love.graphics.rectangle("fill", itemRect.x, itemRect.y, itemRect.w, itemRect.h)
         end
         
-        -- Avatar with Google-style colors
         love.graphics.setColor(user.color)
         love.graphics.circle("fill", x + 40, currentY + 36, 22)
         
-        -- Online indicator
+        -- Online / Offline dot
         if user.online then
             love.graphics.setColor(colors.online)
             love.graphics.circle("fill", x + 54, currentY + 50, 7)
@@ -332,14 +419,15 @@ function ChatApp:drawInbox(x, y, width, height)
             love.graphics.circle("fill", x + 54, currentY + 50, 5)
             love.graphics.setColor(colors.online)
             love.graphics.circle("fill", x + 54, currentY + 50, 4)
+        else
+            love.graphics.setColor(colors.offline)
+            love.graphics.circle("fill", x + 54, currentY + 50, 5)
         end
         
-        -- Name
         love.graphics.setColor(0.2, 0.2, 0.2)
         love.graphics.setFont(self.titleFont)
         love.graphics.print(user.name, x + 78, currentY + 14)
         
-        -- Last Message
         local lastMsg = user.messages[#user.messages]
         if lastMsg then
             local unread = self:getUnreadCount(user)
@@ -355,12 +443,10 @@ function ChatApp:drawInbox(x, y, width, height)
             if lastMsg.sender == "user" then txt = "You: " .. txt end
             love.graphics.print(txt, x + 78, currentY + 38)
             
-            -- Time
             love.graphics.setColor(0.6, 0.6, 0.6)
             love.graphics.setFont(self.timeFont)
             love.graphics.printf(lastMsg.time, x + width - 44, currentY + 16, 40, "right")
             
-            -- Unread badge
             if unread > 0 then
                 local badgeX = x + width - 28
                 love.graphics.setColor(colors.primary)
@@ -371,7 +457,6 @@ function ChatApp:drawInbox(x, y, width, height)
             end
         end
         
-        -- Divider
         love.graphics.setColor(colors.divider)
         love.graphics.line(x + 16, currentY + itemHeight - 1, x + width - 16, currentY + itemHeight - 1)
         
@@ -379,8 +464,6 @@ function ChatApp:drawInbox(x, y, width, height)
     end
     
     love.graphics.setScissor()
-    
-    -- Scrollbar
     self:drawScrollbar(x + width - 8, viewY, 4, viewHeight, self.inboxScroll, self.inboxMaxScroll)
 end
 
@@ -390,15 +473,14 @@ function ChatApp:drawChat(x, y, width, height)
     
     self:markMessagesSeen(user)
     
-    -- Background
     love.graphics.setColor(colors.background)
     love.graphics.rectangle("fill", x, y, width, height)
     
-    -- Header with shadow
+    -- Header Bar
     love.graphics.setColor(colors.header)
     love.graphics.rectangle("fill", x, y, width, 60)
     
-    -- Back button (Google style)
+    -- Back button
     local mx, my = love.mouse.getPosition()
     local backHovered = mx >= x and mx <= x + 56 and my >= y and my <= y + 60
     if backHovered then
@@ -415,21 +497,21 @@ function ChatApp:drawChat(x, y, width, height)
     love.graphics.setFont(self.titleFont)
     love.graphics.printf(user.name, x + 70, y + 16, width - 140, "left")
     
-    -- Online status text
+    -- Status
     love.graphics.setFont(self.timeFont)
     if user.online then
         love.graphics.setColor(colors.online)
         love.graphics.printf("Active now", x + 70, y + 38, width - 140, "left")
     else
-        love.graphics.setColor(colors.timeText)
+        love.graphics.setColor(colors.offline)
         love.graphics.printf("Offline", x + 70, y + 38, width - 140, "left")
     end
     
-    -- Avatar in header
+    -- Avatar
     love.graphics.setColor(user.color)
     love.graphics.circle("fill", x + width - 40, y + 30, 20)
     
-    -- Chat area
+    -- Messages Area
     local chatY = y + 60
     local chatHeight = height - 130
     love.graphics.setScissor(x, chatY, width, chatHeight)
@@ -450,64 +532,49 @@ function ChatApp:drawChat(x, y, width, height)
         
         if currentY + bubbleHeight >= chatY and currentY <= chatY + chatHeight then
             if msg.sender == "ai" then
-                -- Avatar for AI messages
                 love.graphics.setColor(user.color)
                 love.graphics.circle("fill", x + 32, currentY + 18, 16)
                 
-                -- Bubble with shadow
                 love.graphics.setColor(colors.shadow)
                 love.graphics.rectangle("fill", x + 52 + 2, currentY + 2, bubbleWidth, bubbleHeight, 18)
                 love.graphics.setColor(colors.aiBubble)
                 love.graphics.rectangle("fill", x + 52, currentY, bubbleWidth, bubbleHeight, 18)
                 
-                -- Text
                 love.graphics.setColor(colors.aiText)
                 love.graphics.setFont(self.font)
                 love.graphics.printf(msg.text, x + 64, currentY + 12, bubbleWidth - 24, "left")
                 
-                -- Time
                 love.graphics.setColor(colors.timeText)
                 love.graphics.setFont(self.timeFont)
                 love.graphics.print(msg.time, x + 52 + bubbleWidth + 8, currentY + bubbleHeight - 16)
             else
-                -- User bubble (light blue)
                 local bX = x + width - bubbleWidth - 16
                 
-                -- Bubble with shadow
                 love.graphics.setColor(colors.shadow)
                 love.graphics.rectangle("fill", bX + 2, currentY + 2, bubbleWidth, bubbleHeight, 18)
                 love.graphics.setColor(colors.userBubble)
                 love.graphics.rectangle("fill", bX, currentY, bubbleWidth, bubbleHeight, 18)
                 
-                -- Text
                 love.graphics.setColor(colors.userText)
                 love.graphics.setFont(self.font)
                 love.graphics.printf(msg.text, bX + 16, currentY + 12, bubbleWidth - 24, "left")
                 
-                -- Time and seen indicator
                 love.graphics.setColor(colors.timeText)
                 love.graphics.setFont(self.timeFont)
                 local tw = self.timeFont:getWidth(msg.time)
                 love.graphics.print(msg.time, bX - tw - 8, currentY + bubbleHeight - 16)
-                
-                -- Seen checkmark
-                if i == #user.messages and msg.sender == "user" then
-                    love.graphics.setColor(colors.primary)
-                    love.graphics.print("Vv", bX - tw - 8 - 20, currentY + bubbleHeight - 16)
-                end
             end
         end
         
         currentY = currentY + bubbleHeight + 8
     end
     
-    -- Typing indicator
     if self.isTyping and self.typingUser == user then
         love.graphics.setColor(colors.shadow)
-        love.graphics.rectangle("fill", x + 52 + 2, currentY + 2, 56, 36, 18)
+        love.graphics.rectangle("fill", x + 52 + 2, currentY + 2, 80, 36, 18)
         love.graphics.setColor(colors.aiBubble)
-        love.graphics.rectangle("fill", x + 52, currentY, 56, 36, 18)
-        love.graphics.setColor(colors.aiText)
+        love.graphics.rectangle("fill", x + 52, currentY, 80, 36, 18)
+        love.graphics.setColor(colors.primary)
         love.graphics.setFont(self.font)
         love.graphics.print("Typing...", x + 64, currentY + 12)
         currentY = currentY + 44
@@ -516,49 +583,69 @@ function ChatApp:drawChat(x, y, width, height)
     love.graphics.setScissor()
     self:drawScrollbar(x + width - 8, chatY, 4, chatHeight, self.chatScroll, self.chatMaxScroll)
     
-    -- Input Area (Google style)
+    -- SCRIPTED INPUT AREA
     local inputY = y + height - 70
     love.graphics.setColor(colors.header)
     love.graphics.rectangle("fill", x, inputY, width, 70)
     love.graphics.setColor(colors.divider)
     love.graphics.line(x, inputY, x + width, inputY)
     
-    -- Input Box with shadow
     local inputBoxX = x + 16
-    local inputBoxW = width - 100
+    local sendBtnW = 70
+    local inputBoxW = width - sendBtnW - 40
+    
+    -- Get current scripted response
+    local scriptedMsg, replyText, onComplete = self:getScriptedInputForUser(user)
+    local canSend = (scriptedMsg ~= "" and not self.isTyping)
+    self.inputText = scriptedMsg
     
     love.graphics.setColor(colors.shadow)
     love.graphics.rectangle("fill", inputBoxX, inputY + 12 + 2, inputBoxW, 44, 22)
     love.graphics.setColor(colors.inputBg)
     love.graphics.rectangle("fill", inputBoxX, inputY + 12, inputBoxW, 44, 22)
-    love.graphics.setColor(colors.border)
+    
+    if canSend then
+        love.graphics.setColor(0.0, 0.47, 0.83, 0.4)
+    else
+        love.graphics.setColor(colors.border)
+    end
     love.graphics.rectangle("line", inputBoxX, inputY + 12, inputBoxW, 44, 22)
     
-    -- Text
-    love.graphics.setColor(0.2, 0.2, 0.2)
     love.graphics.setFont(self.font)
-    
     local inputX = inputBoxX + 16
     love.graphics.setScissor(inputX, inputY + 12, inputBoxW - 24, 44)
-    love.graphics.print(self.inputText, inputX, inputY + 24)
     
-    if self.cursorVisible then
-        local cw = self.font:getWidth(self.inputText)
-        love.graphics.line(inputX + cw + 2, inputY + 22, inputX + cw + 2, inputY + 44)
+    if canSend then
+        love.graphics.setColor(0.12, 0.14, 0.18)
+        love.graphics.print(self.inputText, inputX, inputY + 24)
+    else
+        love.graphics.setColor(0.65, 0.68, 0.72)
+        love.graphics.print("(No message to send right now)", inputX, inputY + 24)
     end
     love.graphics.setScissor()
     
-    -- Send Button (Google style)
-    local sendHovered = mx >= x + width - 68 and mx <= x + width - 20 and my >= inputY + 14 and my <= inputY + 54
-    if sendHovered then
-        love.graphics.setColor(colors.primaryDark)
+    -- Send Button
+    local sendBtnX = x + width - sendBtnW - 16
+    local sendBtnY = inputY + 14
+    local sendBtnH = 40
+    
+    local sendHovered = mx >= sendBtnX and mx <= sendBtnX + sendBtnW and
+                        my >= sendBtnY and my <= sendBtnY + sendBtnH
+                        
+    if canSend then
+        if sendHovered then
+            love.graphics.setColor(colors.primaryDark)
+        else
+            love.graphics.setColor(colors.primary)
+        end
     else
-        love.graphics.setColor(colors.primary)
+        love.graphics.setColor(colors.disabledBtn)
     end
-    love.graphics.rectangle("fill", x + width - 68, inputY + 14, 48, 40, 10)
+    
+    love.graphics.rectangle("fill", sendBtnX, sendBtnY, sendBtnW, sendBtnH, 10)
     love.graphics.setColor(1, 1, 1)
     love.graphics.setFont(self.titleFont)
-    love.graphics.printf("Send", x + width - 68, inputY + 26, 48, "center")
+    love.graphics.printf("Send", sendBtnX, sendBtnY + 11, sendBtnW, "center")
 end
 
 function ChatApp:drawScrollbar(scrollX, viewY, thumbWidth, viewHeight, scroll, maxScroll)
@@ -569,11 +656,9 @@ function ChatApp:drawScrollbar(scrollX, viewY, thumbWidth, viewHeight, scroll, m
     local thumbHeight = math.max(40, trackHeight * visibleRatio)
     local thumbY = viewY + (scroll / maxScroll) * (trackHeight - thumbHeight)
     
-    -- Scrollbar track
     love.graphics.setColor(colors.scrollbarBg)
     love.graphics.rectangle("fill", scrollX, viewY, thumbWidth, trackHeight, 4)
     
-    -- Scrollbar thumb
     love.graphics.setColor(colors.scrollbarFg)
     love.graphics.rectangle("fill", scrollX, thumbY, thumbWidth, thumbHeight, 4)
 end
@@ -581,10 +666,9 @@ end
 function ChatApp:mousepressed(mx, my, button, wx, wy)
     if button == 1 then
         if self.currentView == "inbox" then
-            local viewY = 68 -- Updated from 116
-            local viewHeight = self.windowHeight - 68 -- Updated from 116
+            local viewY = 68
+            local viewHeight = self.windowHeight - 68
             
-            -- Check scrollbar first
             local scrollX = self.windowX + self.windowWidth - 8
             if mx >= scrollX and mx <= scrollX + 4 and my >= viewY and my <= viewY + viewHeight then
                 self.draggingScrollbar = true
@@ -594,15 +678,13 @@ function ChatApp:mousepressed(mx, my, button, wx, wy)
                 return
             end
             
-            -- Search bar click
-            local searchY = 16 -- Updated from 64
+            local searchY = 16
             if my >= searchY and my <= searchY + 40 and mx >= 16 and mx <= self.windowWidth - 16 then
                 self.searchActive = true
             else
                 self.searchActive = false
             end
             
-            -- Inbox items
             if my >= viewY and my <= viewY + viewHeight then
                 local relativeY = my - viewY + self.inboxScroll
                 local idx = math.floor(relativeY / 72) + 1
@@ -617,7 +699,6 @@ function ChatApp:mousepressed(mx, my, button, wx, wy)
             local viewY = 60
             local chatHeight = self.windowHeight - 130
             
-            -- Check scrollbar first
             local scrollX = self.windowX + self.windowWidth - 8
             if mx >= scrollX and mx <= scrollX + 4 and my >= viewY and my <= viewY + chatHeight then
                 self.draggingScrollbar = true
@@ -637,7 +718,9 @@ function ChatApp:mousepressed(mx, my, button, wx, wy)
             
             -- Send button
             local inputY = self.windowHeight - 70
-            if mx >= self.windowWidth - 68 and mx <= self.windowWidth - 20 and 
+            local sendBtnW = 70
+            local sendBtnX = self.windowWidth - sendBtnW - 16
+            if mx >= sendBtnX and mx <= sendBtnX + sendBtnW and 
                my >= inputY + 14 and my <= inputY + 54 then
                 self:sendMessage()
                 return
@@ -688,11 +771,10 @@ function ChatApp:mousemoved(mx, my, dx, dy)
 end
 
 function ChatApp:textinput(text)
+    -- Freeform typing is disabled in chat to preserve narrative story integrity
     if self.searchActive and self.currentView == "inbox" then
         self.searchText = self.searchText .. text
         self.inboxScroll = 0
-    elseif self.currentView == "chat" then
-        self.inputText = self.inputText .. text
     end
 end
 
@@ -708,12 +790,7 @@ function ChatApp:keypressed(key)
             self.searchText = ""
         end
     elseif self.currentView == "chat" then
-        if key == "backspace" then
-            local byteoffset = utf8.offset(self.inputText, -1)
-            if byteoffset then
-                self.inputText = string.sub(self.inputText, 1, byteoffset - 1)
-            end
-        elseif key == "return" then
+        if key == "return" or key == "space" then
             self:sendMessage()
         elseif key == "escape" then
             self.currentView = "inbox"
@@ -723,31 +800,36 @@ function ChatApp:keypressed(key)
 end
 
 function ChatApp:sendMessage()
-    if #self.inputText == 0 then return end
-    
     local user = self:getActiveUser()
-    if not user then return end
+    if not user or self.isTyping then return end
     
-    local sentText = self.inputText
+    local scriptedMsg, replyText, onComplete = self:getScriptedInputForUser(user)
+    if not scriptedMsg or scriptedMsg == "" then return end
+    
     table.insert(user.messages, {
-        text = sentText,
+        text = scriptedMsg,
         sender = "user",
         time = os.date("%H:%M"),
         seen = true
     })
     
-    self.inputText = ""
+    AudioManager.playSFX("click", 1.2)
     self:scrollToBottom()
     
-    pcall(function()
-        local EventBus = require("src.core.event_bus")
-        EventBus.emit("chat:sent", { user = user.name, userId = user.id, text = sentText })
-    end)
+    EventBus.emit("chat:sent", {
+        user = user.name,
+        userId = user.id,
+        text = scriptedMsg
+    })
     
-    if not self.isTyping then
+    if replyText and replyText ~= "" then
         self.isTyping = true
-        self.typingTimer = math.random() * 1.5 + 1.0
+        self.typingTimer = 1.2
         self.typingUser = user
+        self.pendingReply = replyText
+        self.onReplyComplete = onComplete
+    elseif onComplete then
+        onComplete()
     end
 end
 

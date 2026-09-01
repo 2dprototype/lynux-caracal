@@ -3,7 +3,17 @@ pcall(function() io.stdout:setvbuf("no") end)
 
 local GameManager = require("src.core.game_manager")
 
-function love.load()
+function love.load(arg)
+    -- Test runner mode
+    for _, a in ipairs(arg or {}) do
+        if a == "--test" then
+            local testRunner = require("src.test_verify")
+            testRunner()
+            love.event.quit(0)
+            return
+        end
+    end
+
     love.graphics.setDefaultFilter("nearest", "nearest")
     love.keyboard.setTextInput(true)
     love.keyboard.setKeyRepeat(true)

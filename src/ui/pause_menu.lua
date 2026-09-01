@@ -120,6 +120,11 @@ function PauseMenu.activateCurrent()
     elseif PauseMenu.currentTab == "confirm_reset" then
         if PauseMenu.selectedIndex == 1 then
             PauseMenu.close()
+            local SaveManager = require("src.core.save_manager")
+            SaveManager.resetProgress()
+            PlayerStats.init()
+            local TaskManager = require("src.tasks.task_manager")
+            TaskManager.init()
             local StoryEngine = require("src.story.story_engine")
             StoryEngine.restart()
             EventBus.emit("game:request_switch_mode", { mode = "story", transition = "fade" })

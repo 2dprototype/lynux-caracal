@@ -32,11 +32,29 @@ function PlayerStats.init()
         end
     end, "stats_email_read")
 
+    EventBus.on("email:attachment_downloaded", function(data)
+        if data and data.filename then
+            PlayerStats.setFlag("downloaded:" .. data.filename:lower(), true)
+        end
+    end, "stats_attachment_downloaded")
+
     EventBus.on("chat:sent", function(data)
         if data and data.user then
             PlayerStats.setFlag("chat_sent:" .. data.user:lower(), true)
         end
     end, "stats_chat_sent")
+
+    EventBus.on("file:saved", function(data)
+        if data and data.node and data.node.name then
+            PlayerStats.setFlag("file_saved:" .. data.node.name:lower(), true)
+        end
+    end, "stats_file_saved")
+
+    EventBus.on("browser:navigate", function(data)
+        if data and data.url then
+            PlayerStats.setFlag("browser_visited:" .. data.url:lower(), true)
+        end
+    end, "stats_browser_nav")
 end
 
 function PlayerStats.addXP(amount)

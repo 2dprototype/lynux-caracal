@@ -8,6 +8,7 @@ local StoryEngine = require("src.story.story_engine")
 local DesktopManager = require("src.desktop.desktop_mgr")
 local Notifications = require("src.desktop.notifications")
 local PauseMenu = require("src.ui.pause_menu")
+local SaveManager = require("src.core.save_manager")
 
 local GameManager = {
     mode = "story", -- "story", "desktop"
@@ -22,6 +23,7 @@ function GameManager.init()
     StoryEngine.init()
     DesktopManager.init()
     PauseMenu.init()
+    SaveManager.init()
 
     -- Listen to switch mode requests
     EventBus.on("game:request_switch_mode", function(data)
@@ -39,6 +41,11 @@ function GameManager.init()
     local ok, script = pcall(require, "src.chapters.prologue")
     if ok and script then
         StoryEngine.loadScript(script)
+    end
+
+    -- Attempt loading saved progress if available
+    if SaveManager.hasSave() then
+        SaveManager.loadGame()
     end
 end
 
@@ -59,6 +66,7 @@ end
 function GameManager.update(dt)
     Transitions.update(dt)
     TaskManager.update(dt)
+    SaveManager.update(dt)
 
     -- If pause menu is open, pause game background updates
     if not PauseMenu.isOpen then

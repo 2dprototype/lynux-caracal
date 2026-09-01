@@ -3,7 +3,39 @@ local filesystemModule = require("src.core.filesystem")
 
 local TaskConditions = {}
 
--- Checks if a file exists at a given path in the virtual filesystem (e.g. "home/cipher.txt" or "/home/cipher.txt")
+-- Combine multiple conditions with AND
+function TaskConditions.all(...)
+    local conds = {...}
+    return function()
+        for _, c in ipairs(conds) do
+            if type(c) == "function" then
+                local ok, res = pcall(c)
+                if not ok or not res then
+                    return false
+                end
+            end
+        end
+        return true
+    end
+end
+
+-- Combine multiple conditions with OR
+function TaskConditions.any(...)
+    local conds = {...}
+    return function()
+        for _, c in ipairs(conds) do
+            if type(c) == "function" then
+                local ok, res = pcall(c)
+                if ok and res then
+                    return true
+                end
+            end
+        end
+        return false
+    end
+end
+
+-- Checks if a file exists at a given path in the virtual filesystem (e.g. "home/cipher.txt" or "home/user/Downloads/cat_cafe_review.txt")
 function TaskConditions.fileExists(targetPath)
     return function()
         local fs = filesystemModule.getFS()
@@ -72,6 +104,19 @@ function TaskConditions.emailRead(senderSubstr)
     end
 end
 
+-- Checks if an email attachment has been downloaded
+function TaskConditions.attachmentDownloaded(filenameSubstr)
+    local PlayerStats = require("src.core.player_stats")
+    return function()
+        for k, v in pairs(PlayerStats.flags) do
+            if k:find("downloaded:") and k:find(filenameSubstr:lower(), 1, true) and v == true then
+                return true
+            end
+        end
+        return TaskConditions.fileExists("home/user/Downloads/" .. filenameSubstr)()
+    end
+end
+
 -- Checks if a chat message was sent to a specific contact
 function TaskConditions.chatSentTo(userSubstr)
     local PlayerStats = require("src.core.player_stats")
@@ -96,6 +141,19 @@ function TaskConditions.browserVisited(siteSubstr)
         end
         if siteSubstr:lower():find("cat") and PlayerStats.getFlag("browsed_cat_cafe") then
             return true
+        end
+        return false
+    end
+end
+
+-- Checks if a file was saved / edited
+function TaskConditions.fileSaved(filenameSubstr)
+    local PlayerStats = require("src.core.player_stats")
+    return function()
+        for k, v in pairs(PlayerStats.flags) do
+            if k:find("file_saved:") and k:find(filenameSubstr:lower(), 1, true) and v == true then
+                return true
+            end
         end
         return false
     end

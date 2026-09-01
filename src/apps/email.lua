@@ -1,19 +1,25 @@
--- email.lua
+-- src/apps/email.lua
+local PlayerStats = require("src.core.player_stats")
+local filesystem = require("src.core.filesystem")
+local EventBus = require("src.core.event_bus")
+local Notifications = require("src.desktop.notifications")
+local AudioManager = require("src.core.audio_manager")
+
 local EmailApp = {}
 EmailApp.__index = EmailApp
 
 function EmailApp.new()
     local self = setmetatable({}, EmailApp)
-    self.font10 = love.graphics.newFont(10)
-    self.font11 = love.graphics.newFont(11)
-    self.font12 = love.graphics.newFont(12)
-    self.font13 = love.graphics.newFont(13)
-    self.font14 = love.graphics.newFont(14)
-    self.font16 = love.graphics.newFont(16)
-    self.font20 = love.graphics.newFont(20)
+    self.font10 = love.graphics.newFont("font/Nunito-Regular.ttf", 10) or love.graphics.newFont(10)
+    self.font11 = love.graphics.newFont("font/Nunito-Regular.ttf", 11) or love.graphics.newFont(11)
+    self.font12 = love.graphics.newFont("font/Nunito-Regular.ttf", 12) or love.graphics.newFont(12)
+    self.font13 = love.graphics.newFont("font/Nunito-Regular.ttf", 13) or love.graphics.newFont(13)
+    self.font14 = love.graphics.newFont("font/Nunito-Regular.ttf", 14) or love.graphics.newFont(14)
+    self.font16 = love.graphics.newFont("font/IBMPlexSans-Bold.ttf", 16) or love.graphics.newFont(16)
+    self.font20 = love.graphics.newFont("font/IBMPlexSans-Bold.ttf", 20) or love.graphics.newFont(20)
     
-    -- Mock Email Data
-    self.emails = {
+    -- Master Email Database with progressive unlock flags and attachments
+    self.allEmails = {
         {
             id = 101,
             subject = "Dinner tonight + DON'T forget the laundry!",
@@ -22,7 +28,8 @@ function EmailApp.new()
             time = "11:15 PM",
             body = "Hey big brother!\n\nI left some leftover curry in the fridge with plastic wrap. Make sure you microwave it before eating instead of eating it cold like a savage.\n\nAlso, are you still staying up late on the computer? Mom called and said don't forget to buy milk on your way home from school tomorrow.\n\nBy the way, all the first-years in my class were whispering today about weird noises and blinking lights from the 3rd floor old server room after 6 PM... Is your Newspaper Club really investigating that? Don't get suspended, dummy!\n\n- Hiko",
             unread = true,
-            starred = true
+            starred = true,
+            unlocked = true
         },
         {
             id = 102,
@@ -30,9 +37,15 @@ function EmailApp.new()
             sender = "Suzumia (Vice President)",
             email = "suzumia.y@kamiyama-press.org",
             time = "11:42 PM",
-            body = "Hi Aki-kun,\n\nThank you so much for backing me up during the editorial meeting today when President Nagahashi started going overboard with his ghost story idea!\n\nI just organized my interview notes from the Meow Latte Cat Cafe. The owner was super nice and gave us permission to publish photos of Mochi (the white Scottish Fold) and Chobi (the calico)! Mochi actually climbed into my lap while I was writing notes... it was heaven. (///_///)\n\nI put the draft notes in our club folder under 'cat_cafe_review.txt'. Could you check the formatting and layout on your PC whenever you get a chance? I really want this front-cover feature to turn out amazing.\n\nSee you in the clubroom tomorrow!\n\n- Suzumia",
+            body = "Hi Aki-kun,\n\nThank you so much for backing me up during the editorial meeting today when President Nagahashi started going overboard with his ghost story idea!\n\nI just organized my interview notes from the Meow Latte Cat Cafe. The owner was super nice and gave us permission to publish photos of Mochi (the white Scottish Fold) and Chobi (the calico)! Mochi actually climbed into my lap while I was writing notes... it was heaven. (///_///)\n\nI have attached my raw draft notes below ('cat_cafe_review.txt'). Please click the attachment below to download it to your Downloads folder, then check the formatting and menu pricing in TextEditor! I really want our front-cover feature to turn out amazing.\n\nSee you in the clubroom tomorrow!\n\n- Suzumia",
             unread = true,
-            starred = true
+            starred = true,
+            unlocked = true,
+            attachment = {
+                filename = "cat_cafe_review.txt",
+                size = "1.4 KB",
+                content = "=== KAMIYAMA HIGH NEWSPAPER: SPECIAL FEATURE ===\nTITLE: A Whiskered Paradise: Visiting 'Meow Latte' Cat Cafe\nAUTHOR: Suzumia (VP) & Aki (Reporter)\n\n[HIGHLIGHTS]\n- Location: 3 minutes walking from Kamiyama Station South Exit.\n- Atmosphere: Warm wood interior, sunlight through large bay windows, relaxing jazz music.\n- Featured Stars:\n  * Mochi (White Scottish Fold) - Extremely friendly, curled up on our notes!\n  * Chobi (Calico Shorthair) - Playful and curious, loved our camera straps.\n- Recommended Treats: Strawberry Cat-Paw Parfait (¥680), Souffle Pancakes (¥750).\n- Student Special: 10% discount when presenting Kamiyama High ID card!\n\nNote from Suzumia: Aki-kun, let's make sure Mochi's picture is front and center on the main cover!"
+            }
         },
         {
             id = 103,
@@ -42,7 +55,8 @@ function EmailApp.new()
             time = "10:30 PM",
             body = "ATTENTION ALL NEWSPAPER CLUB PERSONNEL:\n\nThe Student Council thinks they can intimidate us with their budget review threats. THEY ARE MISTAKEN.\n\nOur upcoming edition MUST be sensational. Aki, as Lead Layout Editor, I expect you to give the 'Midnight Server Room Urban Legend' article the most dramatic, spine-chilling headline possible! Use red ink borders if the school mimeograph allows it!\n\nI know Suzumia insisted on her cat cafe piece, so we will compromise with the Dual Cover format. But the Mystery Report will be our magnum opus!\n\nJournalistic glory awaits!\n\n- President Nagahashi",
             unread = true,
-            starred = false
+            starred = false,
+            unlocked = true
         },
         {
             id = 104,
@@ -52,7 +66,8 @@ function EmailApp.new()
             time = "04:15 PM",
             body = "To: Kamiyama High Newspaper Club Editorial Board\n\nThis is a formal notification regarding the upcoming Q3 Club Budget Allocation Review.\n\nDue to declining readership in recent issues, your allocated printing quota is subject to a 40% reduction unless circulation and verified student engagement show a marked increase in the upcoming Special Edition.\n\nPlease submit your publication draft by Friday afternoon.\n\nKamiyama High Student Council Auditing Committee",
             unread = false,
-            starred = false
+            starred = false,
+            unlocked = true
         },
         {
             id = 105,
@@ -62,7 +77,14 @@ function EmailApp.new()
             time = "09:50 PM",
             body = "Yo Aki,\n\nI dug through our club's old backup drive and found the raw network dump from last year's website server. I put it in your Downloads folder as 'school_server_dump.log'.\n\nNagahashi thinks he's just inventing spooky rumors to scare freshmen, but... honestly, there are some strange outbound packets logged on port 8080 from the old terminal. Take a look when you're at your desk.\n\nAnyway, back to watching my late-night anime stream. 2D cat maids > 3D drama any day.\n\n( ^ _ ^ )/\n- Hoshida",
             unread = true,
-            starred = false
+            starred = false,
+            unlocked = false,
+            unlockFlag = "email_unlocked:105",
+            attachment = {
+                filename = "school_server_dump.log",
+                size = "2.8 KB",
+                content = "[23:14:02] [ETH-0] INBOUND PACKET on Port 8080 from 192.168.1.144 (Old 3rd Floor Rack)\n[23:14:03] [PAYLOAD] Encrypted XOR stream detected [Length: 256 bytes]\n[23:14:04] [DECRYPTOR] Matching signature with Newspaper Club archive...\n[23:14:05] [KEY_FOUND] Secret Token: SHADOW-CAT-09\n[23:14:06] [STATUS] Remote node ping active. Traceroute bounces through 3 internal relays.\n[23:14:07] [NOTE] Hoshida: 'Aki, someone is definitely using the school old repeater as a proxy.'"
+            }
         },
         {
             id = 106,
@@ -72,99 +94,135 @@ function EmailApp.new()
             time = "07:15 AM",
             body = "Aki,\n\nI ran a subnet traceroute on the repeater while eating morning Pocky.\n\nThe packet route does not end on the 3rd floor. The signal is being re-routed down the elevator shaft into the locked basement power sub-station (IP: 192.168.1.254).\n\nCheck 'traceroute_dump.txt' in your Downloads folder.\n\nThe MAC address matches a commercial high-gain transceiver. Someone is piggybacking on our school grid to host an external server.\n\nKeep this between us until we pass the Student Council audit at 5 PM.\n\n- Hoshida [Root]",
             unread = true,
-            starred = true
+            starred = true,
+            unlocked = false,
+            unlockFlag = "email_unlocked:106",
+            attachment = {
+                filename = "traceroute_dump.txt",
+                size = "1.8 KB",
+                content = "=== KAMIYAMA HIGH INTRANET TRACEROUTE LOG ===\nTARGET: port8080.ghost-relay.local\n\nHOP 1: 192.168.1.1 (Kamiyama Gateway Router) [1.2ms]\nHOP 2: 192.168.1.144 (3rd Floor Switchboard 04) [4.5ms]\nHOP 3: 192.168.1.254 (Basement Electrical Conduit Sub-Station) [0.8ms]\n\nALERT: Target IP 192.168.1.254 responds with MAC: 00:1A:C2:7B:99:4F\nNOTE (Hoshida): This MAC address belongs to an external commercial mesh router, not school inventory!\nCIPHER VERIFIED: [SHADOW-CAT-09]"
+            }
         }
     }
     
-    -- UI Theme Colors (Gmail Style)
     self.colors = {
-        bg = {0.96, 0.97, 0.98},            -- Light grayish blue outer background
-        paneBg = {1, 1, 1},                 -- White cards
-        primaryText = {0.12, 0.12, 0.13},   -- Near black
-        secondaryText = {0.36, 0.38, 0.41}, -- Slate grey
-        accentRed = {0.85, 0.18, 0.14},     -- Gmail Red
-        accentBlueHover = {0.93, 0.95, 0.99},-- Selection hover blue
-        border = {0.88, 0.89, 0.91}         -- Soft border separator
+        bg = {0.96, 0.97, 0.98},
+        paneBg = {1, 1, 1},
+        primaryText = {0.12, 0.12, 0.13},
+        secondaryText = {0.36, 0.38, 0.41},
+        accentRed = {0.85, 0.18, 0.14},
+        accentBlueHover = {0.93, 0.95, 0.99},
+        border = {0.88, 0.89, 0.91}
     }
     
     self.selected = 1
     self.activeFolder = "Inbox"
     self.folders = {
-        {name = "Inbox", icon = "i", count = 2},
+        {name = "Inbox", icon = "i", count = 0},
         {name = "Starred", icon = "*"},
         {name = "Sent", icon = "v"},
         {name = "Drafts", icon = "#"}
     }
     
-    -- Dimensions & Layout
     self.width = 0
     self.height = 0
     self.sidebarWidth = 120
-    self.minWidthForDetail = 700 -- Threshold for showing detail pane
+    self.minWidthForDetail = 700
     
-    -- State Variables
     self.mouseX = -1
     self.mouseY = -1
     self.mousePressed = false
-    self.showingDetailMobile = false -- Track if showing detail on mobile
+    self.showingDetailMobile = false
     
-    -- Scroll properties for Email Detail View
     self.scrollOffset = 0
     self.maxScroll = 0
     self.isDraggingScrollbar = false
     self.scrollDragOffset = 0
     
-    -- Scroll properties for Email List View
     self.listScrollOffset = 0
     self.listMaxScroll = 0
     self.isDraggingListScrollbar = false
     self.listScrollDragOffset = 0
     
+    -- Hit box for attachment download button
+    self.attachmentButtonRect = nil
+    
     return self
+end
+
+function EmailApp:getVisibleEmails()
+    local visible = {}
+    for _, email in ipairs(self.allEmails) do
+        local isUnlocked = email.unlocked
+        if not isUnlocked and email.unlockFlag then
+            if PlayerStats.getFlag(email.unlockFlag) or 
+               (email.id == 105 and (PlayerStats.getFlag("hoshida_alert") or PlayerStats.getFlag("chat_sent:suzumia"))) or
+               (email.id == 106 and (PlayerStats.getFlag("chapter_2_started") or PlayerStats.getFlag("task_chapter2_master_proof"))) then
+                isUnlocked = true
+                email.unlocked = true
+            end
+        end
+
+        if isUnlocked then
+            if self.activeFolder == "Inbox" then
+                table.insert(visible, email)
+            elseif self.activeFolder == "Starred" and email.starred then
+                table.insert(visible, email)
+            end
+        end
+    end
+    
+    -- Update unread count for Inbox
+    local unreadCount = 0
+    for _, e in ipairs(visible) do
+        if e.unread then unreadCount = unreadCount + 1 end
+    end
+    self.folders[1].count = unreadCount
+    
+    return visible
 end
 
 function EmailApp:draw(x, y, width, height)
     self.width = width
     self.height = height
+    self.attachmentButtonRect = nil
     
-    -- Push transformation to render everything using relative coordinates
     love.graphics.push()
     love.graphics.translate(x, y)
     
-    -- 1. Outer App Background
     love.graphics.setColor(self.colors.bg)
     love.graphics.rectangle("fill", 0, 0, width, height)
     
-    -- Determine if we're in compact mode
     local isCompact = width < self.minWidthForDetail
-    
-    -- 2. Draw Left Sidebar (Folders & Gmail logo)
     self:drawSidebar(isCompact)
     
-    -- 3. Draw Split Panes based on mode
     local leftRemainingWidth = width - self.sidebarWidth
+    local visibleEmails = self:getVisibleEmails()
+    
+    if #visibleEmails == 0 then
+        self.selected = 1
+    elseif self.selected > #visibleEmails then
+        self.selected = #visibleEmails
+    end
     
     if isCompact then
-        -- Compact mode: Show either list or detail, not both
         if self.showingDetailMobile then
-            self:drawEmailDetail(self.sidebarWidth, leftRemainingWidth, x, y, true)
+            self:drawEmailDetail(self.sidebarWidth, leftRemainingWidth, x, y, true, visibleEmails)
         else
-            self:drawEmailList(self.sidebarWidth, leftRemainingWidth, x, y, true)
+            self:drawEmailList(self.sidebarWidth, leftRemainingWidth, x, y, true, visibleEmails)
         end
     else
-        -- Full mode: Show both panes
         local emailListWidth = math.floor(leftRemainingWidth * 0.42)
         local contentWidth = leftRemainingWidth - emailListWidth
         
-        self:drawEmailList(self.sidebarWidth, emailListWidth, x, y, false)
-        self:drawEmailDetail(self.sidebarWidth + emailListWidth, contentWidth, x, y, false)
+        self:drawEmailList(self.sidebarWidth, emailListWidth, x, y, false, visibleEmails)
+        self:drawEmailDetail(self.sidebarWidth + emailListWidth, contentWidth, x, y, false, visibleEmails)
     end
     
     love.graphics.pop()
 end
 
 function EmailApp:drawSidebar(isCompact)
-    -- Header / Logo Area
     love.graphics.setColor(self.colors.accentRed)
     love.graphics.rectangle("fill", 15, 12, 28, 20, 3)
     love.graphics.setColor(1, 1, 1)
@@ -177,7 +235,6 @@ function EmailApp:drawSidebar(isCompact)
         love.graphics.print("Mail", 50, 13)
     end
     
-    -- Folder List
     local folderY = 55
     local itemHeight = 32
     love.graphics.setFont(self.font13)
@@ -199,11 +256,9 @@ function EmailApp:drawSidebar(isCompact)
             love.graphics.setColor(self.colors.secondaryText)
         end
         
-        -- Icon and text
         love.graphics.print(folder.icon, 20, folderY + 8)
         love.graphics.print(folder.name, 35, folderY + 8)
         
-        -- Badge count
         if folder.count and folder.count > 0 then
             love.graphics.setColor(self.colors.secondaryText)
             love.graphics.setFont(self.font11)
@@ -215,8 +270,7 @@ function EmailApp:drawSidebar(isCompact)
     end
 end
 
-function EmailApp:drawEmailList(startX, listWidth, absX, absY, isCompact)
-    -- Content Card container
+function EmailApp:drawEmailList(startX, listWidth, absX, absY, isCompact, emails)
     local padding = 8
     local innerX = startX + padding
     local innerY = padding
@@ -229,38 +283,31 @@ function EmailApp:drawEmailList(startX, listWidth, absX, absY, isCompact)
     love.graphics.setColor(self.colors.border)
     love.graphics.rectangle("line", innerX, innerY, innerW, innerH, 8)
     
-    -- Calculate list scroll properties
     local headerHeight = 40
     local rowHeight = 75
-    local totalListHeight = headerHeight + (#self.emails * rowHeight)
+    local totalListHeight = headerHeight + (#emails * rowHeight)
     self.listMaxScroll = math.max(0, totalListHeight - innerH)
     self.listScrollOffset = math.max(0, math.min(self.listScrollOffset, self.listMaxScroll))
     
-    -- Render list content with scissor
     love.graphics.setScissor(absX + innerX, absY + innerY, innerW, innerH)
     
-    -- Sub-header (fixed)
     local drawY = innerY + 16 - self.listScrollOffset
-    
     love.graphics.setColor(self.colors.secondaryText)
     love.graphics.setFont(self.font12)
     
     if isCompact and self.showingDetailMobile then
-        -- Back button for mobile
         love.graphics.print("Back", innerX + 16, drawY)
     else
-        love.graphics.print("INBOX", innerX + 16, drawY)
+        love.graphics.print(string.upper(self.activeFolder), innerX + 16, drawY)
     end
     
-    -- Email Row Items
     local rowY = innerY + headerHeight - self.listScrollOffset
     
-    for i, email in ipairs(self.emails) do
+    for i, email in ipairs(emails) do
         local isSelected = i == self.selected
         local isHovered = self.mouseX >= innerX and self.mouseX <= innerX + innerW and
                           self.mouseY >= rowY and self.mouseY <= rowY + rowHeight - 1
                           
-        -- Row Background
         if isSelected then
             love.graphics.setColor(self.colors.accentBlueHover)
             love.graphics.rectangle("fill", innerX + 2, rowY, innerW - 4, rowHeight - 2, 4)
@@ -269,11 +316,9 @@ function EmailApp:drawEmailList(startX, listWidth, absX, absY, isCompact)
             love.graphics.rectangle("fill", innerX + 2, rowY, innerW - 4, rowHeight - 2, 4)
         end
         
-        -- Border Bottom separator
         love.graphics.setColor(self.colors.border)
         love.graphics.line(innerX + 12, rowY + rowHeight - 1, innerX + innerW - 12, rowY + rowHeight - 1)
         
-        -- Sender Title
         if email.unread then
             love.graphics.setColor(self.colors.primaryText)
             love.graphics.setFont(self.font13)
@@ -282,19 +327,16 @@ function EmailApp:drawEmailList(startX, listWidth, absX, absY, isCompact)
             love.graphics.setFont(self.font13)
         end
         
-        -- Truncate sender name for compact mode
         local senderName = email.sender
         if isCompact and #senderName > 20 then
             senderName = string.sub(senderName, 1, 18) .. "..."
         end
         love.graphics.print(senderName, innerX + 16, rowY + 10)
         
-        -- Time stamp
         love.graphics.setColor(self.colors.secondaryText)
         love.graphics.setFont(self.font11)
         love.graphics.printf(email.time, innerX + innerW - 80, rowY + 12, 65, "right")
         
-        -- Star status
         love.graphics.setFont(self.font12)
         if email.starred then
             love.graphics.setColor(0.95, 0.65, 0)
@@ -304,7 +346,6 @@ function EmailApp:drawEmailList(startX, listWidth, absX, absY, isCompact)
             love.graphics.print("*", innerX + innerW - 22, rowY + 36)
         end
         
-        -- Subject Line
         love.graphics.setColor(self.colors.primaryText)
         love.graphics.setFont(self.font12)
         local maxSubjectLen = isCompact and 22 or 28
@@ -312,7 +353,6 @@ function EmailApp:drawEmailList(startX, listWidth, absX, absY, isCompact)
         if #dispSubject > maxSubjectLen then dispSubject = string.sub(dispSubject, 1, maxSubjectLen - 2) .. "..." end
         love.graphics.print(dispSubject, innerX + 16, rowY + 30)
         
-        -- Body Excerpt snippet
         love.graphics.setColor(self.colors.secondaryText)
         love.graphics.setFont(self.font11)
         local bodyExcerpt = email.body:gsub("\n", " ")
@@ -323,9 +363,8 @@ function EmailApp:drawEmailList(startX, listWidth, absX, absY, isCompact)
         rowY = rowY + rowHeight
     end
     
-    love.graphics.setScissor() -- clear scissor viewport
+    love.graphics.setScissor()
     
-    -- Draw scrollbar for email list
     if self.listMaxScroll > 0 then
         local scrollbarWidth = 6
         local trackX = innerX + innerW - scrollbarWidth - 2
@@ -338,11 +377,9 @@ function EmailApp:drawEmailList(startX, listWidth, absX, absY, isCompact)
         local isThumbHovered = self.mouseX >= trackX and self.mouseX <= trackX + scrollbarWidth and
                               self.mouseY >= thumbY and self.mouseY <= thumbY + thumbHeight
         
-        -- Track
         love.graphics.setColor(0.93, 0.93, 0.94)
         love.graphics.rectangle("fill", trackX, trackY, scrollbarWidth, trackHeight, 3)
         
-        -- Thumb
         if self.isDraggingListScrollbar then
             love.graphics.setColor(0.5, 0.5, 0.5)
         elseif isThumbHovered then
@@ -354,21 +391,20 @@ function EmailApp:drawEmailList(startX, listWidth, absX, absY, isCompact)
     end
 end
 
-function EmailApp:drawEmailDetail(startX, detailWidth, absX, absY, isCompact)
+function EmailApp:drawEmailDetail(startX, detailWidth, absX, absY, isCompact, emails)
     local padding = 8
     local innerX = startX
     local innerY = padding
     local innerW = detailWidth - padding
     local innerH = self.height - (padding * 2)
     
-    -- Content Card Container
     love.graphics.setColor(self.colors.paneBg)
     love.graphics.rectangle("fill", innerX, innerY, innerW, innerH, 8)
     
     love.graphics.setColor(self.colors.border)
     love.graphics.rectangle("line", innerX, innerY, innerW, innerH, 8)
     
-    local email = self.emails[self.selected]
+    local email = emails[self.selected]
     if not email then
         love.graphics.setColor(self.colors.secondaryText)
         love.graphics.setFont(self.font14)
@@ -376,25 +412,23 @@ function EmailApp:drawEmailDetail(startX, detailWidth, absX, absY, isCompact)
         return
     end
     
-    -- Layout margins inside the detailed reader
     local contentPadding = isCompact and 16 or 24
     local readerWidth = innerW - (contentPadding * 2)
     
-    -- Dynamic height calculation for Scrollbar
     local textFont = self.font14
     local headerSize = 145
     local _, lines = textFont:getWrap(email.body, readerWidth - 20)
-    local totalContentHeight = headerSize + (#lines * textFont:getHeight()) + 60
+    local bodyHeight = #lines * textFont:getHeight()
+    local attachmentHeight = email.attachment and 80 or 0
+    local totalContentHeight = headerSize + bodyHeight + attachmentHeight + 60
     
     self.maxScroll = math.max(0, totalContentHeight - innerH)
     self.scrollOffset = math.max(0, math.min(self.scrollOffset, self.maxScroll))
     
-    -- Render Pane content safely using Scissor
     love.graphics.setScissor(absX + innerX, absY + innerY, innerW - 14, innerH)
     
     local drawY = innerY + contentPadding - self.scrollOffset
     
-    -- Back button for compact mode
     if isCompact then
         love.graphics.setColor(self.colors.accentRed)
         love.graphics.setFont(self.font13)
@@ -409,7 +443,7 @@ function EmailApp:drawEmailDetail(startX, detailWidth, absX, absY, isCompact)
     
     drawY = drawY + (isCompact and 35 or 45)
     
-    -- Star Action / Marker
+    -- Star Action
     love.graphics.setFont(self.font16)
     if email.starred then
         love.graphics.setColor(0.95, 0.65, 0)
@@ -419,17 +453,16 @@ function EmailApp:drawEmailDetail(startX, detailWidth, absX, absY, isCompact)
         love.graphics.print("*", innerX + contentPadding, drawY + 8)
     end
     
-    -- Sender avatar circle
+    -- Sender Avatar Circle
     love.graphics.setColor(0.88, 0.92, 0.98)
     love.graphics.circle("fill", innerX + contentPadding + 40, drawY + 18, 16)
     love.graphics.setColor(self.colors.accentRed)
     love.graphics.setFont(self.font12)
     love.graphics.printf(string.upper(string.sub(email.sender, 1, 1)), innerX + contentPadding + 24, drawY + 12, 32, "center")
     
-    -- Sender detail metadata
+    -- Sender metadata
     love.graphics.setColor(self.colors.primaryText)
     love.graphics.setFont(self.font13)
-    
     local senderName = email.sender
     if isCompact and #senderName > 25 then
         senderName = string.sub(senderName, 1, 23) .. "..."
@@ -446,14 +479,94 @@ function EmailApp:drawEmailDetail(startX, detailWidth, absX, absY, isCompact)
     love.graphics.line(innerX + contentPadding, drawY, innerX + innerW - contentPadding, drawY)
     
     -- Message Body
-    drawY = drawY + 25
+    drawY = drawY + 20
     love.graphics.setColor(self.colors.primaryText)
     love.graphics.setFont(textFont)
     love.graphics.printf(email.body, innerX + contentPadding, drawY, readerWidth - 20, "left")
+    drawY = drawY + bodyHeight + 25
     
-    love.graphics.setScissor() -- clear scissor viewport
+    -- ATTACHMENT CARD SECTION
+    if email.attachment then
+        local att = email.attachment
+        local attCardX = innerX + contentPadding
+        local attCardY = drawY
+        local attCardW = readerWidth - 10
+        local attCardH = 64
+        
+        -- Check if already downloaded
+        local isDownloaded = PlayerStats.getFlag("downloaded:" .. att.filename:lower()) or 
+                            TaskConditions_fileExists_check("home/user/Downloads/" .. att.filename)
+        
+        -- Card background with shadow
+        love.graphics.setColor(0, 0, 0, 0.04)
+        love.graphics.rectangle("fill", attCardX + 2, attCardY + 2, attCardW, attCardH, 6)
+        
+        if isDownloaded then
+            love.graphics.setColor(0.93, 0.98, 0.94)
+        else
+            love.graphics.setColor(0.95, 0.96, 0.98)
+        end
+        love.graphics.rectangle("fill", attCardX, attCardY, attCardW, attCardH, 6)
+        
+        love.graphics.setColor(self.colors.border)
+        love.graphics.rectangle("line", attCardX, attCardY, attCardW, attCardH, 6)
+        
+        -- File Icon Badge
+        love.graphics.setColor(0.0, 0.47, 0.83)
+        love.graphics.rectangle("fill", attCardX + 12, attCardY + 12, 40, 40, 4)
+        love.graphics.setColor(1, 1, 1)
+        love.graphics.setFont(self.font11)
+        love.graphics.printf("TXT", attCardX + 12, attCardY + 25, 40, "center")
+        
+        -- File info text
+        love.graphics.setFont(self.font13)
+        love.graphics.setColor(self.colors.primaryText)
+        love.graphics.print(att.filename, attCardX + 62, attCardY + 14)
+        
+        love.graphics.setFont(self.font11)
+        love.graphics.setColor(self.colors.secondaryText)
+        love.graphics.print(att.size .. "  •  Attachment", attCardX + 62, attCardY + 34)
+        
+        -- Download / Status Button
+        local btnW = 160
+        local btnH = 34
+        local btnX = attCardX + attCardW - btnW - 14
+        local btnY = attCardY + 15
+        
+        local isBtnHovered = self.mouseX >= btnX and self.mouseX <= btnX + btnW and
+                             self.mouseY >= btnY and self.mouseY <= btnY + btnH
+        
+        if isDownloaded then
+            love.graphics.setColor(0.18, 0.65, 0.35, 0.9)
+            love.graphics.rectangle("fill", btnX, btnY, btnW, btnH, 4)
+            love.graphics.setColor(1, 1, 1)
+            love.graphics.setFont(self.font12)
+            love.graphics.printf("✓ Saved in Downloads", btnX, btnY + 9, btnW, "center")
+        else
+            if isBtnHovered then
+                love.graphics.setColor(0.0, 0.4, 0.75)
+            else
+                love.graphics.setColor(0.0, 0.47, 0.83)
+            end
+            love.graphics.rectangle("fill", btnX, btnY, btnW, btnH, 4)
+            love.graphics.setColor(1, 1, 1)
+            love.graphics.setFont(self.font12)
+            love.graphics.printf("⬇ Download File", btnX, btnY + 9, btnW, "center")
+        end
+        
+        self.attachmentButtonRect = {
+            x = btnX,
+            y = btnY,
+            w = btnW,
+            h = btnH,
+            email = email,
+            attachment = att,
+            isDownloaded = isDownloaded
+        }
+    end
     
-    -- Draw Custom interactive Scrollbar
+    love.graphics.setScissor()
+    
     if self.maxScroll > 0 then
         local scrollbarWidth = 8
         local trackX = innerX + innerW - scrollbarWidth - 4
@@ -480,7 +593,66 @@ function EmailApp:drawEmailDetail(startX, detailWidth, absX, absY, isCompact)
     end
 end
 
--- ================= INTERACTION SYSTEMS =================
+-- Helper check if file exists in FS
+function TaskConditions_fileExists_check(targetPath)
+    local fs = filesystem.getFS()
+    if not fs then return false end
+    targetPath = targetPath:gsub("^/", "")
+    local parts = {}
+    for part in targetPath:gmatch("[^/]+") do table.insert(parts, part) end
+    local cur = fs
+    for _, p in ipairs(parts) do
+        if not cur.children or not cur.children[p] then return false end
+        cur = cur.children[p]
+    end
+    return cur.type == "file"
+end
+
+function EmailApp:downloadAttachment(email, att)
+    if not att then return end
+    
+    local fs = filesystem.getFS()
+    -- Ensure home/user/Downloads exists
+    local home = fs.children["home"]
+    if not home then
+        home = { name = "home", type = "directory", parent = fs, children = {} }
+        fs.children["home"] = home
+    end
+    local user = home.children["user"]
+    if not user then
+        user = { name = "user", type = "directory", parent = home, children = {} }
+        home.children["user"] = user
+    end
+    local downloads = user.children["Downloads"]
+    if not downloads then
+        downloads = { name = "Downloads", type = "directory", parent = user, children = {} }
+        user.children["Downloads"] = downloads
+    end
+    
+    -- Save file into Downloads directory
+    downloads.children[att.filename] = {
+        name = att.filename,
+        type = "file",
+        parent = downloads,
+        content = att.content or "",
+        created = os.time(),
+        modified = os.time()
+    }
+    
+    filesystem.save(fs)
+    
+    PlayerStats.setFlag("downloaded:" .. att.filename:lower(), true)
+    PlayerStats.setFlag("email_downloaded:" .. tostring(email.id), true)
+    
+    AudioManager.playSFX("notification", 1.2)
+    Notifications.add("Download Complete", "Saved '" .. att.filename .. "' to Downloads", nil, 5.0)
+    
+    EventBus.emit("email:attachment_downloaded", {
+        filename = att.filename,
+        emailId = email.id,
+        path = "home/user/Downloads/" .. att.filename
+    })
+end
 
 function EmailApp:mousepressed(mx, my, button)
     if button ~= 1 then return end
@@ -497,18 +669,28 @@ function EmailApp:mousepressed(mx, my, button)
             self.activeFolder = folder.name
             self.showingDetailMobile = false
             self.listScrollOffset = 0
+            self.selected = 1
             return
         end
         folderY = folderY + itemHeight + 2
     end
     
-    -- Get layout dimensions
+    -- Check Attachment download button click
+    if self.attachmentButtonRect then
+        local btn = self.attachmentButtonRect
+        if self.mouseX >= btn.x and self.mouseX <= btn.x + btn.w and
+           self.mouseY >= btn.y and self.mouseY <= btn.y + btn.h then
+            self:downloadAttachment(btn.email, btn.attachment)
+            return
+        end
+    end
+    
     local leftRemainingWidth = self.width - self.sidebarWidth
     local padding = 8
+    local visibleEmails = self:getVisibleEmails()
     
     if isCompact then
         if self.showingDetailMobile then
-            -- Check for back button in detail view
             local innerX = self.sidebarWidth
             local backButtonY = padding + 16
             if self.mouseY >= backButtonY - 5 and self.mouseY <= backButtonY + 25 and
@@ -516,36 +698,27 @@ function EmailApp:mousepressed(mx, my, button)
                 self.showingDetailMobile = false
                 return
             end
-            
-            -- Handle detail interactions in compact mode
-            self:handleDetailInteractions(leftRemainingWidth, padding)
+            self:handleDetailInteractions(leftRemainingWidth, padding, visibleEmails)
         else
-            -- Handle list interactions in compact mode
             local listWidth = leftRemainingWidth
-            self:handleListInteractions(self.sidebarWidth, listWidth, padding, true)
+            self:handleListInteractions(self.sidebarWidth, listWidth, padding, true, visibleEmails)
         end
     else
-        -- Full mode interactions
         local emailListWidth = math.floor(leftRemainingWidth * 0.42)
         local contentWidth = leftRemainingWidth - emailListWidth
-        
-        -- Handle list interactions
-        self:handleListInteractions(self.sidebarWidth, emailListWidth, padding, false)
-        
-        -- Handle detail interactions
-        self:handleDetailInteractions(contentWidth, padding)
+        self:handleListInteractions(self.sidebarWidth, emailListWidth, padding, false, visibleEmails)
+        self:handleDetailInteractions(contentWidth, padding, visibleEmails)
     end
 end
 
-function EmailApp:handleListInteractions(startX, listWidth, padding, isCompact)
+function EmailApp:handleListInteractions(startX, listWidth, padding, isCompact, emails)
     local innerX = startX + padding
     local innerW = listWidth - (padding * 2)
     local innerY = padding
     
-    -- Check for list scrollbar interaction first
     local headerHeight = 40
     local rowHeight = 75
-    local totalListHeight = headerHeight + (#self.emails * rowHeight)
+    local totalListHeight = headerHeight + (#emails * rowHeight)
     local innerH = self.height - (padding * 2)
     local listMaxScroll = math.max(0, totalListHeight - innerH)
     
@@ -564,7 +737,6 @@ function EmailApp:handleListInteractions(startX, listWidth, padding, isCompact)
                 self.listScrollDragOffset = self.mouseY - thumbY
                 return
             else
-                -- Jump to position
                 local targetFraction = (self.mouseY - trackY - (thumbHeight / 2)) / (trackHeight - thumbHeight)
                 self.listScrollOffset = targetFraction * listMaxScroll
                 self.listScrollOffset = math.max(0, math.min(self.listScrollOffset, listMaxScroll))
@@ -573,35 +745,30 @@ function EmailApp:handleListInteractions(startX, listWidth, padding, isCompact)
         end
     end
     
-    -- Check back button in compact mode
     if isCompact and self.showingDetailMobile then
-        if self.mouseX >= innerX + 16 and self.mouseX <= innerX + 80 and
-           self.mouseY >= innerY + 16 - 5 and self.mouseY <= innerY + 16 + 25 then
-            self.showingDetailMobile = false
-            return
-        end
         return
     end
     
     local rowY = innerY + headerHeight - self.listScrollOffset
     
-    for i, email in ipairs(self.emails) do
+    for i, email in ipairs(emails) do
         if self.mouseX >= innerX and self.mouseX <= innerX + innerW and
            self.mouseY >= rowY and self.mouseY <= rowY + rowHeight - 1 then
            
-            -- Dynamic click to Star inside email row
             if self.mouseX >= innerX + innerW - 30 and self.mouseX <= innerX + innerW - 5 then
                 email.starred = not email.starred
             else
                 self.selected = i
                 email.unread = false
                 self.scrollOffset = 0
-                pcall(function()
-                    local EventBus = require("src.core.event_bus")
-                    EventBus.emit("email:read", email)
-                end)
                 
-                -- In compact mode, switch to detail view
+                PlayerStats.setFlag("email_read:" .. tostring(email.id), true)
+                if email.sender then
+                    PlayerStats.setFlag("email_read_sender:" .. email.sender:lower(), true)
+                end
+                
+                EventBus.emit("email:read", email)
+                
                 if isCompact then
                     self.showingDetailMobile = true
                 end
@@ -612,42 +779,40 @@ function EmailApp:handleListInteractions(startX, listWidth, padding, isCompact)
     end
 end
 
-function EmailApp:handleDetailInteractions(detailWidth, padding)
+function EmailApp:handleDetailInteractions(detailWidth, padding, emails)
     local rx = self.width - detailWidth + padding
     local rw = detailWidth - padding * 2
     local rh = self.height - (padding * 2)
     
-    -- Check for star toggle in detail view
     local isCompact = self.width < self.minWidthForDetail
     local contentPadding = isCompact and 16 or 24
     local starY = padding + contentPadding
     
     if isCompact then
-        starY = starY + 30 -- Account for back button
+        starY = starY + 30
     end
     
     if self.mouseX >= rx + contentPadding and self.mouseX <= rx + contentPadding + 50 and
        self.mouseY >= starY + 5 and self.mouseY <= starY + 25 then
-        local email = self.emails[self.selected]
+        local email = emails[self.selected]
         if email then 
             email.starred = not email.starred
             return
         end
     end
     
-    -- Scrollbar interaction
     if self.maxScroll > 0 then
         local scrollbarWidth = 8
         local trackX = rx + rw - scrollbarWidth - 4
         if self.mouseX >= trackX and self.mouseX <= trackX + scrollbarWidth then
             local trackHeight = rh - 8
-            
-            local textFont = self.font14
-            local headerSize = 145
-            local email = self.emails[self.selected]
+            local email = emails[self.selected]
             if email then
+                local textFont = self.font14
+                local headerSize = 145
                 local _, lines = textFont:getWrap(email.body, rw - (contentPadding * 2) - 20)
-                local totalContentHeight = headerSize + (#lines * textFont:getHeight()) + 60
+                local attachmentHeight = email.attachment and 80 or 0
+                local totalContentHeight = headerSize + (#lines * textFont:getHeight()) + attachmentHeight + 60
                 
                 local thumbHeight = math.max(30, (rh / totalContentHeight) * trackHeight)
                 local thumbY = (padding + 4) + (self.scrollOffset / self.maxScroll) * (trackHeight - thumbHeight)
@@ -669,15 +834,14 @@ function EmailApp:mousemoved(mx, my, dx, dy)
     self.mouseX = mx
     self.mouseY = my
     
-    -- Handle list scrollbar dragging
     if self.isDraggingListScrollbar and self.listMaxScroll > 0 then
         local padding = 8
         local innerH = self.height - (padding * 2)
         local trackHeight = innerH - 4
-        
+        local visibleEmails = self:getVisibleEmails()
         local headerHeight = 40
         local rowHeight = 75
-        local totalListHeight = headerHeight + (#self.emails * rowHeight)
+        local totalListHeight = headerHeight + (#visibleEmails * rowHeight)
         
         local thumbHeight = math.max(30, (innerH / totalListHeight) * trackHeight)
         local relativeY = self.mouseY - self.listScrollDragOffset - (padding + 2)
@@ -687,30 +851,24 @@ function EmailApp:mousemoved(mx, my, dx, dy)
         self.listScrollOffset = math.max(0, math.min(self.listScrollOffset, self.listMaxScroll))
     end
     
-    -- Handle detail scrollbar dragging
     if self.isDraggingScrollbar and self.maxScroll > 0 then
         local isCompact = self.width < self.minWidthForDetail
         local leftRemainingWidth = self.width - self.sidebarWidth
         local padding = 8
         
-        local detailWidth
-        if isCompact then
-            detailWidth = leftRemainingWidth
-        else
-            local emailListWidth = math.floor(leftRemainingWidth * 0.42)
-            detailWidth = leftRemainingWidth - emailListWidth
-        end
-        
+        local detailWidth = isCompact and leftRemainingWidth or (leftRemainingWidth - math.floor(leftRemainingWidth * 0.42))
         local rh = self.height - (padding * 2)
         local trackHeight = rh - 8
         
-        local contentPadding = isCompact and 16 or 24
-        local textFont = self.font14
-        local headerSize = 145
-        local email = self.emails[self.selected]
+        local visibleEmails = self:getVisibleEmails()
+        local email = visibleEmails[self.selected]
         if email then
+            local contentPadding = isCompact and 16 or 24
+            local textFont = self.font14
+            local headerSize = 145
             local _, lines = textFont:getWrap(email.body, detailWidth - padding - (contentPadding * 2) - 20)
-            local totalContentHeight = headerSize + (#lines * textFont:getHeight()) + 60
+            local attachmentHeight = email.attachment and 80 or 0
+            local totalContentHeight = headerSize + (#lines * textFont:getHeight()) + attachmentHeight + 60
             
             local thumbHeight = math.max(30, (rh / totalContentHeight) * trackHeight)
             local relativeY = self.mouseY - self.scrollDragOffset - (padding + 4)
@@ -729,37 +887,31 @@ function EmailApp:mousereleased(mx, my, button)
 end
 
 function EmailApp:wheelmoved(x, y)
-    -- Determine which panel to scroll based on mouse position
     local isCompact = self.width < self.minWidthForDetail
     local leftRemainingWidth = self.width - self.sidebarWidth
     
     if isCompact then
         if self.showingDetailMobile then
-            -- Scroll detail view
             if self.maxScroll > 0 then
                 self.scrollOffset = self.scrollOffset - (y * 30)
                 self.scrollOffset = math.max(0, math.min(self.scrollOffset, self.maxScroll))
             end
         else
-            -- Scroll list view
             if self.listMaxScroll > 0 then
                 self.listScrollOffset = self.listScrollOffset - (y * 30)
                 self.listScrollOffset = math.max(0, math.min(self.listScrollOffset, self.listMaxScroll))
             end
         end
     else
-        -- Full mode: scroll based on which panel mouse is over
         local emailListWidth = math.floor(leftRemainingWidth * 0.42)
         local listEndX = self.sidebarWidth + emailListWidth
         
         if self.mouseX <= listEndX and self.mouseX >= self.sidebarWidth then
-            -- Mouse is over list panel
             if self.listMaxScroll > 0 then
                 self.listScrollOffset = self.listScrollOffset - (y * 30)
                 self.listScrollOffset = math.max(0, math.min(self.listScrollOffset, self.listMaxScroll))
             end
         elseif self.mouseX > listEndX then
-            -- Mouse is over detail panel
             if self.maxScroll > 0 then
                 self.scrollOffset = self.scrollOffset - (y * 30)
                 self.scrollOffset = math.max(0, math.min(self.scrollOffset, self.maxScroll))
@@ -769,32 +921,14 @@ function EmailApp:wheelmoved(x, y)
 end
 
 function EmailApp:keypressed(key)
+    local visibleEmails = self:getVisibleEmails()
     if key == "up" then
         self.selected = math.max(1, self.selected - 1)
         self.scrollOffset = 0
-        -- Auto-scroll list to show selected item
-        local rowHeight = 75
-        local headerHeight = 40
-        local targetY = headerHeight + (self.selected - 1) * rowHeight
-        if targetY < self.listScrollOffset then
-            self.listScrollOffset = targetY
-        elseif targetY + rowHeight > self.listScrollOffset + self.height - 16 then
-            self.listScrollOffset = targetY + rowHeight - self.height + 16
-        end
     elseif key == "down" then
-        self.selected = math.min(#self.emails, self.selected + 1)
+        self.selected = math.min(#visibleEmails, self.selected + 1)
         self.scrollOffset = 0
-        -- Auto-scroll list to show selected item
-        local rowHeight = 75
-        local headerHeight = 40
-        local targetY = headerHeight + (self.selected - 1) * rowHeight
-        if targetY < self.listScrollOffset then
-            self.listScrollOffset = targetY
-        elseif targetY + rowHeight > self.listScrollOffset + self.height - 16 then
-            self.listScrollOffset = targetY + rowHeight - self.height + 16
-        end
     elseif key == "escape" then
-        -- Back button functionality for compact mode
         if self.width < self.minWidthForDetail then
             self.showingDetailMobile = false
         end
@@ -805,11 +939,9 @@ function EmailApp:update(dt) end
 function EmailApp:textinput(text) end
 
 function EmailApp:resize(w, h)
-    -- Reset detail view when switching modes
     if self.width > 0 then
         local wasCompact = self.width < self.minWidthForDetail
         local isNowCompact = w < self.minWidthForDetail
-        
         if wasCompact ~= isNowCompact then
             self.showingDetailMobile = false
         end

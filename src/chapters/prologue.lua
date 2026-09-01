@@ -1,9 +1,149 @@
--- data/stories/prologue.lua
--- Lynux Caracal: Chapter 1 - "Ink, Whiskers & The Midnight Repeater"
+-- src/chapters/prologue.lua
+-- Lynux Caracal: Chapter 1 & 2 - "Ink, Whiskers & The Midnight Repeater"
 -- Locked to Aki's POV (Newspaper Club Reporter)
 
 local TaskConditions = require("src.tasks.task_conditions")
 local EventBus = require("src.core.event_bus")
+
+-- Chapter 1 Desktop Task Sequence Definitions
+local ch1Tasks = {}
+
+ch1Tasks.task8 = {
+    id = "ch1_task8_dual_master_proof",
+    title = "Finalize Dual-Cover Layout Proof",
+    desc = "Open Files, navigate to Documents/newspaper/ and verify 'dual_issue_draft.txt' combining the Cat Cafe feature and the Mystery report.",
+    hint = "Check 'Documents/newspaper/dual_issue_draft.txt' in Files or TextEditor.",
+    xp = 150,
+    condition = TaskConditions.fileContentContains("home/user/Documents/newspaper/dual_issue_draft.txt", "SHADOW-CAT-09"),
+    onComplete = function(task)
+        local Notifications = require("src.desktop.notifications")
+        local PlayerStats = require("src.core.player_stats")
+        PlayerStats.setFlag("chapter1_desktop_completed", true)
+        Notifications.add("All Tasks Complete!", "Chapter 1 desktop layout finished. Click 'Continue Story' to proceed.", nil, 6.0)
+    end
+}
+
+ch1Tasks.task7 = {
+    id = "ch1_task7_secure_cipher",
+    title = "Save Quarantine Cipher 'SHADOW-CAT-09'",
+    desc = "Create a file named 'cipher.txt' in your home folder containing 'SHADOW-CAT-09' to trigger Hoshida's port quarantine script.",
+    hint = "In TextEditor, create a new file, type 'SHADOW-CAT-09', and save as 'cipher.txt' in your home folder.",
+    xp = 100,
+    condition = TaskConditions.any(
+        TaskConditions.fileContentContains("home/cipher.txt", "SHADOW-CAT-09"),
+        TaskConditions.fileContentContains("home/user/cipher.txt", "SHADOW-CAT-09")
+    ),
+    onComplete = function(task)
+        local Notifications = require("src.desktop.notifications")
+        Notifications.add("Security Firewall", "Port 8080 quarantined. Proxy severed.", nil, 5.0)
+        local TaskManager = require("src.tasks.task_manager")
+        TaskManager.setTask(ch1Tasks.task8)
+    end
+}
+
+ch1Tasks.task6 = {
+    id = "ch1_task6_inspect_server_dump",
+    title = "Inspect Port 8080 Packet Dump",
+    desc = "Hoshida detected an unauthorized proxy stream on the school network! Check 'school_server_dump.log' in Downloads or Hoshida's email (#105) to locate the token.",
+    hint = "Open 'school_server_dump.log' from Downloads in TextEditor, or view Hoshida's email (#105). Find the Secret Token.",
+    xp = 75,
+    condition = TaskConditions.any(
+        TaskConditions.emailRead("Hoshida"),
+        TaskConditions.fileContentContains("home/user/Downloads/school_server_dump.log", "SHADOW-CAT-09")
+    ),
+    onComplete = function(task)
+        local Notifications = require("src.desktop.notifications")
+        Notifications.add("Hoshida [Root]", "Token identified! Save it in 'cipher.txt' in home folder.", nil, 6.0)
+        local TaskManager = require("src.tasks.task_manager")
+        TaskManager.setTask(ch1Tasks.task7)
+    end
+}
+
+ch1Tasks.task5 = {
+    id = "ch1_task5_chat_with_suzumia",
+    title = "Message Suzumia on Chat",
+    desc = "Open Chat, select 'Suzumia (Vice President)', and send her your feedback on the Meow Latte photos.",
+    hint = "Open Chat from taskbar, click on Suzumia, read Aki's scripted response, and click 'Send'.",
+    xp = 75,
+    condition = TaskConditions.chatSentTo("Suzumia"),
+    onComplete = function(task)
+        local Notifications = require("src.desktop.notifications")
+        local PlayerStats = require("src.core.player_stats")
+        PlayerStats.setFlag("hoshida_alert", true)
+        PlayerStats.setFlag("email_unlocked:105", true)
+        Notifications.add("Hoshida [Root]", "URGENT: Port 8080 anomaly detected on school subnet!", nil, 6.0)
+        local TaskManager = require("src.tasks.task_manager")
+        TaskManager.setTask(ch1Tasks.task6)
+    end
+}
+
+ch1Tasks.task4 = {
+    id = "ch1_task4_browse_cat_cafe",
+    title = "Research Meow Latte Website",
+    desc = "Launch Browser and visit 'http://meowlatte.com' to review the cat profiles and dessert specials.",
+    hint = "Open Browser from taskbar, type 'http://meowlatte.com' or click the link on the home page.",
+    xp = 75,
+    condition = TaskConditions.browserVisited("cat"),
+    onComplete = function(task)
+        local Notifications = require("src.desktop.notifications")
+        local PlayerStats = require("src.core.player_stats")
+        PlayerStats.setFlag("browsed_cat_cafe", true)
+        Notifications.add("Chat Notification", "Suzumia (Vice President) is online now", nil, 5.0)
+        local TaskManager = require("src.tasks.task_manager")
+        TaskManager.setTask(ch1Tasks.task5)
+    end
+}
+
+ch1Tasks.task3 = {
+    id = "ch1_task3_review_draft_notes",
+    title = "Review & Format 'cat_cafe_review.txt'",
+    desc = "Open 'cat_cafe_review.txt' from Downloads in TextEditor. Verify the student discount and parfait details, then save the file.",
+    hint = "In Files or TextEditor, open 'cat_cafe_review.txt' in Downloads. Press Ctrl+S to save.",
+    xp = 50,
+    condition = TaskConditions.any(
+        TaskConditions.fileSaved("cat_cafe_review.txt"),
+        TaskConditions.fileContentContains("home/user/Downloads/cat_cafe_review.txt", "10% discount")
+    ),
+    onComplete = function(task)
+        local Notifications = require("src.desktop.notifications")
+        Notifications.add("Browser Alert", "Meow Latte website accessible at http://meowlatte.com", nil, 5.0)
+        local TaskManager = require("src.tasks.task_manager")
+        TaskManager.setTask(ch1Tasks.task4)
+    end
+}
+
+ch1Tasks.task2 = {
+    id = "ch1_task2_download_attachment",
+    title = "Download 'cat_cafe_review.txt' from Email",
+    desc = "Open Suzumia's email (#102) and click 'Download File' on the attachment to save her notes to Downloads.",
+    hint = "Open Email app, view Suzumia's email (#102), scroll down, and click the 'Download File' button.",
+    xp = 50,
+    condition = TaskConditions.attachmentDownloaded("cat_cafe_review.txt"),
+    onComplete = function(task)
+        local Notifications = require("src.desktop.notifications")
+        Notifications.add("TextEditor Alert", "Open 'cat_cafe_review.txt' from Downloads to inspect", nil, 5.0)
+        local TaskManager = require("src.tasks.task_manager")
+        TaskManager.setTask(ch1Tasks.task3)
+    end
+}
+
+ch1Tasks.task1 = {
+    id = "ch1_task1_check_inbox",
+    title = "Check Inbox (Hiko & Suzumia)",
+    desc = "Open Email on your desktop. Read the message from your sister Hiko, as well as Suzumia's draft notes.",
+    hint = "Launch Email from taskbar. Click on Hiko's and Suzumia's unread emails to read them.",
+    xp = 50,
+    condition = TaskConditions.all(
+        TaskConditions.emailRead("Hiko"),
+        TaskConditions.emailRead("Suzumia")
+    ),
+    onComplete = function(task)
+        local Notifications = require("src.desktop.notifications")
+        Notifications.add("Email Attachment", "Suzumia attached 'cat_cafe_review.txt' to her email", nil, 5.0)
+        local TaskManager = require("src.tasks.task_manager")
+        TaskManager.setTask(ch1Tasks.task2)
+    end
+}
 
 return {
     -- =========================================================================
@@ -82,105 +222,10 @@ return {
     { type = "monologue", text = "Down the hall, I heard my sister Hiko yelling earlier about leftover curry in the fridge before she went to her room." },
     { type = "monologue", text = "Before I begin assembling the dual-cover layout, I should check my email inbox. Hiko sent a message about chores, and Suzumia promised to send over her Meow Latte notes." },
 
-    -- TASK 1: Check Sibling & Club Emails
+    -- ASSIGN INITIAL CHAPTER 1 TASK & SWITCH TO DESKTOP
     {
         type = "task",
-        task = {
-            id = "check_club_emails",
-            title = "Check Inbox (Hiko & Suzumia)",
-            desc = "Open the Email application on your desktop. Read the message from your sister Hiko, as well as Suzumia's draft notes.",
-            hint = "Launch Email from the bottom taskbar or start menu. Click through Hiko's and Suzumia's unread emails.",
-            xp = 50,
-            condition = TaskConditions.emailRead("Suzumia"),
-            onComplete = function(task)
-                local Notifications = require("src.desktop.notifications")
-                Notifications.add("Browser Alert", "New website shortcut added: Meow Latte Cat Cafe", nil, 5.0)
-            end
-        }
-    },
-
-    { type = "switch_mode", mode = "desktop", transition = "crt_zoom" },
-
-    -- =========================================================================
-    -- ACT III: RESEARCHING THE FELINE SANCTUARY & CHATTING WITH SUZUMIA
-    -- =========================================================================
-    { type = "label", name = "after_email" },
-    { type = "bg", name = "bedroom_night" },
-    { type = "monologue", text = "Suzumia was so thorough... she even cataloged each cat's personality and favorite sleeping spots." },
-    { type = "monologue", text = "And Hiko's email mentioned that even the first-years in her class have been gossiping about the server room noises." },
-    { type = "monologue", text = "To write a compelling review, I should browse the official 'Meow Latte' website in my browser to verify the dessert menu and cat names, then text Suzumia to confirm the headline." },
-
-    -- TASK 2: Browse Cat Cafe Website
-    {
-        type = "task",
-        task = {
-            id = "browse_cat_cafe",
-            title = "Browse Meow Latte Website",
-            desc = "Launch the Browser app and visit 'http://meowlatte.com' to review the cat profiles and dessert specials.",
-            hint = "Open Browser from the taskbar, click the 'Meow Latte' shortcut or type 'http://meowlatte.com'.",
-            xp = 75,
-            condition = TaskConditions.browserVisited("cat"),
-            onComplete = function(task)
-                local Notifications = require("src.desktop.notifications")
-                Notifications.add("Chat", "Suzumia (Vice President) is active now", nil, 5.0)
-            end
-        }
-    },
-
-    { type = "switch_mode", mode = "desktop", transition = "crt_zoom" },
-
-    { type = "label", name = "after_browser" },
-    { type = "bg", name = "bedroom_night" },
-    { type = "monologue", text = "Mochi the Scottish Fold and Chobi the calico... they really are adorable. Suzumia's enthusiasm makes complete sense now." },
-    { type = "monologue", text = "I notice Suzumia's status indicator in the Chat app is active. I should send her a quick message to let her know the draft is looking great." },
-
-    -- TASK 3: Message Suzumia on Chat
-    {
-        type = "task",
-        task = {
-            id = "chat_with_suzumia",
-            title = "Message Suzumia on Chat",
-            desc = "Open Chat, select 'Suzumia (Vice President)', and send her a reply about the cat cafe photos.",
-            hint = "Open Chat from the taskbar, click on Suzumia, type a friendly message, and hit Enter.",
-            xp = 75,
-            condition = TaskConditions.chatSentTo("Suzumia"),
-            onComplete = function(task)
-                local Notifications = require("src.desktop.notifications")
-                Notifications.add("Hoshida [Root]", "URGENT: Port 8080 anomaly detected on school subnet!", nil, 6.0)
-            end
-        }
-    },
-
-    { type = "switch_mode", mode = "desktop", transition = "crt_zoom" },
-
-    -- =========================================================================
-    -- ACT IV: THE MIDNIGHT ANOMALY & HOSHIDA'S REVELATION
-    -- =========================================================================
-    { type = "label", name = "after_chat" },
-    { type = "bg", name = "bedroom_night" },
-    { type = "monologue", text = "Talking to Suzumia late at night always puts my mind at ease. She really cares so much about our club." },
-    { type = "sfx", name = "notification" },
-    { type = "monologue", text = "Wait... a red notification badge just flashed in my system tray. It's from Hoshida." },
-    { type = "monologue", text = "His usual goofy otaku tone is completely gone. In its place is a raw packet dump from port 8080." },
-    { type = "monologue", text = "Hoshida ran a deep subnet scan against the school's old 3rd floor repeater rack. Someone dumped an encrypted XOR payload containing the key 'SHADOW-CAT-09'." },
-    { type = "monologue", text = "The rumor Nagahashi thought he made up... someone is actually using the school's old server as an unauthorized proxy bridge!" },
-    { type = "monologue", text = "I need to open TextEditor immediately and save the cipher key 'SHADOW-CAT-09' into 'cipher.txt' in my home folder so Hoshida's firewall script can quarantine the port." },
-
-    -- TASK 4: Save Cipher Key in TextEditor
-    {
-        type = "task",
-        task = {
-            id = "secure_school_cipher",
-            title = "Secure Cipher 'SHADOW-CAT-09'",
-            desc = "Create a file named 'cipher.txt' in your home folder containing 'SHADOW-CAT-09' to trigger the quarantine script.",
-            hint = "Launch TextEditor from the taskbar. Type 'SHADOW-CAT-09' and save the file as 'cipher.txt'.",
-            xp = 100,
-            condition = TaskConditions.fileContentContains("home/cipher.txt", "SHADOW-CAT-09"),
-            onComplete = function(task)
-                local Notifications = require("src.desktop.notifications")
-                Notifications.add("System", "Port 8080 quarantined. Proxy severed.", nil, 6.0)
-            end
-        }
+        task = ch1Tasks.task1
     },
 
     { type = "switch_mode", mode = "desktop", transition = "crt_zoom" },
@@ -190,7 +235,7 @@ return {
     -- =========================================================================
     { type = "label", name = "post_task" },
     { type = "bg", name = "bedroom_night" },
-    { type = "monologue", text = "Done. 'cipher.txt' is saved, and Hoshida's automated script successfully severed the intruder's tunnel." },
+    { type = "monologue", text = "01:15 AM. The keyboard falls silent at last. 'cipher.txt' is saved, and Hoshida's automated script successfully severed the intruder's tunnel." },
     { type = "sfx", name = "notification" },
 
     { type = "say", speaker = "Hoshida (Anon)", text = "Tunnel terminated. Clean work, Aki. The repeater switch on the 3rd floor is locked down." },
@@ -240,7 +285,7 @@ return {
 
     -- Conclusion of Chapter 1 & Transition into Chapter 2
     { type = "label", name = "prologue_conclusion" },
-    { type = "monologue", text = "02:15 AM. The keyboard falls silent at last. The draft files are safely formatted and ready for the morning press." },
+    { type = "monologue", text = "02:15 AM. The draft files are safely formatted and ready for the morning press." },
     { type = "monologue", text = "I take a slow sip of cooling tea, gazing out the bedroom window at the quiet autumn stars above Kamiyama City." },
     { type = "monologue", text = "Tomorrow, when the clubroom door opens and the afternoon sun floods the second floor... our real story begins." },
     { type = "wait", duration = 1.5 },
@@ -291,38 +336,27 @@ return {
     { type = "say", speaker = "Aki", text = "[Whispering] The basement? Under the gymnasium?" },
     { type = "say", speaker = "Hoshida", text = "[Whispering] Yeah. And whoever set it up is using a commercial MAC router. Open your PC, check the traceroute dump in Downloads, and compile the final master proof in your Documents folder before Saeki arrives." },
 
-    -- MODE SWITCH: DESKTOP WORKSTATION INVESTIGATION
+    -- CHAPTER 2 TASK
     {
         type = "task",
-        id = "task_chapter2_master_proof",
-        title = "Compile Final Master Proof & Inspect Basement Traceroute",
-        desc = "1. Read Hoshida's confidential email (#106) in Email app.\n2. Verify the basement sub-station IP (192.168.1.254) in 'traceroute_dump.txt'.\n3. Confirm final_dual_issue_master.txt in Documents/newspaper/.",
-        xp = 400
+        task = {
+            id = "task_chapter2_master_proof",
+            title = "Compile Final Master Proof & Inspect Basement Traceroute",
+            desc = "1. Read Hoshida's confidential email (#106) in Email app.\n2. Verify the basement sub-station IP (192.168.1.254) in 'traceroute_dump.txt'.\n3. Confirm final_dual_issue_master.txt in Documents/newspaper/.",
+            hint = "Open Email, read email #106 from Hoshida, download/view 'traceroute_dump.txt' in Downloads.",
+            xp = 400,
+            condition = TaskConditions.all(
+                TaskConditions.emailRead("Hoshida"),
+                TaskConditions.fileContentContains("home/user/Downloads/traceroute_dump.txt", "192.168.1.254")
+            ),
+            onComplete = function(task)
+                local PlayerStats = require("src.core.player_stats")
+                PlayerStats.setFlag("chapter2_proof_verified", true)
+            end
+        }
     },
-    {
-        type = "custom",
-        action = function()
-            local EventBus = require("src.core.event_bus")
-            local TaskManager = require("src.tasks.task_manager")
-            local TaskConditions = require("src.tasks.task_conditions")
-            
-            TaskManager.setTask({
-                id = "task_chapter2_master_proof",
-                title = "Compile Final Master Proof & Inspect Basement Traceroute",
-                desc = "Read Hoshida's confidential email (#106) and inspect traceroute_dump.txt",
-                xp = 400,
-                condition = TaskConditions.all(
-                    TaskConditions.emailRead("Hoshida"),
-                    TaskConditions.fileContentContains("home/user/Downloads/traceroute_dump.txt", "192.168.1.254")
-                ),
-                onComplete = function()
-                    local EventBus = require("src.core.event_bus")
-                    EventBus.emit("story:advance")
-                end
-            })
-            EventBus.emit("game:request_switch_mode", { mode = "desktop", transition = "crt_zoom" })
-        end
-    },
+
+    { type = "switch_mode", mode = "desktop", transition = "crt_zoom" },
 
     -- RETURN TO STORY: ACT IX - THE STUDENT COUNCIL AUDIT
     { type = "bg", name = "clubroom_sunset" },
@@ -364,4 +398,3 @@ return {
     { type = "monologue", text = "        TO BE CONTINUED IN CHAPTER 3: THE GHOST MESH    " },
     { type = "monologue", text = "========================================================" }
 }
-
