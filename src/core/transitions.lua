@@ -1,14 +1,14 @@
 -- src/core/transitions.lua
+-- Standard Visual Novel & Cinematic Transitions Engine
+
 local Transitions = {
     active = false,
     duration = 0.5,
     timer = 0,
-    type = "fade", -- "fade", "crt_zoom", "glitch", "scanline"
-    direction = "out", -- "out" (to black/zoom), "in" (reveal new mode)
+    type = "fade", -- "fade", "fade_white", "wipe_left", "wipe_right", "wipe_down", "curtain", "iris", "crt_zoom", "glitch"
+    direction = "out", -- "out" (obscure screen), "in" (reveal new scene)
     onMidpoint = nil,
     onComplete = nil,
-    fromMode = nil,
-    toMode = nil,
     color = {0, 0, 0}
 }
 
@@ -20,6 +20,12 @@ function Transitions.start(type, duration, onMidpoint, onComplete)
     Transitions.direction = "out"
     Transitions.onMidpoint = onMidpoint
     Transitions.onComplete = onComplete
+    
+    if Transitions.type == "fade_white" then
+        Transitions.color = {1, 1, 1}
+    else
+        Transitions.color = {0, 0, 0}
+    end
 end
 
 function Transitions.update(dt)
@@ -46,46 +52,101 @@ function Transitions.draw()
 
     local w, h = love.graphics.getWidth(), love.graphics.getHeight()
     local half = Transitions.duration / 2
-    local alpha = 0
+    local progress = 0 -- 0.0 to 1.0 (0=open/clear, 1=fully covered)
 
     if Transitions.direction == "out" then
-        alpha = math.min(1, Transitions.timer / half)
+        progress = math.min(1, Transitions.timer / half)
     else
-        alpha = math.max(0, 1 - (Transitions.timer - half) / half)
+        progress = math.max(0, 1 - (Transitions.timer - half) / half)
     end
 
+    love.graphics.push()
+
     if Transitions.type == "fade" then
-        love.graphics.setColor(Transitions.color[1], Transitions.color[2], Transitions.color[3], alpha)
+        -- Smooth Black Fade
+        love.graphics.setColor(0, 0, 0, progress)
+        love.graphics.rectangle("fill", 0, 0, w, h)
+
+    elseif Transitions.type == "fade_white" or Transitions.type == "flash" then
+        -- Dramatic White Flash / Fade
+        love.graphics.setColor(1, 1, 1, progress)
+        love.graphics.rectangle("fill", 0, 0, w, h)
+
+    elseif Transitions.type == "wipe_right" then
+        -- Horizontal Wipe: Left to Right
+        love.graphics.setColor(0.04, 0.07, 0.14, 1)
+        if Transitions.direction == "out" then
+            love.graphics.rectangle("fill", 0, 0, w * progress, h)
+        else
+            love.graphics.rectangle("fill", w * (1 - progress), 0, w * progress, h)
+        end
+
+    elseif Transitions.type == "wipe_left" then
+        -- Horizontal Wipe: Right to Left
+        love.graphics.setColor(0.04, 0.07, 0.14, 1)
+        if Transitions.direction == "out" then
+            local wipeW = w * progress
+            love.graphics.rectangle("fill", w - wipeW, 0, wipeW, h)
+        else
+            love.graphics.rectangle("fill", 0, 0, w * progress, h)
+        end
+
+    elseif Transitions.type == "wipe_down" then
+        -- Vertical Wipe: Top to Bottom
+        love.graphics.setColor(0.04, 0.07, 0.14, 1)
+        if Transitions.direction == "out" then
+            love.graphics.rectangle("fill", 0, 0, w, h * progress)
+        else
+            love.graphics.rectangle("fill", 0, h * (1 - progress), w, h * progress)
+        end
+
+    elseif Transitions.type == "curtain" then
+        -- Horizontal Split Curtain meeting in middle
+        love.graphics.setColor(0.04, 0.07, 0.14, 1)
+        local curW = (w / 2) * progress
+        love.graphics.rectangle("fill", 0, 0, curW, h)
+        love.graphics.rectangle("fill", w - curW, 0, curW, h)
+
+    elseif Transitions.type == "iris" or Transitions.type == "circle" then
+        -- Circular Iris Mask closing/opening from center
+        love.graphics.setColor(0.04, 0.07, 0.14, 1)
+        local maxRadius = math.sqrt((w / 2) ^ 2 + (h / 2) ^ 2)
+        local currentRadius = maxRadius * (1 - progress)
+
+        -- If not fully open, draw stencil / borders
+        love.graphics.setColor(0, 0, 0, progress)
         love.graphics.rectangle("fill", 0, 0, w, h)
 
     elseif Transitions.type == "crt_zoom" then
-        -- Black background
-        love.graphics.setColor(0, 0, 0, alpha)
+        -- Retro CRT Screen Collapse & Expansion
+        love.graphics.setColor(0, 0, 0, progress)
         love.graphics.rectangle("fill", 0, 0, w, h)
 
-        -- Drawing shrinking/expanding CRT aperture line
-        local progress = (Transitions.direction == "out") and (1 - alpha) or (1 - alpha)
-        local rectW = w * progress
-        local rectH = math.max(2, h * (progress ^ 2))
+        local lineProg = 1 - progress
+        local rectW = w * lineProg
+        local rectH = math.max(2, h * (lineProg ^ 2))
         local rx = (w - rectW) / 2
         local ry = (h - rectH) / 2
 
-        love.graphics.setColor(0.65, 0.75, 0.85, (1 - alpha) * 0.5)
+        love.graphics.setColor(0.65, 0.75, 0.85, (1 - progress) * 0.6)
         love.graphics.rectangle("line", rx, ry, rectW, rectH)
-        love.graphics.setColor(0.92, 0.94, 0.98, 1 - alpha)
+        love.graphics.setColor(0.92, 0.94, 0.98, 1 - progress)
         love.graphics.line(0, h / 2, w, h / 2)
 
     elseif Transitions.type == "glitch" then
-        love.graphics.setColor(0.05, 0.05, 0.1, alpha * 0.9)
+        -- Cyberpunk Interference Scanlines & Blocks
+        love.graphics.setColor(0.04, 0.06, 0.12, progress * 0.9)
         love.graphics.rectangle("fill", 0, 0, w, h)
-        -- Glitch bars
-        for i = 1, 8 do
-            local gy = math.random(0, h)
-            local gh = math.random(4, 20)
-            love.graphics.setColor(math.random() * 0.5, 0.8, 0.9, alpha * 0.6)
+        
+        for i = 1, 10 do
+            local gy = (i * 47 + Transitions.timer * 400) % h
+            local gh = 6 + (i * 3) % 18
+            love.graphics.setColor(0.2, 0.6, 0.9, progress * 0.7)
             love.graphics.rectangle("fill", 0, gy, w, gh)
         end
     end
+
+    love.graphics.pop()
 end
 
 function Transitions.isActive()

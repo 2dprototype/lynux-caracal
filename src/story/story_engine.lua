@@ -112,7 +112,8 @@ function StoryEngine.nextStep()
         StoryEngine.nextStep()
 
     elseif step.type == "char_show" then
-        CharacterManager.show(step.char, step.pos, step.expr)
+        local isFlipped = (step.flip == true or step.flipped == true or step.mirror == true or step.mirrored == true)
+        CharacterManager.show(step.char, step.pos, step.expr, isFlipped)
         StoryEngine.nextStep()
 
     elseif step.type == "char_hide" then
@@ -228,7 +229,7 @@ end
 function StoryEngine.draw()
     SceneView.draw()
     CharacterManager.draw()
-    DialogueBox.draw()
+    DialogueBox.draw(StoryEngine.autoPlay)
     ChoiceBox.draw()
     HistoryLog.draw()
 end
@@ -252,6 +253,10 @@ function StoryEngine.mousepressed(x, y, button)
     if HistoryLog.visible then return end
     if ChoiceBox.mousepressed(x, y, button) then return end
 
+    if DialogueBox.mousepressed and DialogueBox.mousepressed(x, y, button, StoryEngine) then
+        return
+    end
+
     if button == 1 then
         StoryEngine.advance()
     elseif button == 2 then
@@ -261,6 +266,9 @@ end
 
 function StoryEngine.mousemoved(x, y, dx, dy)
     ChoiceBox.mousemoved(x, y)
+    if DialogueBox.mousemoved then
+        DialogueBox.mousemoved(x, y)
+    end
 end
 
 function StoryEngine.wheelmoved(x, y)

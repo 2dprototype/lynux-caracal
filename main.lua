@@ -53,6 +53,24 @@ function love.keypressed(key)
     GameManager.keypressed(key)
 end
 
+function love.touchpressed(id, x, y, dx, dy, pressure)
+    local screenW = love.graphics.getWidth()
+    local screenH = love.graphics.getHeight()
+    GameManager.mousepressed(x * screenW, y * screenH, 1)
+end
+
+function love.touchmoved(id, x, y, dx, dy, pressure)
+    local screenW = love.graphics.getWidth()
+    local screenH = love.graphics.getHeight()
+    GameManager.mousemoved(x * screenW, y * screenH, (dx or 0) * screenW, (dy or 0) * screenH)
+end
+
+function love.touchreleased(id, x, y, dx, dy, pressure)
+    local screenW = love.graphics.getWidth()
+    local screenH = love.graphics.getHeight()
+    GameManager.mousereleased(x * screenW, y * screenH, 1)
+end
+
 function love.resize(w, h)
     GameManager.resize(w, h)
 end

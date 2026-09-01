@@ -136,11 +136,12 @@ function CharacterManager.getSprite(characterId)
     return nil, defaultPath
 end
 
-function CharacterManager.show(characterId, position, expression)
+function CharacterManager.show(characterId, position, expression, flipped)
     position = position or "center"
     CharacterManager.activeCharacters[position] = {
         characterId = characterId,
         expression = expression or "normal",
+        flipped = (flipped == true),
         alpha = 1.0
     }
 end
@@ -175,16 +176,18 @@ function CharacterManager.draw()
             love.graphics.push()
 
             if img then
-                -- Render loaded visual novel character sprite
+                -- Render loaded visual novel character sprite with mirror/flip support
                 local targetHeight = math.min(h * 0.78, 640)
                 local scale = targetHeight / img:getHeight()
                 local imgW = img:getWidth() * scale
                 local imgH = img:getHeight() * scale
-                local drawX = math.floor(coords.x - imgW / 2)
+
+                local scaleX = charData.flipped and -scale or scale
+                local drawX = charData.flipped and math.floor(coords.x + imgW / 2) or math.floor(coords.x - imgW / 2)
                 local drawY = math.floor(h - imgH + 15) -- grounded near bottom
 
                 love.graphics.setColor(1, 1, 1, alpha)
-                love.graphics.draw(img, drawX, drawY, 0, scale, scale)
+                love.graphics.draw(img, drawX, drawY, 0, scaleX, scale)
 
             else
                 -- Missing sprite: Developer placeholder card displaying target sprite source
@@ -217,8 +220,13 @@ function CharacterManager.draw()
                 love.graphics.setColor(0.95, 0.45, 0.45, alpha)
                 love.graphics.printf("[Missing Sprite]", cardX + 8, cardY + 38, cardW - 16, "center")
 
-                love.graphics.setColor(0.7, 0.78, 0.9, alpha)
-                love.graphics.printf("Position: " .. tostring(posKey), cardX + 8, cardY + 58, cardW - 16, "center")
+                if charData.flipped then
+                    love.graphics.setColor(0.9, 0.75, 0.35, alpha)
+                    love.graphics.printf("[Mirrored] Pos: " .. tostring(posKey), cardX + 8, cardY + 58, cardW - 16, "center")
+                else
+                    love.graphics.setColor(0.7, 0.78, 0.9, alpha)
+                    love.graphics.printf("Position: " .. tostring(posKey), cardX + 8, cardY + 58, cardW - 16, "center")
+                end
 
                 -- Sprite Source Path box
                 love.graphics.setColor(0.04, 0.06, 0.11, 0.9 * alpha)
