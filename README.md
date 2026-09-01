@@ -1,4 +1,4 @@
-# 🐱 Lynux Caracal
+# 📰 Daydream Newspaper Club
 
 > **A Hybrid Narrative Visual Novel & Simulated Desktop Operating System Game Engine**  
 > Built with [Love2D (Lua)](https://love2d.org/) • Windows 10 Style Desktop Interface • Material Dark Aesthetic • 60 FPS Architecture
@@ -7,9 +7,11 @@
 
 ## 🌟 Overview
 
-**Lynux Caracal** is a hybrid narrative game that seamlessly switches between **Storytelling Mode (Visual Novel)** and the **Protagonist's Personal Computer (Windows 10 Style Desktop Simulation)** set in a grounded 2009–2010 atmosphere.
+**Daydream Newspaper Club** is a hybrid narrative game that seamlessly switches between **Storytelling Mode (Visual Novel)** and the **Protagonist's Personal Computer (Windows 10 Style Desktop Simulation)** set in the warm, nostalgic atmosphere of Kamiyama High School.
 
-The gameplay and mode transitions are **strictly narrative-driven**: as the story progresses, the narrative naturally sends the player to their PC to complete real computing tasks (e.g. reading emails, chatting with contacts, editing cipher files, executing terminal commands), then transitions back to the visual novel when objectives are fulfilled.
+The player assumes the role of **Aki Akizuki**, lead layout editor of the Kamiyama High Newspaper Club. Facing an impending budget audit by the Student Council, Aki must work alongside Vice President **Suzumia**, President **Nagahashi**, and tech specialist **Hoshida** to assemble the ultimate Dual-Cover Autumn Special Edition while uncovering an unauthorized proxy server operating inside the school's old 3rd floor repeater network.
+
+Gameplay transitions are **strictly narrative-driven**: the visual novel story naturally directs the player to their workstation to complete real computing tasks (downloading email attachments, editing review drafts in TextEditor, researching cat cafe menus in Browser, chatting with club members, and isolating network ciphers), then returns to the visual novel when objectives are fulfilled.
 
 ---
 
@@ -17,111 +19,93 @@ The gameplay and mode transitions are **strictly narrative-driven**: as the stor
 
 ```mermaid
 graph TD
-    A["Story Mode (Visual Novel)"] -->|"Narrative Scene & Task Issued"| B["Task Issued by Story"]
-    B -->|"Smooth CRT Zoom Transition"| C["Windows 10 Desktop Mode"]
-    C -->|"Email Maya / Chat Chloe / Edit Files"| D["Complete Technical Objective"]
-    D -->|"Objective Met & Progress Recorded"| E["Level-Up (+XP) & Notification"]
+    A["Main Menu (Continue / New Game / Chapter Select)"] -->|"Start Chapter"| B["Story Mode (Visual Novel)"]
+    B -->|"Editorial Meeting & Objective Assigned"| C["CRT Zoom Transition"]
+    C -->|"Workstation Mode (Email / Chat / Files / TextEditor / Browser)"| D["Complete Investigative Objectives"]
+    D -->|"Objective Met & Progress Recorded"| E["Level-Up (+XP) & Notification Banner"]
     E -->|"Click Continue Story on Task HUD"| F["Story Resumes with Narrative Consequences"]
+    F -->|"Chapter Conclusion & Editorial Choice"| G["Automatic Transition to Next Chapter"]
 ```
 
 ---
 
-## ✨ Features
+## ✨ Key Features
 
 ### 📖 1. Visual Novel & Narrative Engine
-- **Atmospheric Monologues & Dialogues**: Clean Material dark glass plate with soft drop shadows and zero distracting borders.
-- **Branching Choice System**: Clean Material option cards with number prefixes (`1.`, `2.`, `3.`) and Windows Accent Blue selection highlights.
-- **Dialogue Transcript Backlog**: Scrollable history log overlay toggled with `H` or `L` keys.
-- **Rich 2009–2010 Storyline**:
-  - **Task 1 (Sister's Email)**: Open the Email app and read Maya's message about Mom's 50th birthday.
-  - **Task 2 (Girlfriend Chat)**: Open Chat and reply to Chloe's late-night message.
-  - **Task 3 (The Cipher Intrusion)**: A network packet arrives on port 8080. Decrypt the key and save `DELTA-99` in `cipher.txt` using TextEditor.
-  - **Scene 4 (Ghost Confrontation)**: Face off against the mysterious hacker entity `Ghost` with branching dialogue choices.
+- **Atmospheric Storytelling**: Clean Material dark glass dialogues with zero distracting borders and crisp typography.
+- **Modular Chapter Architecture**:
+  - **Chapter 1 ("Ink, Whiskers & The Midnight Repeater")**: Editorial deadlock in Clubroom 204, cat cafe draft investigation, and isolating the 3rd floor repeater anomaly.
+  - **Chapter 2 ("The Morning Commute & The Basement Sub-Station")**: Morning walk with Hiko, Auditor Saeki's 17:00 deadline, and tracing the basement physical mesh node.
+- **Branching Choice System**: Meaningful editorial decisions that influence the tone and focus of the club's publication.
+- **Dialogue Transcript Backlog**: Full scrollable dialogue history toggled with `H` or `L` keys.
 
 ### 🪟 2. Windows 10 Style Desktop Operating System
 - **Multi-Process App Management**:
-  - Supports running **multiple concurrent instances / windows of the same app** (e.g., editing `cipher.txt` and `notes.txt` in separate TextEditor windows).
-  - Each window has its own unique Process ID (`pid`), state, coordinate offsets, and active focus.
-  - Taskbar tabs display multi-instance counter badges.
-- **Windows 10 Chrome & Controls**:
-  - Flat dark titlebars with app icon and title.
-  - Standard top-right controls: Minimize (`—`), Maximize (`□`), and Close (`✕` which turns bright Windows Red `#e81123` on hover).
-  - 1px Windows Accent Blue (`#0078d4`) focus border.
-- **Bottom Taskbar (38px)**:
-  - Windows 4-square Start button and Start Menu with application drawer.
-  - Search box mockup (`"Type here to search"`).
-  - Active underline indicators on running app tabs.
-  - System tray with real-time digital clock (`12:43 AM`), date (`08/31/2010`), and Player Level/XP progress badge.
-- **Desktop Widgets & Apps**:
-  - 📋 **Task HUD**: Clean Windows 10 Sticky Note / Objectives card with live checkmarks and `"Continue Story"` button.
-  - 🔔 **Action Center Notifications**: Windows 10 toast popups in the bottom-right corner.
-  - 📝 **TextEditor**: Multi-instance file editing, dirty flags, saving, and line numbering.
-  - 📁 **Files App**: Directory navigation and direct file launching.
-  - 💻 **Terminal**: Interactive shell with command execution and filesystem commands.
-  - 💬 **Chat**: Messaging app with multiple contacts (Chloe, Alice, Bob, etc.).
-  - ✉️ **Email**: Mail client with inbox filtering and unread indicators.
-  - 🌐 **Browser**, 🖼️ **ImageViewer**, 🧊 **ObjViewer**, ⚙️ **Settings**.
+  - Run multiple concurrent instances of applications with unique Process IDs (`pid`).
+  - Taskbar tabs feature running indicators and instance count badges.
+- **Desktop Applications**:
+  - ✉️ **Email Client**: Progressive email unlocking, folder filtering, and interactive email attachment downloading (`cat_cafe_review.txt`).
+  - 💬 **Chat App**: Scripted narrative auto-text messaging with realistic typing delays.
+  - 📝 **TextEditor**: Syntax highlighting, file saving (`Ctrl+S`), line numbering, and dirty flags.
+  - 🌐 **Browser**: Web navigation (`http://meowlatte.com`) with tabbed browsing.
+  - 📁 **Files App**: Directory navigation across `/home/user/Downloads`, `/home/user/Documents`, etc.
+  - 💻 **Terminal**: Interactive shell with filesystem commands (`ls`, `cat`, `help`, `quarantine`).
+  - 📋 **Task HUD**: Clean sticky note objective tracker with live checkmarks and `"Continue Story"` button.
+  - 🔔 **Action Center**: System toast notifications.
 
-### 🔤 3. Standard Fonts & Crisp Typography
-- **UI & Dialogue Body**: `font/Nunito-Regular.ttf` (size 14–15px) for clear readability.
-- **Headers & Window Titles**: `font/IBMPlexSans-Bold.ttf` (size 15–16px) for bold titles.
-- **Monospace Code / Terminal**: `font/consola.ttf` for terminal and code editors.
-- **Zero Emojis**: Replaced all emoji symbols across the entire game with clean, professional vector geometry and labels.
+### 🎵 3. Original Soundtrack & Audio Design
+- **`audio/bgm/main_menu.mp3`**: Elegant, atmospheric BGM for the Main Menu and Story Visual Novel scenes.
+- **`audio/bgm/desktop.mp3`**: Warm, ambient electronic OST for Workstation Desktop mode and cafe scenes.
+- **Procedural Sound Effects**: Typewriter blips, UI clicks, task completed fanfares, and level-up chimes.
 
-### ⚙️ 4. Professional ESC Pause & Settings Menu
-- Accessible anytime in both Story and Desktop modes by pressing `ESC`.
-- **Resume Game**: Seamlessly return to current gameplay.
-- **Settings & Audio**: Interactive sliders for SFX and Music volume, plus typewriter text speed options.
-- **Restart Chapter**: Re-initialize the current story chapter.
-- **Exit to Desktop**: Cleanly quit the application.
+### 💾 4. Persistent Auto-Save System
+- Progress (story position, player level/XP, completed tasks, flags, unlocked emails, chat states, and filesystem) automatically saves upon task completion, story choices, and chapter transitions.
+- Supports resuming from the Title Screen with **Continue**.
 
 ---
 
-## 📁 Clean Codebase Architecture
-
-All source code is strictly organized in `./src/`, keeping only `main.lua` and `conf.lua` in the root:
+## 📁 Source Code Structure
 
 ```
-lynux-caracal/
-├── main.lua                  -- Root entry point; delegates to GameManager
-├── conf.lua                  -- Window resolution (760x480, resizable) & Love2D config
-├── README.md                 -- Engine documentation
-├── assets/                   -- App icons and UI graphics
-├── audio/                    -- Music and sound assets
-├── data/
-│   ├── filesystem.json       -- Virtual OS filesystem template
-│   └── stories/
-│       └── prologue.lua      -- Chapter 1 narrative and quest script
+daydream-newspaper-club/
+├── main.lua                  -- Root Love2D entry point
+├── conf.lua                  -- Window resolution (760x480, resizable) & title config
+├── README.md                 -- Project documentation
+├── audio/
+│   ├── bgm/                  -- Background music tracks (main_menu.mp3, desktop.mp3)
+│   └── sfx/                  -- Sound effects
 ├── font/                     -- Standard TrueType fonts (Nunito, IBMPlexSans, consola)
-├── lib/                      -- JSON, XML, and helper libraries
+├── lib/                      -- JSON and helper libraries
 ├── src/
 │   ├── core/
-│   │   ├── game_manager.lua  -- Master state machine & lifecycle coordinator
-│   │   ├── event_bus.lua     -- Global pub/sub messaging bus
-│   │   ├── player_stats.lua  -- XP, levels, hacker ranks, and narrative flags
-│   │   ├── audio_manager.lua -- SFX and background music controller
+│   │   ├── game_manager.lua  -- State machine (Menu <-> Story <-> Desktop)
+│   │   ├── save_manager.lua  -- Persistent save and restore system
+│   │   ├── audio_manager.lua -- BGM and SFX audio controller
+│   │   ├── player_stats.lua  -- XP, levels, and narrative flags
 │   │   ├── filesystem.lua    -- Virtual in-memory filesystem engine
-│   │   └── transitions.lua   -- CRT zoom and fade screen transitions
+│   │   └── event_bus.lua     -- Global pub/sub event bus
+│   ├── chapters/
+│   │   ├── chapter_manager.lua -- Chapter registry, selector, and loader
+│   │   ├── chapter_1.lua     -- Chapter 1 narrative and 8-task quest chain
+│   │   └── chapter_2.lua     -- Chapter 2 narrative and basement traceroute
 │   ├── story/
-│   │   ├── story_engine.lua  -- Visual novel script interpreter
-│   │   ├── dialogue_box.lua  -- Material dialogue renderer (no borders)
-│   │   ├── choice_box.lua    -- Branching choice renderer
-│   │   ├── history_log.lua   -- Backlog transcript overlay
-│   │   ├── character_mgr.lua -- Character profiles and nametags
-│   │   └── scene_view.lua    -- 2009-2010 bedroom and environment scenes
+│   │   ├── story_engine.lua  -- Script interpreter and step dispatcher
+│   │   ├── dialogue_box.lua  -- Material dialogue renderer
+│   │   ├── choice_box.lua    -- Branching choice selector
+│   │   └── history_log.lua   -- Dialogue backlog transcript overlay
 │   ├── desktop/
-│   │   ├── desktop_mgr.lua   -- Desktop wallpaper, icons, and Start Menu
-│   │   ├── window_mgr.lua    -- Multi-process window chrome and event routing
-│   │   ├── taskbar.lua       -- Windows 10 bottom taskbar and system tray
-│   │   ├── task_hud.lua      -- Sticky Note objective tracker
-│   │   └── notifications.lua -- Windows Action Center toast notifications
+│   │   ├── desktop_mgr.lua   -- Workstation wallpaper, icons, and Start Menu
+│   │   ├── window_mgr.lua    -- Multi-window process manager
+│   │   ├── taskbar.lua       -- Windows 10 bottom taskbar
+│   │   ├── task_hud.lua      -- Objective tracker sticky note
+│   │   └── notifications.lua -- Toast notification popups
 │   ├── tasks/
-│   │   ├── task_manager.lua  -- Quest lifecycle and level-up banners
-│   │   └── task_conditions.lua -- Evaluators for files, emails, and chats
-│   ├── apps/                 -- Desktop applications (TextEditor, Email, Chat, Files, etc.)
-│   ├── ui/
-│   │   └── pause_menu.lua    -- ESC Pause and Settings menu
-│   └── test_verify.lua       -- Automated verification test suite
+│   │   ├── task_manager.lua  -- Task lifecycle and level-up banners
+│   │   └── task_conditions.lua -- Evaluators for files, emails, downloads, chats
+│   ├── apps/                 -- Desktop applications (Email, Chat, TextEditor, Browser, Files, Terminal)
+│   └── ui/
+│       ├── main_menu.lua     -- Responsive startup Title Screen
+│       └── pause_menu.lua    -- In-game ESC pause and settings menu
 ```
 
 ---
@@ -130,21 +114,22 @@ lynux-caracal/
 
 | Context | Key / Action | Description |
 |---|---|---|
-| **Anywhere** | `ESC` | Open / Close Pause & Settings Menu |
-| **Story Mode** | `Space` / `Enter` / `Left Click` | Advance dialogue / Complete typing |
-| **Story Mode** | `1`, `2`, `3` / `Click` | Select dialogue choice |
-| **Story Mode** | `H` / `L` | Toggle dialogue history backlog |
-| **Desktop** | `Left Click` | Focus / Launch / Interact with app windows & icons |
+| **Anywhere** | `ESC` | Open / Close Pause & Settings Menu / Back |
+| **Main Menu** | `Up` / `Down` / `Enter` / `Click` | Navigate & activate menu options |
+| **Story Mode** | `Space` / `Enter` / `Left Click` | Advance dialogue / Complete typewriter text |
+| **Story Mode** | `1`, `2`, `3` / `Click` | Select branching dialogue option |
+| **Story Mode** | `H` / `L` | Toggle dialogue backlog history |
+| **Desktop** | `Left Click` | Focus, launch, and interact with app windows & icons |
 | **Desktop** | `Right Click` on Dock | Launch new process instance of application |
-| **Desktop** | `Window Titlebar Drag` | Move window |
-| **Desktop** | `Window Bottom-Right Drag` | Resize window |
+| **Desktop** | `Window Titlebar Drag` | Move active window |
+| **Desktop** | `Window Bottom-Right Drag` | Resize active window |
 | **Task HUD** | `Click Continue Story` | Return to visual novel after completing task |
 
 ---
 
 ## 🚀 Running the Game
 
-Launch with Love2D:
+Launch with Love2D (v11+):
 ```bash
 love .
 ```

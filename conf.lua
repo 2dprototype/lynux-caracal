@@ -4,7 +4,7 @@ function love.conf(t)
     t.window.minwidth = 640
     t.window.minheight = 400
     t.window.resizable = true
-    t.window.title = "Lynux Caracal"
-    t.identity = "lynux_caracal"
+    t.window.title = "Daydream Newspaper Club"
+    t.identity = "daydream_newspaper_club"
     t.console = true
 end
